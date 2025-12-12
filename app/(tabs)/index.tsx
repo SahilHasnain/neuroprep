@@ -1,111 +1,107 @@
-import { FileQuestion, FileText, MessageCircleQuestion, TrendingUp } from "lucide-react-native";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { router } from "expo-router";
+import {
+  FileQuestion,
+  FileText,
+  MessageCircleQuestion,
+  TrendingUp,
+} from "lucide-react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import QuickActionButton from "../../components/ui/QuickActionButton";
+import StatsCard from "../../components/ui/StatsCard";
+
+const quickActions = [
+  {
+    icon: MessageCircleQuestion,
+    label: "Ask Doubt",
+    description: "Get instant help",
+    onPress: () => router.push("/ask-doubt"),
+    bgColor: "bg-blue-100",
+    iconColor: "#3b82f6",
+  },
+  {
+    icon: FileQuestion,
+    label: "Generate Questions",
+    description: "Practice smarter",
+    onPress: () => router.push("/generate-questions"),
+    bgColor: "bg-green-100",
+    iconColor: "#22c55e",
+  },
+  {
+    icon: FileText,
+    label: "Convert Notes",
+    description: "Transform Notes",
+    onPress: () => router.push("/notes"),
+    bgColor: "bg-purple-100",
+    iconColor: "#a855f7",
+  },
+  {
+    icon: TrendingUp,
+    label: "View Progress",
+    description: "Track Growth",
+    onPress: () => console.log("View Progress"),
+    bgColor: "bg-orange-100",
+    iconColor: "#f97316",
+  },
+];
+
+const stats = [
+  {
+    value: "24",
+    label: "Questions",
+    sublabel: "Solved",
+    color: "text-blue-600",
+  },
+  {
+    value: "87%",
+    label: "Accuracy",
+    sublabel: "Rate",
+    color: "text-green-600",
+  },
+  {
+    value: "15",
+    label: "Day Streak",
+    sublabel: "Keep going!",
+    color: "text-orange-600",
+  },
+];
 
 export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1">
       <ScrollView className="px-6 py-8">
-      <View className="mb-8">
-        <Text className="mb-1 text-3xl font-bold text-gray-900">Welcome back</Text>
-        <Text className="text-lg text-gray-600">Ready to ace your exam?</Text>
-      </View>
-
-      <View className="mb-8">
-        <Text className="mb-4 text-xl font-semibold text-gray-900">
-          Quick Actions
-        </Text>
-        <View className="flex-row flex-wrap justify-between">
-          <TouchableOpacity className="w-[48%] border-[1px] border-gray-200 p-4 rounded-xl items-center justify-center bg-white shadow-sm mb-4">
-            <View className="items-center justify-center w-12 h-12 mb-3 bg-blue-100 rounded-full">
-              <MessageCircleQuestion size={24} color="#3b82f6" />
-            </View>
-            <Text className="text-base font-semibold text-gray-900">
-              Ask Doubt
-            </Text>
-            <Text className="mt-1 text-xs text-center">Get instant help</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="bg-white w-[48%] border-[1px] border-gray-200 rounded-xl shadow-sm justify-center items-center p-4 mb-4">
-            <View className="items-center justify-center w-12 h-12 mb-3 bg-green-100 rounded-full">
-              <FileQuestion size={24} color="#22c55e" />
-            </View>
-            <Text className="text-base font-semibold text-gray-900">
-              Generate Questions
-            </Text>
-            <Text className="mt-1 text-xs text-gray-500">Practice smarter</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity className="bg-white w-[48%] border-[1px] border-gray-200 rounded-xl shadow-sm justify-center items-center p-4">
-            <View className="items-center justify-center w-12 h-12 mb-3 bg-purple-100 rounded-full">
-              <FileText size={24} color="#a855f7" />
-            </View>
-            <Text className="text-base font-semibold text-gray-900">
-              Convert Notes
-            </Text>
-            <Text className="mt-1 text-xs text-gray-500">Transform Notes</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity className="bg-white w-[48%] border-[1px] border-gray-200 rounded-xl shadow-sm justify-center items-center p-4">
-            <View className="items-center justify-center w-12 h-12 mb-3 bg-orange-100 rounded-full">
-              <TrendingUp size={24} color="#f97316" />
-            </View>
-            <Text className="text-base font-semibold text-gray-900">
-              View Progress
-            </Text>
-            <Text className="mt-1 text-xs text-gray-500">Track Growth</Text>
-          </TouchableOpacity>
+        <View className="mb-8">
+          <Text className="mb-1 text-3xl font-bold text-gray-900">
+            Welcome Champ
+          </Text>
+          <Text className="text-lg text-gray-600">Ready to ace your exam?</Text>
         </View>
-      </View>
 
-      <View>
-        <Text className="mb-4 text-xl font-semibold text-gray-900">
-          Today&apos;s Stats
-        </Text>
-
-        <View className="flex flex-row p-6 border-gray-200 border-[1px] shadow-sm rounded-xl bg-white justify-between items-center">
-          <View className="items-center flex-1">
-            <Text className="mb-1 text-2xl font-bold text-blue-600">
-              24
-            </Text>
-            <Text className="mb-1 text-sm text-gray-600">
-              Questions
-            </Text>
-            <Text className="text-xs text-gray-400">
-              Solved
-            </Text>
+        <View className="mb-8">
+          <Text className="mb-4 text-xl font-semibold text-gray-900">
+            Quick Actions
+          </Text>
+          <View className="flex-row flex-wrap justify-between">
+            {quickActions.map((action, index) => (
+              <QuickActionButton
+                key={`action-${index}`}
+                icon={action.icon}
+                iconColor={action.iconColor}
+                bgColor={action.bgColor}
+                label={action.label}
+                description={action.description}
+                onPress={action.onPress}
+              />
+            ))}
           </View>
-
-           <View className="w-[1px] h-12 bg-gray-200" />
-           
-          <View className="items-center flex-1">
-            <Text className="mb-3 text-2xl font-bold text-green-600">
-              87%
-            </Text>
-            <Text className="mb-1 text-sm text-gray-600">
-              Accuracy
-            </Text>
-            <Text className="text-xs text-gray-400">
-              Rate
-            </Text>
-          </View>
-
-           <View className="w-[1px] h-12 bg-gray-200" />
-           
-          <View className="items-center flex-1">
-            <Text className="mb-1 text-2xl font-bold text-orange-600">
-              15
-            </Text>
-            <Text className="mb-1 text-sm text-gray-600">
-              Day Streak
-            </Text>
-            <Text className="text-xs text-gray-400">
-              Keep going!
-            </Text>
-          </View>
-          
         </View>
-      </View>
+
+        <View>
+          <Text className="mb-4 text-xl font-semibold text-gray-900">
+            Today&apos;s Stats
+          </Text>
+          <StatsCard stats={stats} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
