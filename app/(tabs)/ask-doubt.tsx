@@ -25,18 +25,6 @@ export default function AskDoubtScreen() {
       isUser: false,
       timeStamp: "Just Now",
     },
-    {
-      id: "2",
-      text: "Hi! I'm your AI tutor. Ask me any doubt related to NEET/JEE and I'll help you understand it.",
-      isUser: true,
-      timeStamp: "Just Now",
-    },
-    {
-      id: "3",
-      text: "Hi! I'm your AI tutor. Ask me any doubt related to NEET/JEE and I'll help you understand it.",
-      isUser: false,
-      timeStamp: "Just Now",
-    },
   ]);
 
   const [inputText, setInputText] = useState("");
