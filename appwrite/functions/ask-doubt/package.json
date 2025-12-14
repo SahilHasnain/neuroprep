@@ -1,0 +1,22 @@
+{
+  "name": "ask-doubt-function",
+  "version": "1.0.0",
+  "description": "Appwrite function to handle doubt resolution using Gemini AI",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-gemini.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^14.1.0",
+    "undici": "^6.20.1"
+  },
+  "keywords": [
+    "appwrite",
+    "function",
+    "gemini",
+    "ai"
+  ],
+  "author": "Sahil Hasnain",
+  "license": "MIT"
+}
