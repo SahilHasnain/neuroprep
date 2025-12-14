@@ -1,7 +1,13 @@
 import { fetch } from "undici";
-import { createAdminClient } from "../../config/appwrite.client";
-import { appwriteConfig } from "../../config/config";
-import { ID } from "node-appwrite";
+import { Client, ID, Account, TablesDB, Avatars } from "node-appwrite";
+
+const appwriteConfig = {
+    endpointUrl: process.env.APPWRITE_ENDPOINT,
+    projectId: process.env.APPWRITE_PROJECT,
+    databaseId: process.env.APPWRITE_DATABASE_ID,
+    doubtsTableId: process.env.DOUBTS_TABLE_ID,
+    aiAnswerTableId: process.env.AI_ANSWER_TABLE_ID,
+}
 
 
 function inferMetadata(text) {
@@ -118,6 +124,25 @@ async function callGemini(prompt) {
 }
 
 export { buildGeminiPrompt, callGemini, inferMetadata };
+
+const createAdminClient = async () => {
+    const client = new Client()
+        .setEndpoint(process.env.APPWRITE_ENDPOINT)
+        .setProject(process.env.APPWRITE_PROJECT)
+        .setKey(process.env.APPWRITE_SECRET_KEY);
+
+    return {
+        get account() {
+            return new Account(client);
+        },
+        get tablesDB() {
+            return new TablesDB(client)
+        },
+        get avatars() {
+            return new Avatars(client);
+        }
+    }
+}
 
 export default async ({ req, res, log, error }) => {
     try {
