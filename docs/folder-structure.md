@@ -44,3 +44,6 @@
 /assets
   images/
   fonts/
+
+/appwrite
+  /functions

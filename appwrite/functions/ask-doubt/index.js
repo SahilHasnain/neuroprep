@@ -1,28 +1,29 @@
 import { fetch } from "undici";
+import { createAdminClient } from "../../config/appwrite.client";
+import { appwriteConfig } from "../../config/config";
+import { ID } from "node-appwrite";
 
 
 function inferMetadata(text) {
     const t = text.toLowerCase();
 
-    const isBio = /biology|botany|zoology|cell|dna|physiology|genetics|ecology|photosynthesis|neuron/.test(t);
-    const isPhy = /physics|newton|force|momentum|electric|magnetic|optics|thermo|quantum|kinematics|current/.test(t);
-    const isChem = /chemistry|organic|inorganic|stoichiometry|acid|base|salt|reaction|bond|periodic/.test(t);
-    const isMath = /math|integration|derivative|limits|probability|matrix|vector|algebra|geometry|trigonometry/.test(t)
+    const SUBJECT_RULES = [
+        { subject: "Biology", regex: /biology|botany|zoology|cell|dna|genetics|neuron/ },
+        { subject: "Physics", regex: /physics|newton|force|momentum|current|quantum/ },
+        { subject: "Chemistry", regex: /chemistry|organic|inorganic|acid|base|bond/ },
+        { subject: "Mathematics", regex: /math|integration|derivative|matrix|vector/ },
+    ];
 
-    let subject = "General"
-    if (isBio) subject = "Biology"
-    else if (isPhy) subject = "Physics"
-    else if (isChem) subject = "Chemistry"
-    else if (isMath) subject = "Mathematics"
+    const subject = SUBJECT_RULES.find(r => r.regex.test(t))?.subject ?? "General"
 
-    const topicMatch = (t.match(/[a-z]+/g) || []).slice(0, 3).join(" ");
+    const topic = (t.match(/[a-z]+/g) || []).slice(0, 3).join(" ") || "General Topic";
 
     const lengthScore = Math.min(3, Math.ceil(text.length / 120));
     const keywordScore = /prove | derive | why | explain | mechanism | theorem/.test(t) ? 2 : 1;
     const total = lengthScore + keywordScore;
-    const inferredDifficulty = total >= 4 ? "Hard" : total >= 3 ? "Medium" : "Easy";
+    const difficulty = total >= 4 ? "Hard" : total >= 3 ? "Medium" : "Easy";
 
-    return { subject, topic: topicMatch || "General Topic", inferredDifficulty };
+    return { subject, topic, difficulty };
 
 }
 
@@ -117,4 +118,50 @@ async function callGemini(prompt) {
 }
 
 export { buildGeminiPrompt, callGemini, inferMetadata };
+
+export default async ({ req, res, log, error }) => {
+    try {
+        if (req.method !== "POST") return res.json({
+            success: false, message: "Only post method allowed"
+        }, 405)
+
+        const { userId, doubtText } = JSON.parse(req.body ?? "{}");
+
+        if (!userId || !doubtText.trim()) res.json({ sucess: false, message: "invalid input" }, 400);
+
+        const meta = inferMetadata(doubtText)
+
+        const { tablesDB } = await createAdminClient();
+
+        const doubt = await tablesDB.createRow({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.doubtsTableId,
+            rowId: ID.unique(),
+            data: {
+                userId,
+                doubtText,
+                subject: meta.subject,
+                topic: meta.topic,
+                difficulty: meta.difficulty
+            }
+        })
+
+        const prompt = buildGeminiPrompt(doubtText);
+        const aiAnswer = await callGemini(prompt)
+
+        await tablesDB.createRow({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.aiAnswerTableId,
+            rowId: ID.unique(),
+            data: {
+                doubtId: doubt.$id,
+                aiAnswer
+            }
+        })
+
+        return res.json({ success: true, aiAnswer })
+    } catch (err) {
+        res.json({ success: false, message: "Internal server error: " + err }, 500)
+    }
+}
 
