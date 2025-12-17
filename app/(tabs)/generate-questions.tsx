@@ -1,8 +1,9 @@
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
+import InputTopic from "@/components/ui/InputTopic";
 import QuestionCard from "@/components/ui/QuestionCard";
 import { Sparkles } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,32 +20,6 @@ const subjects = [
   { label: "Biology", value: "biology" },
   { label: "Mathematics", value: "mathematics" },
 ];
-
-const topicsBySubject: Record<string, { label: string; value: string }[]> = {
-  physics: [
-    { label: "Mechanics", value: "mechanics" },
-    { label: "Thermodynamics", value: "thermodynamics" },
-    { label: "Optics", value: "optics" },
-    { label: "Electromagnetism", value: "electromagnetism" },
-  ],
-  chemistry: [
-    { label: "Organic Chemistry", value: "organic" },
-    { label: "Inorganic Chemistry", value: "inorganic" },
-    { label: "Physical Chemistry", value: "physical" },
-  ],
-  biology: [
-    { label: "Cell Biology", value: "cell" },
-    { label: "Genetics", value: "genetics" },
-    { label: "Ecology", value: "ecology" },
-    { label: "Human Physiology", value: "physiology" },
-  ],
-  mathematics: [
-    { label: "Calculus", value: "calculus" },
-    { label: "Algebra", value: "algebra" },
-    { label: "Trigonometry", value: "trigonometry" },
-    { label: "Coordinate Geometry", value: "coordinate" },
-  ],
-};
 
 const difficultyLevels = [
   { label: "Easy", value: "easy" },
@@ -66,39 +41,58 @@ export default function GenerateQuestionsScreen() {
   const [questionCount, setQuestionCount] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
   >({});
 
   const handleGenerateQuestions = async () => {
+    // Validate inputs
     if (!subject || !topic || !difficulty || !questionCount) {
       return;
     }
 
     setLoading(true);
+    setError(null);
     setQuestions([]);
     setSelectedAnswers({});
 
-    // Simulate API call
-    setTimeout(() => {
-      const mockQuestions: Question[] = Array.from(
-        { length: parseInt(questionCount) },
-        (_, i) => ({
-          id: `q${i + 1}`,
-          question: `Sample ${difficulty} question ${i + 1} about ${topic} in ${subject}. What is the correct explanation for this concept?`,
-          options: [
-            { id: `q${i + 1}a`, text: "Option A: First possible answer" },
-            { id: `q${i + 1}b`, text: "Option B: Second possible answer" },
-            { id: `q${i + 1}c`, text: "Option C: Third possible answer" },
-            { id: `q${i + 1}d`, text: "Option D: Fourth possible answer" },
-          ],
-          correctAnswer: `q${i + 1}${["a", "b", "c", "d"][Math.floor(Math.random() * 4)]}`,
-        })
-      );
+    try {
+      const res = await fetch("https://69423cba001540dea615.fra.appwrite.run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subject,
+          topic,
+          difficulty,
+          questionCount,
+        }),
+      });
 
-      setQuestions(mockQuestions);
+      if (!res.ok) {
+        throw new Error(`Failed to generate questions: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Validate response data
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        throw new Error("Invalid response from server");
+      }
+
+      setQuestions(data);
+    } catch (err) {
+      console.error("Error generating questions:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to generate questions. Please try again."
+      );
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const handleAnswerSelect = (questionId: string, optionId: string) => {
@@ -111,13 +105,13 @@ export default function GenerateQuestionsScreen() {
   const handleReset = () => {
     setQuestions([]);
     setSelectedAnswers({});
+    setError(null);
     setSubject("");
     setTopic("");
     setDifficulty("");
     setQuestionCount("");
   };
 
-  const topics = subject ? topicsBySubject[subject] || [] : [];
   const canGenerate = subject && topic && difficulty && questionCount;
 
   return (
@@ -148,22 +142,16 @@ export default function GenerateQuestionsScreen() {
                 label="Select Subject"
                 value={subject}
                 options={subjects}
-                onSelect={(value) => {
-                  setSubject(value);
-                  setTopic("");
-                }}
+                onSelect={setSubject}
                 placeholder="Choose a subject"
               />
 
-              {subject && (
-                <Dropdown
-                  label="Select Topic"
-                  value={topic}
-                  options={topics}
-                  onSelect={setTopic}
-                  placeholder="Choose a topic"
-                />
-              )}
+              <InputTopic
+                label="Enter Topic"
+                value={topic}
+                onChangeText={setTopic}
+                placeholder="e.g., Newton's Laws, Organic Reactions"
+              />
 
               <Dropdown
                 label="Difficulty Level"
@@ -185,13 +173,20 @@ export default function GenerateQuestionsScreen() {
                 <Button
                   title="Generate Questions"
                   onPress={handleGenerateQuestions}
-                  disabled={!canGenerate}
                   loading={loading}
                   fullWidth
                 />
               </View>
 
-              {!canGenerate && (
+              {error && (
+                <View className="mt-3 p-3 bg-red-50 rounded-xl border-[1px] border-red-200">
+                  <Text className="text-sm text-center text-red-600">
+                    {error}
+                  </Text>
+                </View>
+              )}
+
+              {!canGenerate && !error && (
                 <Text className="mt-3 text-sm text-center text-gray-500">
                   Please fill all fields to generate questions
                 </Text>
@@ -242,6 +237,3 @@ export default function GenerateQuestionsScreen() {
     </SafeAreaView>
   );
 }
-
-
-

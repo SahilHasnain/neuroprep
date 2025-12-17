@@ -64,7 +64,8 @@ export default function AskDoubtScreen() {
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
           <Text className="text-2xl font-bold text-gray-900">Ask Doubt</Text>
@@ -73,7 +74,11 @@ export default function AskDoubtScreen() {
           </Text>
         </View>
 
-        <ScrollView className="flex-1 px-6 py-4">
+        <ScrollView
+          className="flex-1 px-6 py-4"
+          contentContainerStyle={{ paddingBottom: 20 }}
+          keyboardShouldPersistTaps="handled"
+        >
           {messages.map((message) => (
             <ChatBubble
               key={message.id}
