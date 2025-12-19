@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { CheckCircle2, Circle } from "lucide-react-native";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import MathMarkdown from "@/components/shared/MathMarkdown";
 import Button from "./Button";
 
 interface Option {
@@ -41,9 +42,19 @@ export default function QuestionCard({
 
   return (
     <View className="p-4 mb-4 bg-white rounded-2xl shadow-sm border-[1px] border-gray-200">
-      <Text className="mb-4 text-base font-medium leading-6 text-gray-900">
+      <MathMarkdown
+        style={{
+          body: {
+            color: "#111827",
+            fontSize: 16,
+            lineHeight: 22,
+            fontWeight: "600",
+            marginBottom: 12,
+          },
+        }}
+      >
         {question}
-      </Text>
+      </MathMarkdown>
 
       <View className="space-y-2">
         {options.map((option, index) => {
@@ -102,21 +113,27 @@ export default function QuestionCard({
                     </Text>
                   )}
                 </View>
-                <Text
-                  className={clsx(
-                    "flex-1 text-base",
-                    shouldHighlight &&
-                      isCorrectOption &&
-                      "text-green-900 font-medium",
-                    shouldHighlight &&
-                      isSelected &&
-                      !isCorrectOption &&
-                      "text-red-900",
-                    !shouldHighlight && "text-gray-900"
-                  )}
-                >
-                  {option.text}
-                </Text>
+                <View className="flex-1">
+                  <MathMarkdown
+                    style={{
+                      body: {
+                        fontSize: 15,
+                        lineHeight: 20,
+                        color: shouldHighlight
+                          ? isCorrectOption
+                            ? "#065f46" // green-900
+                            : isSelected
+                              ? "#7f1d1d" // red-900
+                              : "#111827"
+                          : "#111827",
+                        fontWeight:
+                          shouldHighlight && isCorrectOption ? "600" : "400",
+                      },
+                    }}
+                  >
+                    {option.text}
+                  </MathMarkdown>
+                </View>
               </View>
             </TouchableOpacity>
           );

@@ -3,8 +3,15 @@ import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
+import {
+  loadNotesFromStorage,
+  saveNoteToStorage,
+  deleteNoteFromStorage,
+  formatNotesContent,
+  type Note,
+} from "@/utils";
 import { BookOpen, Sparkles, X } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Modal,
@@ -15,14 +22,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-interface Note {
-  id: string;
-  title: string;
-  subject: string;
-  content: string;
-  date: string;
-}
+import MathMarkdown from "@/components/shared/MathMarkdown";
 
 const subjects = [
   { label: "Physics", value: "physics" },
@@ -51,6 +51,15 @@ export default function NotesScreen() {
     topic: "",
     noteLength: "detailed",
   });
+
+  // Load notes from AsyncStorage on mount
+  useEffect(() => {
+    const loadNotes = async () => {
+      const storedNotes = await loadNotesFromStorage();
+      setNotes(storedNotes);
+    };
+    loadNotes();
+  }, []);
 
   const filteredNotes = notes.filter((note) => {
     const matchesSearch =
@@ -111,10 +120,17 @@ export default function NotesScreen() {
         }),
       };
 
+      // Save to AsyncStorage with structured format
+      await saveNoteToStorage(note, {
+        subject: generateConfig.subject,
+        topic: generateConfig.topic,
+        noteLength: generateConfig.noteLength,
+      });
+
       setNotes([note, ...notes]);
       setGenerateConfig({ subject: "", topic: "", noteLength: "detailed" });
       setIsModalVisible(false);
-      Alert.alert("Success", "AI notes generated successfully!");
+      Alert.alert("Success", "AI notes generated and saved!");
     } catch (err) {
       console.error("Error generating notes:", err);
       Alert.alert(
@@ -128,71 +144,16 @@ export default function NotesScreen() {
     }
   };
 
-  const formatNotesContent = (apiNotes: any): string => {
-    let content = `📚 ${apiNotes.title || "AI-Generated Notes"}\n\n`;
-
-    if (apiNotes.sections && Array.isArray(apiNotes.sections)) {
-      apiNotes.sections.forEach((section: any, idx: number) => {
-        content += `## ${idx + 1}. ${section.heading}\n`;
-        content += `${section.content}\n\n`;
-
-        if (section.keyPoints && section.keyPoints.length > 0) {
-          content += "**Key Points:**\n";
-          section.keyPoints.forEach((point: string) => {
-            content += `• ${point}\n`;
-          });
-          content += "\n";
-        }
-
-        if (section.examples && section.examples.length > 0) {
-          content += "**Examples:**\n";
-          section.examples.forEach((example: string) => {
-            content += `• ${example}\n`;
-          });
-          content += "\n";
-        }
-      });
-    }
-
-    if (apiNotes.importantFormulas && apiNotes.importantFormulas.length > 0) {
-      content += "## Important Formulas\n";
-      apiNotes.importantFormulas.forEach((formula: any) => {
-        content += `**${formula.name}:** ${formula.formula}\n${formula.explanation}\n\n`;
-      });
-    }
-
-    if (
-      apiNotes.commonMisconceptions &&
-      apiNotes.commonMisconceptions.length > 0
-    ) {
-      content += "## Common Misconceptions\n";
-      apiNotes.commonMisconceptions.forEach((item: any) => {
-        content += `❌ ${item.misconception}\n✅ ${item.correction}\n\n`;
-      });
-    }
-
-    if (apiNotes.examTips && apiNotes.examTips.length > 0) {
-      content += "## Exam Tips\n";
-      apiNotes.examTips.forEach((tip: string) => {
-        content += `✓ ${tip}\n`;
-      });
-      content += "\n";
-    }
-
-    if (apiNotes.summary) {
-      content += `## Summary\n${apiNotes.summary}`;
-    }
-
-    return content;
-  };
-
-  const handleDeleteNote = (id: string) => {
+  const handleDeleteNote = async (id: string) => {
     Alert.alert("Delete Note", "Are you sure you want to delete this note?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => {
+        onPress: async () => {
+          // Remove from AsyncStorage
+          await deleteNoteFromStorage(id);
+          // Update UI state
           setNotes(notes.filter((note) => note.id !== id));
           setIsViewModalVisible(false);
         },
@@ -286,95 +247,93 @@ export default function NotesScreen() {
         transparent
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View className="justify-end flex-1 bg-black/50">
-          <View className="bg-white rounded-t-3xl">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <View className="flex-row items-center flex-1">
-                <Sparkles size={24} color="#3b82f6" />
-                <Text className="ml-2 text-xl font-bold text-gray-900">
-                  Generate AI Notes
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => setIsModalVisible(false)}
-                className="p-2 rounded-full active:bg-gray-100"
-              >
-                <X size={24} color="#6b7280" />
-              </Pressable>
+        <View className="flex-1 bg-white rounded-t-3xl">
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
+            <View className="flex-row items-center flex-1">
+              <Sparkles size={24} color="#3b82f6" />
+              <Text className="ml-2 text-xl font-bold text-gray-900">
+                Generate AI Notes
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => setIsModalVisible(false)}
+              className="p-2 rounded-full active:bg-gray-100"
+            >
+              <X size={24} color="#6b7280" />
+            </Pressable>
+          </View>
+
+          <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
+            <View className="p-4 mb-4 rounded-xl bg-blue-50">
+              <Text className="text-sm leading-5 text-blue-700">
+                AI will generate comprehensive notes on your selected topic,
+                tailored for NEET/JEE preparation.
+              </Text>
             </View>
 
-            <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
-              <View className="p-4 mb-4 rounded-xl bg-blue-50">
-                <Text className="text-sm leading-5 text-blue-700">
-                  AI will generate comprehensive notes on your selected topic,
-                  tailored for NEET/JEE preparation.
+            <Dropdown
+              label="Select Subject"
+              value={generateConfig.subject}
+              options={subjects}
+              onSelect={(value) =>
+                setGenerateConfig({ ...generateConfig, subject: value })
+              }
+              placeholder="Choose a subject"
+            />
+
+            <InputTopic
+              label="Enter Topic"
+              value={generateConfig.topic}
+              onChangeText={(value) =>
+                setGenerateConfig({ ...generateConfig, topic: value })
+              }
+              placeholder="e.g., Thermodynamics, Cell Division"
+            />
+
+            <Dropdown
+              label="Note Type"
+              value={generateConfig.noteLength}
+              options={noteLengths}
+              onSelect={(value) =>
+                setGenerateConfig({ ...generateConfig, noteLength: value })
+              }
+              placeholder="Choose note type"
+            />
+
+            {loading ? (
+              <View className="py-8">
+                <ActivityIndicator size="large" color="#3b82f6" />
+                <Text className="mt-3 text-sm text-center text-gray-600">
+                  AI is generating your notes...
                 </Text>
               </View>
-
-              <Dropdown
-                label="Select Subject"
-                value={generateConfig.subject}
-                options={subjects}
-                onSelect={(value) =>
-                  setGenerateConfig({ ...generateConfig, subject: value })
-                }
-                placeholder="Choose a subject"
-              />
-
-              <InputTopic
-                label="Enter Topic"
-                value={generateConfig.topic}
-                onChangeText={(value) =>
-                  setGenerateConfig({ ...generateConfig, topic: value })
-                }
-                placeholder="e.g., Thermodynamics, Cell Division"
-              />
-
-              <Dropdown
-                label="Note Type"
-                value={generateConfig.noteLength}
-                options={noteLengths}
-                onSelect={(value) =>
-                  setGenerateConfig({ ...generateConfig, noteLength: value })
-                }
-                placeholder="Choose note type"
-              />
-
-              {loading ? (
-                <View className="py-8">
-                  <ActivityIndicator size="large" color="#3b82f6" />
-                  <Text className="mt-3 text-sm text-center text-gray-600">
-                    AI is generating your notes...
-                  </Text>
+            ) : (
+              <View className="flex-row gap-3 mt-2">
+                <View className="flex-1">
+                  <Button
+                    title="Cancel"
+                    onPress={() => setIsModalVisible(false)}
+                    variant="outline"
+                    fullWidth
+                  />
                 </View>
-              ) : (
-                <View className="flex-row gap-3 mt-2">
-                  <View className="flex-1">
-                    <Button
-                      title="Cancel"
-                      onPress={() => setIsModalVisible(false)}
-                      variant="outline"
-                      fullWidth
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Button
-                      title="Generate Notes"
-                      onPress={handleGenerateNotes}
-                      fullWidth
-                      disabled={!canGenerate}
-                    />
-                  </View>
+                <View className="flex-1">
+                  <Button
+                    title="Generate Notes"
+                    onPress={handleGenerateNotes}
+                    fullWidth
+                    disabled={!canGenerate}
+                  />
                 </View>
-              )}
+              </View>
+            )}
 
-              {!canGenerate && !loading && (
-                <Text className="mt-2 text-xs text-center text-gray-500">
-                  Please select subject and topic to generate notes
-                </Text>
-              )}
-            </ScrollView>
-          </View>
+            {!canGenerate && !loading && (
+              <Text className="mt-2 text-xs text-center text-gray-500">
+                Please select subject and topic to generate notes
+              </Text>
+            )}
+          </ScrollView>
         </View>
       </Modal>
 
@@ -450,9 +409,81 @@ export default function NotesScreen() {
                     <Text className="mb-2 text-sm font-semibold text-gray-500">
                       Content
                     </Text>
-                    <Text className="text-base leading-6 text-gray-700">
+                    <MathMarkdown
+                      style={{
+                        body: {
+                          color: "#374151",
+                          fontSize: 15,
+                          lineHeight: 24,
+                        },
+                        heading1: {
+                          color: "#111827",
+                          fontSize: 24,
+                          fontWeight: "bold",
+                          marginTop: 16,
+                          marginBottom: 8,
+                        },
+                        heading2: {
+                          color: "#1f2937",
+                          fontSize: 20,
+                          fontWeight: "bold",
+                          marginTop: 14,
+                          marginBottom: 6,
+                        },
+                        heading3: {
+                          color: "#374151",
+                          fontSize: 18,
+                          fontWeight: "600",
+                          marginTop: 12,
+                          marginBottom: 4,
+                        },
+                        strong: { color: "#1f2937", fontWeight: "bold" },
+                        em: { color: "#4b5563", fontStyle: "italic" },
+                        code_inline: {
+                          backgroundColor: "#f3f4f6",
+                          color: "#dc2626",
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                          fontFamily: "monospace",
+                        },
+                        code_block: {
+                          backgroundColor: "#f9fafb",
+                          color: "#111827",
+                          padding: 12,
+                          borderRadius: 8,
+                          fontFamily: "monospace",
+                          fontSize: 13,
+                        },
+                        fence: {
+                          backgroundColor: "#f9fafb",
+                          color: "#111827",
+                          padding: 12,
+                          borderRadius: 8,
+                          fontFamily: "monospace",
+                          fontSize: 13,
+                        },
+                        blockquote: {
+                          backgroundColor: "#dbeafe",
+                          borderLeftColor: "#3b82f6",
+                          borderLeftWidth: 4,
+                          paddingLeft: 12,
+                          paddingVertical: 8,
+                          marginVertical: 8,
+                          borderRadius: 4,
+                        },
+                        bullet_list: { marginVertical: 4 },
+                        ordered_list: { marginVertical: 4 },
+                        list_item: { marginVertical: 2, color: "#374151" },
+                        paragraph: {
+                          marginVertical: 4,
+                          color: "#4b5563",
+                          lineHeight: 22,
+                        },
+                      }}
+                    >
                       {selectedNote.content}
-                    </Text>
+                    </MathMarkdown>
                   </View>
 
                   <Button

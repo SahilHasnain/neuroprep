@@ -6,13 +6,11 @@ import { Sparkles } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-interface Question {
-  id: string;
-  question: string;
-  options: { id: string; text: string }[];
-  correctAnswer: string;
-}
+import {
+  loadQuestionsFromStorage,
+  saveQuestionsToStorage,
+  type Question,
+} from "@/utils";
 
 const subjects = [
   { label: "Physics", value: "physics" },
@@ -45,6 +43,22 @@ export default function GenerateQuestionsScreen() {
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
   >({});
+
+  // Load questions from AsyncStorage on mount
+  useEffect(() => {
+    const loadQuestions = async () => {
+      const questionSets = await loadQuestionsFromStorage();
+      if (questionSets.length > 0) {
+        const latest = questionSets[0];
+        setQuestions(latest.questions);
+        setSubject(latest.subject);
+        setTopic(latest.topic);
+        setDifficulty(latest.difficulty);
+        setQuestionCount(latest.questionCount.toString());
+      }
+    };
+    loadQuestions();
+  }, []);
 
   const handleGenerateQuestions = async () => {
     // Validate inputs
@@ -83,6 +97,14 @@ export default function GenerateQuestionsScreen() {
       }
 
       setQuestions(data);
+
+      // Save to AsyncStorage with structured format
+      await saveQuestionsToStorage(data, {
+        subject,
+        topic,
+        difficulty,
+        questionCount: parseInt(questionCount, 10),
+      });
     } catch (err) {
       console.error("Error generating questions:", err);
       setError(

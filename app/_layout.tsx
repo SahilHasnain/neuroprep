@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { useCallback, useEffect } from "react";
-import {SafeAreaProvider} from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -36,11 +36,10 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: "#ffffff"},
+          contentStyle: { backgroundColor: "#ffffff" },
           animation: "fade",
         }}
-        />
+      />
     </SafeAreaProvider>
-  )
+  );
 }
-

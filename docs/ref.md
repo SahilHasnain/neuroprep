@@ -1,0 +1,1 @@
+code neat , clean and maintainable honi chahiye , unnecessary complexity nahi chahiye. The more easy the code will be, the more clarity I will get. Jaha par new files banane ki jarurat pade, jarur banao.

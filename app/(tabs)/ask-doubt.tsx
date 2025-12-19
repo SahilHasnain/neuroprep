@@ -1,9 +1,12 @@
 import ChatBubble from "@/components/shared/ChatBubble";
 import Input from "@/components/ui/Input";
-import { useState } from "react";
+import AuthModal from "@/components/ui/AuthModal";
+import { useAuthStore } from "@/store/authStore";
+import { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -18,6 +21,7 @@ interface Message {
 }
 
 export default function AskDoubtScreen() {
+  const { user, checkSession } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -28,11 +32,17 @@ export default function AskDoubtScreen() {
   ]);
 
   const [inputText, setInputText] = useState("");
+  const [authVisible, setAuthVisible] = useState(false);
 
-  const handleSend = () => {
+  // Check session on mount
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const handleSend = async () => {
     if (!inputText.trim()) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       text: inputText.trim(),
       isUser: true,
@@ -42,22 +52,99 @@ export default function AskDoubtScreen() {
       }),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMessage]);
+    const doubtText = inputText.trim();
     setInputText("");
 
-    const aiResponse: Message = {
-      id: (Date.now() + 1).toString(),
-      text: "I understand your question. Let me help you with that. This is a placeholder response. In production, this would connect to an AI service.",
+    // Add loading message
+    const loadingMessage: Message = {
+      id: "loading",
+      text: "Thinking...",
       isUser: false,
       timeStamp: new Date().toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       }),
     };
+    setMessages((prev) => [...prev, loadingMessage]);
 
-    setTimeout(() => {
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+    try {
+      const response = await fetch(
+        "https://693e61e0001e8e28c8e6.fra.appwrite.run",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-identity-type": user ? "user" : "guest",
+            "x-identity-id": user ? user.$id : "guest",
+          },
+          body: JSON.stringify({
+            doubtText: doubtText,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to get response: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Invalid response from server");
+      }
+
+      const aiData = data.data.answer;
+
+      // Format AI response
+      let formattedResponse = "";
+
+      if (aiData.explanation && Array.isArray(aiData.explanation)) {
+        aiData.explanation.forEach((step: string, idx: number) => {
+          formattedResponse += `**Step ${idx + 1}:**\n${step}\n\n`;
+        });
+      }
+
+      if (aiData.intuition) {
+        formattedResponse += `**💡 Intuition:**\n${aiData.intuition}\n\n`;
+      }
+
+      if (aiData.revisionTip) {
+        formattedResponse += `**📝 Revision Tip:**\n${aiData.revisionTip}`;
+      }
+
+      // Remove loading message and add AI response
+      setMessages((prev) => {
+        const filtered = prev.filter((msg) => msg.id !== "loading");
+        const aiResponse: Message = {
+          id: Date.now().toString(),
+          text: formattedResponse,
+          isUser: false,
+          timeStamp: new Date().toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        return [...filtered, aiResponse];
+      });
+    } catch (err) {
+      console.error("Error sending doubt:", err);
+
+      // Remove loading message and show error
+      setMessages((prev) => {
+        const filtered = prev.filter((msg) => msg.id !== "loading");
+        const errorResponse: Message = {
+          id: Date.now().toString(),
+          text: "Sorry, I couldn't process your doubt. Please try again.",
+          isUser: false,
+          timeStamp: new Date().toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        return [...filtered, errorResponse];
+      });
+    }
   };
 
   return (
@@ -68,10 +155,38 @@ export default function AskDoubtScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
-          <Text className="text-2xl font-bold text-gray-900">Ask Doubt</Text>
-          <Text className="mt-1 text-base text-gray-600">
-            Get instant help with your queries
-          </Text>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text className="text-2xl font-bold text-gray-900">
+                Ask Doubt
+              </Text>
+              <Text className="mt-1 text-base text-gray-600">
+                Get instant help with your queries
+              </Text>
+            </View>
+
+            {/* Login/User Badge Button */}
+            <Pressable
+              onPress={() => {
+                if (!user) {
+                  setAuthVisible(true);
+                }
+              }}
+              className={`px-4 py-2 rounded-full ${
+                user
+                  ? "bg-blue-100"
+                  : "bg-gray-100 border-[1px] border-blue-500"
+              }`}
+            >
+              <Text
+                className={`text-sm font-semibold ${
+                  user ? "text-blue-700" : "text-blue-600"
+                }`}
+              >
+                {user ? "Pro" : "Login"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <ScrollView
@@ -95,6 +210,12 @@ export default function AskDoubtScreen() {
           onChangeText={setInputText}
           placeholder="Type your doubt here..."
           multiline
+        />
+
+        {/* Auth Modal for Paid Upgrade */}
+        <AuthModal
+          visible={authVisible}
+          onClose={() => setAuthVisible(false)}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
