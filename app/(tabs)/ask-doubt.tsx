@@ -3,6 +3,7 @@ import Input from "@/components/ui/Input";
 import AuthModal from "@/components/ui/AuthModal";
 import { useAuthStore } from "@/store/authStore";
 import { loadDoubtsFromStorage, saveDoubtToStorage } from "@/utils";
+import { getIdentity } from "@/utils/identity";
 import { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
@@ -104,20 +105,36 @@ export default function AskDoubtScreen() {
     setMessages((prev) => [...prev, loadingMessage]);
 
     try {
+      const identity = await getIdentity();
       const response = await fetch(
         "https://693e61e0001e8e28c8e6.fra.appwrite.run",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-identity-type": user ? "user" : "guest",
-            "x-identity-id": user ? user.$id : "guest",
+            "x-identity-type": identity.type,
+            "x-identity-id": identity.id,
           },
           body: JSON.stringify({
             doubtText: doubtText,
           }),
         }
       );
+
+      if (response.status === 402) {
+        setMessages((prev) => prev.filter((m) => m.id !== "loading"));
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            text: "You've reached your daily limit. Please upgrade to continue.",
+            isUser: false,
+            timeStamp: "Just Now",
+          },
+        ]);
+        setAuthVisible(true);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to get response: ${response.status}`);

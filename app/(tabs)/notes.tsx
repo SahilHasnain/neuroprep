@@ -3,6 +3,8 @@ import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
+import AuthModal from "@/components/ui/AuthModal";
+import { getIdentity } from "@/utils/identity";
 import {
   loadNotesFromStorage,
   saveNoteToStorage,
@@ -45,6 +47,7 @@ export default function NotesScreen() {
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(false);
+  const [authVisible, setAuthVisible] = useState(false);
 
   const [generateConfig, setGenerateConfig] = useState({
     subject: "",
@@ -80,12 +83,15 @@ export default function NotesScreen() {
     setLoading(true);
 
     try {
+      const identity = await getIdentity();
       const response = await fetch(
         "https://6942afbd002f2d29fdce.fra.appwrite.run",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-identity-type": identity.type,
+            "x-identity-id": identity.id,
           },
           body: JSON.stringify({
             subject: generateConfig.subject,
@@ -94,6 +100,16 @@ export default function NotesScreen() {
           }),
         }
       );
+
+      if (response.status === 402) {
+        Alert.alert(
+          "Limit Reached",
+          "You've reached your daily limit. Please upgrade."
+        );
+        setAuthVisible(true);
+        setLoading(false);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to generate notes: ${response.status}`);
@@ -170,6 +186,7 @@ export default function NotesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} />
       <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">

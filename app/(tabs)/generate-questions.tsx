@@ -2,6 +2,8 @@ import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import QuestionCard from "@/components/ui/QuestionCard";
+import AuthModal from "@/components/ui/AuthModal";
+import { getIdentity } from "@/utils/identity";
 import { Sparkles } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -43,6 +45,7 @@ export default function GenerateQuestionsScreen() {
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
   >({});
+  const [authVisible, setAuthVisible] = useState(false);
 
   // Load questions from AsyncStorage on mount
   useEffect(() => {
@@ -72,10 +75,13 @@ export default function GenerateQuestionsScreen() {
     setSelectedAnswers({});
 
     try {
+      const identity = await getIdentity();
       const res = await fetch("https://69423cba001540dea615.fra.appwrite.run", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-identity-type": identity.type,
+          "x-identity-id": identity.id,
         },
         body: JSON.stringify({
           subject,
@@ -85,11 +91,24 @@ export default function GenerateQuestionsScreen() {
         }),
       });
 
+      if (res.status === 402) {
+        setError("Daily limit reached. Please upgrade.");
+        setAuthVisible(true);
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(`Failed to generate questions: ${res.status}`);
       }
 
-      const data = await res.json();
+      const responseJson = await res.json();
+
+      if (!responseJson.success) {
+        throw new Error(responseJson.message || "Failed to generate questions");
+      }
+
+      const data = responseJson.data;
 
       // Validate response data
       if (!data || !Array.isArray(data) || data.length === 0) {
@@ -138,6 +157,7 @@ export default function GenerateQuestionsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} />
       <ScrollView className="flex-1">
         <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
           <View className="flex-row items-center">
