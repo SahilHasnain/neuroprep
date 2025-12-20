@@ -121,7 +121,7 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
           {/* Toggle buttons */}
           <View className="flex-row gap-3 mb-6">
             <Pressable
-              onPress={() => !isSignUp && handleToggleMode()}
+              onPress={() => isSignUp && handleToggleMode()}
               className={`flex-1 py-3 px-4 rounded-lg border-2 ${
                 !isSignUp
                   ? "bg-blue-600 border-blue-600"
@@ -137,7 +137,7 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => isSignUp && handleToggleMode()}
+              onPress={() => !isSignUp && handleToggleMode()}
               className={`flex-1 py-3 px-4 rounded-lg border-2 ${
                 isSignUp
                   ? "bg-blue-600 border-blue-600"
@@ -168,7 +168,7 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
                 Full Name
               </Text>
               <TextInput
-                placeholder="John Doe"
+                placeholder="Umair Farhat"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -183,7 +183,7 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
             Email
           </Text>
           <TextInput
-            placeholder="your@email.com"
+            placeholder="your@gmail.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"

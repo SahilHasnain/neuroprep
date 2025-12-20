@@ -1,12 +1,6 @@
 import { create } from "zustand";
-import { Client, Account, ID, Models } from "react-native-appwrite";
-import { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID } from "@/config/appwrite";
-
-const client = new Client()
-  .setEndpoint(APPWRITE_ENDPOINT)
-  .setProject(APPWRITE_PROJECT_ID);
-
-const account = new Account(client);
+import { ID, Models } from "react-native-appwrite";
+import { account } from "@/lib/appwrite";
 
 interface AuthState {
   user: Models.User<Models.Preferences> | null;

@@ -9,6 +9,7 @@ export * from "./identity";
 // Storage utilities
 export * from "./storage/questions";
 export * from "./storage/notes";
+export * from "./storage/doubts";
 
 // Helper functions
 export * from "./helpers";

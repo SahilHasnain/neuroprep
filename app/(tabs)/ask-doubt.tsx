@@ -2,6 +2,7 @@ import ChatBubble from "@/components/shared/ChatBubble";
 import Input from "@/components/ui/Input";
 import AuthModal from "@/components/ui/AuthModal";
 import { useAuthStore } from "@/store/authStore";
+import { loadDoubtsFromStorage, saveDoubtToStorage } from "@/utils";
 import { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
@@ -34,9 +35,43 @@ export default function AskDoubtScreen() {
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
 
-  // Check session on mount
+  // Check session on mount and load past doubts
   useEffect(() => {
     checkSession();
+
+    const loadPast = async () => {
+      const past = await loadDoubtsFromStorage();
+      if (past.length > 0) {
+        // we want oldest first so reverse (API returns most recent first)
+        const toRender = [...past].reverse();
+        const mapped: Message[] = [];
+        toRender.forEach((d) => {
+          mapped.push({
+            id: d.id + "_q",
+            text: d.text,
+            isUser: true,
+            timeStamp: new Date(d.createdAt).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          });
+          if (d.answer) {
+            mapped.push({
+              id: d.id + "_a",
+              text: d.answer,
+              isUser: false,
+              timeStamp: new Date(d.createdAt).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            });
+          }
+        });
+        setMessages((prev) => [...prev, ...mapped]);
+      }
+    };
+
+    loadPast();
   }, []);
 
   const handleSend = async () => {
@@ -125,6 +160,12 @@ export default function AskDoubtScreen() {
             minute: "2-digit",
           }),
         };
+
+        // Save the pair (user question + AI answer) to storage
+        saveDoubtToStorage(doubtText, formattedResponse).catch((err) => {
+          console.warn("Failed to save doubt:", err);
+        });
+
         return [...filtered, aiResponse];
       });
     } catch (err) {
