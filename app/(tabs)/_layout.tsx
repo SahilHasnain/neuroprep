@@ -4,22 +4,25 @@ import {
   MessageCircleQuestion,
   FileText,
   PencilRuler,
+  Crown,
 } from "lucide-react-native";
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{
+    <Tabs
+      screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#000",
         tabBarInactiveTintColor: "#9ca3af",
         tabBarStyle: {
-            height: 100,
-            paddingBottom: 6,
-            paddingTop: 6,
-            backgroundColor: "#ffffff",
-            borderTopColor: "#e5e7eb"
-        }
-    }}>
+          height: 100,
+          paddingBottom: 6,
+          paddingTop: 6,
+          backgroundColor: "#ffffff",
+          borderTopColor: "#e5e7eb",
+        },
+      }}
+    >
       {/* Home/ Dashboard */}
       <Tabs.Screen
         name="index"
@@ -59,6 +62,14 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <FileText size={size} color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="subscription"
+        options={{
+          title: "Pro",
+          tabBarIcon: ({ color, size }) => <Crown size={size} color={color} />,
         }}
       />
     </Tabs>

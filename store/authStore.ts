@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { ID, Models } from "react-native-appwrite";
 import { account } from "@/lib/appwrite";
+import { usePlanStore } from "./planStore";
 
 interface AuthState {
   user: Models.User<Models.Preferences> | null;
@@ -20,6 +21,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const currentUser = await account.get();
       set({ user: currentUser });
+      // Fetch plan status when session is restored
+      await usePlanStore.getState().fetchPlanStatus();
     } catch {
       set({ user: null });
     } finally {
@@ -40,6 +43,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
     const currentUser = await account.get();
     set({ user: currentUser });
+    // Fetch plan status for new user
+    await usePlanStore.getState().fetchPlanStatus();
   },
 
   login: async (email, password) => {
@@ -49,6 +54,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
     const currentUser = await account.get();
     set({ user: currentUser });
+    // Fetch plan status on login
+    await usePlanStore.getState().fetchPlanStatus();
   },
 
   logout: async () => {
@@ -56,5 +63,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       sessionId: "current",
     });
     set({ user: null });
+    // Reset plan store on logout
+    usePlanStore.setState({
+      planType: "free",
+      limits: { doubts: 5, questions: 10, notes: 20 },
+      usage: {
+        doubts: 0,
+        questions: 0,
+        notes: 0,
+        lastResetDate: new Date().toISOString().split("T")[0],
+      },
+    });
   },
 }));
