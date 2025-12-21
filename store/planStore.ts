@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { PlanState, FeatureType, SubscriptionData } from "@/lib/types/plan";
-import { API_ENDPOINTS } from "@/constants";
-import { getIdentity } from "@/utils/identity";
+import { subscriptionService } from "@/services/api/subscription.service";
 import { openRazorpayCheckout } from "@/utils/razorpay";
 
 // Default limits for free plan
@@ -41,21 +40,8 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   fetchPlanStatus: async () => {
     set({ loading: true, error: null });
     try {
-      const identity = await getIdentity();
-      const response = await fetch(API_ENDPOINTS.GET_PLAN_STATUS, {
-        method: "GET",
-        headers: {
-          "x-identity-type": identity.type,
-          "x-identity-id": identity.id,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch plan status: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      const data = result.data;
+      const result = await subscriptionService.getPlanStatus();
+      const data = result.data as any;
 
       set({
         planType: data.planType || "free",
@@ -107,24 +93,9 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   createSubscription: async (userData) => {
     set({ loading: true, error: null });
     try {
-      const identity = await getIdentity();
-      const response = await fetch(API_ENDPOINTS.CREATE_SUBSCRIPTION, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-identity-type": identity.type,
-          "x-identity-id": identity.id,
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to create subscription: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await subscriptionService.createSubscription(userData);
       set({ loading: false });
-      return result.data as SubscriptionData;
+      return (result.data || result) as SubscriptionData;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       set({ error: errorMessage, loading: false });
@@ -148,22 +119,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   verifyPayment: async (paymentData) => {
     set({ loading: true, error: null });
     try {
-      const identity = await getIdentity();
-      const response = await fetch(API_ENDPOINTS.VERIFY_PAYMENT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-identity-type": identity.type,
-          "x-identity-id": identity.id,
-        },
-        body: JSON.stringify(paymentData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Payment verification failed: ${response.statusText}`);
-      }
-
-      // Refresh plan status
+      await subscriptionService.verifyPayment(paymentData);
       await get().fetchPlanStatus();
       set({ loading: false });
     } catch (err) {
@@ -176,22 +132,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   cancelSubscription: async (reason) => {
     set({ loading: true, error: null });
     try {
-      const identity = await getIdentity();
-      const response = await fetch(API_ENDPOINTS.CANCEL_SUBSCRIPTION, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-identity-type": identity.type,
-          "x-identity-id": identity.id,
-        },
-        body: JSON.stringify({ reason }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to cancel subscription: ${response.statusText}`);
-      }
-
-      // Refresh plan status
+      await subscriptionService.cancelSubscription(reason);
       await get().fetchPlanStatus();
       set({ loading: false });
     } catch (err) {

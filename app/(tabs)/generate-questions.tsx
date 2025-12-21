@@ -3,8 +3,8 @@ import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import QuestionCard from "@/components/ui/QuestionCard";
 import AuthModal from "@/components/ui/AuthModal";
-import { getIdentity } from "@/utils/identity";
-import { API_ENDPOINTS, SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
+import { questionsService } from "@/services/api/questions.service";
+import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
 import { Sparkles } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -56,41 +56,18 @@ export default function GenerateQuestionsScreen() {
     setSelectedAnswers({});
 
     try {
-      const identity = await getIdentity();
-      const res = await fetch(API_ENDPOINTS.GENERATE_QUESTIONS, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-identity-type": identity.type,
-          "x-identity-id": identity.id,
-        },
-        body: JSON.stringify({
-          subject,
-          topic,
-          difficulty,
-          questionCount,
-        }),
+      const res = await questionsService.generateQuestions({
+        subject,
+        topic,
+        difficulty,
+        questionCount,
       });
 
-      // TEMPORARILY DISABLED FOR TESTING
-      // if (res.status === 402) {
-      //   setError("Daily limit reached. Please upgrade.");
-      //   setAuthVisible(true);
-      //   setLoading(false);
-      //   return;
-      // }
-
-      if (!res.ok) {
-        throw new Error(`Failed to generate questions: ${res.status}`);
+      if (!res.success) {
+        throw new Error(res.message || "Failed to generate questions");
       }
 
-      const responseJson = await res.json();
-
-      if (!responseJson.success) {
-        throw new Error(responseJson.message || "Failed to generate questions");
-      }
-
-      const data = responseJson.data;
+      const data = res.data;
 
       // Validate response data
       if (!data || !Array.isArray(data) || data.length === 0) {

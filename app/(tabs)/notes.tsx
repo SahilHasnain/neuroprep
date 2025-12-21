@@ -4,8 +4,8 @@ import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
 import AuthModal from "@/components/ui/AuthModal";
-import { getIdentity } from "@/utils/identity";
-import { API_ENDPOINTS, SUBJECTS, NOTE_LENGTHS } from "@/constants";
+import { notesService } from "@/services/api/notes.service";
+import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
 import {
   loadNotesFromStorage,
   saveNoteToStorage,
@@ -71,48 +71,21 @@ export default function NotesScreen() {
     setLoading(true);
 
     try {
-      const identity = await getIdentity();
-      const response = await fetch(API_ENDPOINTS.NOTES, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-identity-type": identity.type,
-            "x-identity-id": identity.id,
-          },
-          body: JSON.stringify({
-            subject: generateConfig.subject,
-            topic: generateConfig.topic,
-            noteLength: generateConfig.noteLength,
-          }),
-        }
-      );
+      const response = await notesService.generateNotes({
+        subject: generateConfig.subject,
+        topic: generateConfig.topic,
+        noteLength: generateConfig.noteLength,
+      });
 
-      // TEMPORARILY DISABLED FOR TESTING
-      // if (response.status === 402) {
-      //   Alert.alert(
-      //     "Limit Reached",
-      //     "You've reached your daily limit. Please upgrade."
-      //   );
-      //   setAuthVisible(true);
-      //   setLoading(false);
-      //   return;
-      // }
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate notes: ${response.status}`);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Invalid response from server");
       }
 
-      const data = await response.json();
-
-      if (!data.success || !data.data) {
-        throw new Error(data.message || "Invalid response from server");
-      }
-
-      const apiNotes = data.data;
+      const apiNotes = response.data as any;
       const content = formatNotesContent(apiNotes);
 
       const note: Note = {
-        id: apiNotes.id || Date.now().toString(),
+        id: apiNotes?.id || Date.now().toString(),
         title: generateConfig.topic,
         subject: generateConfig.subject,
         content: content,
