@@ -6,10 +6,10 @@
 // Identity utilities
 export * from "./identity";
 
-// Storage utilities
-export * from "./storage/questions";
-export * from "./storage/notes";
-export * from "./storage/doubts";
+// Storage utilities (re-export from services)
+export * from "@/services/storage/questions.storage";
+export * from "@/services/storage/notes.storage";
+export * from "@/services/storage/doubts.storage";
 
 // Helper functions
 export * from "./helpers";

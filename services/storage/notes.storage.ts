@@ -5,7 +5,7 @@ import {
   truncateText,
   getNoteLengthLabel,
   formatDate,
-} from "../helpers";
+} from "@/utils/helpers";
 import { tablesDB } from "@/lib/appwrite";
 import { useAuthStore } from "@/store/authStore";
 import { APPWRITE_CONFIG } from "@/config/appwrite";
