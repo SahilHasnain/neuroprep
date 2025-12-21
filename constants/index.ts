@@ -3,10 +3,10 @@ export const API_ENDPOINTS = {
   ASK_DOUBT: "https://693e61e0001e8e28c8e6.fra.appwrite.run",
   GENERATE_QUESTIONS: "https://69423cba001540dea615.fra.appwrite.run",
   NOTES: "https://6942afbd002f2d29fdce.fra.appwrite.run",
-  CREATE_SUBSCRIPTION: "https://cloud.appwrite.io/v1/functions/create-subscription",
-  VERIFY_PAYMENT: "https://cloud.appwrite.io/v1/functions/verify-payment",
-  GET_PLAN_STATUS: "https://cloud.appwrite.io/v1/functions/get-plan-status",
-  CANCEL_SUBSCRIPTION: "https://cloud.appwrite.io/v1/functions/cancel-subscription",
+  CREATE_SUBSCRIPTION: "https://6947ac26001044e8e8ed.fra.appwrite.run",
+  VERIFY_PAYMENT: "https://6947ac55003801e0a004.fra.appwrite.run",
+  GET_PLAN_STATUS: "https://6947ac7f002a1d447604.fra.appwrite.run",
+  CANCEL_SUBSCRIPTION: "https://6947acaf0021f3fbd316.fra.appwrite.run",
 };
 
 // Subjects

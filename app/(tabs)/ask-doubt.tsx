@@ -120,20 +120,21 @@ export default function AskDoubtScreen() {
         }
       );
 
-      if (response.status === 402) {
-        setMessages((prev) => prev.filter((m) => m.id !== "loading"));
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            text: "You've reached your daily limit. Please upgrade to continue.",
-            isUser: false,
-            timeStamp: "Just Now",
-          },
-        ]);
-        setAuthVisible(true);
-        return;
-      }
+      // TEMPORARILY DISABLED FOR TESTING
+      // if (response.status === 402) {
+      //   setMessages((prev) => prev.filter((m) => m.id !== "loading"));
+      //   setMessages((prev) => [
+      //     ...prev,
+      //     {
+      //       id: Date.now().toString(),
+      //       text: "You've reached your daily limit. Please upgrade to continue.",
+      //       isUser: false,
+      //       timeStamp: "Just Now",
+      //     },
+      //   ]);
+      //   setAuthVisible(true);
+      //   return;
+      // }
 
       if (!response.ok) {
         throw new Error(`Failed to get response: ${response.status}`);

@@ -72,12 +72,13 @@ export default function GenerateQuestionsScreen() {
         }),
       });
 
-      if (res.status === 402) {
-        setError("Daily limit reached. Please upgrade.");
-        setAuthVisible(true);
-        setLoading(false);
-        return;
-      }
+      // TEMPORARILY DISABLED FOR TESTING
+      // if (res.status === 402) {
+      //   setError("Daily limit reached. Please upgrade.");
+      //   setAuthVisible(true);
+      //   setLoading(false);
+      //   return;
+      // }
 
       if (!res.ok) {
         throw new Error(`Failed to generate questions: ${res.status}`);

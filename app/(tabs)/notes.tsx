@@ -87,15 +87,16 @@ export default function NotesScreen() {
         }
       );
 
-      if (response.status === 402) {
-        Alert.alert(
-          "Limit Reached",
-          "You've reached your daily limit. Please upgrade."
-        );
-        setAuthVisible(true);
-        setLoading(false);
-        return;
-      }
+      // TEMPORARILY DISABLED FOR TESTING
+      // if (response.status === 402) {
+      //   Alert.alert(
+      //     "Limit Reached",
+      //     "You've reached your daily limit. Please upgrade."
+      //   );
+      //   setAuthVisible(true);
+      //   setLoading(false);
+      //   return;
+      // }
 
       if (!response.ok) {
         throw new Error(`Failed to generate notes: ${response.status}`);
