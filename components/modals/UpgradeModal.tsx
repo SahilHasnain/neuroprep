@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -6,6 +6,7 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { clsx } from "clsx";
 import Button from "../ui/Button";
@@ -55,18 +56,33 @@ export default function UpgradeModal({
   feature,
   onUpgrade,
 }: UpgradeModalProps) {
-  const { planType } = usePlanStore();
+  const { planType, createSubscription, initiatePayment, loading } = usePlanStore();
   const { user } = useAuthStore();
-  const [showAuthPrompt, setShowAuthPrompt] = React.useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (!user) {
       setShowAuthPrompt(true);
       return;
     }
 
-    onUpgrade?.();
-    // In Phase 4, this will trigger payment flow
+    try {
+      // Create subscription
+      const subscription = await createSubscription({
+        name: user.name,
+        email: user.email,
+      });
+
+      // Initiate payment
+      await initiatePayment(subscription.subscriptionId);
+
+      Alert.alert("Success", "Welcome to Pro! Enjoy unlimited access.");
+      onUpgrade?.();
+      onClose();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Payment failed";
+      Alert.alert("Error", message);
+    }
   };
 
   const handleClose = () => {
@@ -113,7 +129,7 @@ export default function UpgradeModal({
                   Daily Limit Reached
                 </Text>
                 <Text className="text-center text-gray-600">
-                  You've used all your {getFeatureName(feature).toLowerCase()}{" "}
+                  You&apos;ve used all your {getFeatureName(feature).toLowerCase()}{" "}
                   for today. Upgrade to Pro for unlimited access!
                 </Text>
               </>
@@ -145,7 +161,7 @@ export default function UpgradeModal({
           {/* Features list */}
           <View className="px-6 mb-6">
             <Text className="mb-4 text-lg font-semibold text-gray-900">
-              What you'll get:
+              What you&apos;ll get:
             </Text>
 
             {PRO_FEATURES.map((item, index) => (
@@ -185,6 +201,7 @@ export default function UpgradeModal({
               onPress={handleUpgrade}
               variant="primary"
               fullWidth
+              loading={loading}
               className="mb-3 bg-gradient-to-r from-amber-500 to-orange-500"
             />
 

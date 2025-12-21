@@ -70,7 +70,7 @@ export default function UsageProgressBar({
       >
         <View
           className={clsx(
-            "h-full rounded-full transition-all duration-300",
+            "h-full rounded-full",
             isAtLimit && "bg-red-500",
             isNearLimit && !isAtLimit && "bg-orange-500",
             !isNearLimit && "bg-blue-500"

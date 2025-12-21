@@ -4,6 +4,7 @@ import InputTopic from "@/components/ui/InputTopic";
 import QuestionCard from "@/components/ui/QuestionCard";
 import AuthModal from "@/components/ui/AuthModal";
 import { getIdentity } from "@/utils/identity";
+import { API_ENDPOINTS, SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
 import { Sparkles } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -13,26 +14,6 @@ import {
   saveQuestionsToStorage,
   type Question,
 } from "@/utils";
-
-const subjects = [
-  { label: "Physics", value: "physics" },
-  { label: "Chemistry", value: "chemistry" },
-  { label: "Biology", value: "biology" },
-  { label: "Mathematics", value: "mathematics" },
-];
-
-const difficultyLevels = [
-  { label: "Easy", value: "easy" },
-  { label: "Medium", value: "medium" },
-  { label: "Hard", value: "hard" },
-];
-
-const questionCounts = [
-  { label: "5 Questions", value: "5" },
-  { label: "10 Questions", value: "10" },
-  { label: "15 Questions", value: "15" },
-  { label: "20 Questions", value: "20" },
-];
 
 export default function GenerateQuestionsScreen() {
   const [subject, setSubject] = useState("");
@@ -76,7 +57,7 @@ export default function GenerateQuestionsScreen() {
 
     try {
       const identity = await getIdentity();
-      const res = await fetch("https://69423cba001540dea615.fra.appwrite.run", {
+      const res = await fetch(API_ENDPOINTS.GENERATE_QUESTIONS, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -183,7 +164,7 @@ export default function GenerateQuestionsScreen() {
               <Dropdown
                 label="Select Subject"
                 value={subject}
-                options={subjects}
+                options={SUBJECTS}
                 onSelect={setSubject}
                 placeholder="Choose a subject"
               />
@@ -198,7 +179,7 @@ export default function GenerateQuestionsScreen() {
               <Dropdown
                 label="Difficulty Level"
                 value={difficulty}
-                options={difficultyLevels}
+                options={DIFFICULTY_LEVELS}
                 onSelect={setDifficulty}
                 placeholder="Choose difficulty"
               />
@@ -206,7 +187,7 @@ export default function GenerateQuestionsScreen() {
               <Dropdown
                 label="Number of Questions"
                 value={questionCount}
-                options={questionCounts}
+                options={QUESTION_COUNTS}
                 onSelect={setQuestionCount}
                 placeholder="Choose count"
               />

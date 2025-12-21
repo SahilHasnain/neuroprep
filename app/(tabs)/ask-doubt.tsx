@@ -4,6 +4,7 @@ import AuthModal from "@/components/ui/AuthModal";
 import { useAuthStore } from "@/store/authStore";
 import { loadDoubtsFromStorage, saveDoubtToStorage } from "@/utils";
 import { getIdentity } from "@/utils/identity";
+import { API_ENDPOINTS } from "@/constants";
 import { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
@@ -106,9 +107,7 @@ export default function AskDoubtScreen() {
 
     try {
       const identity = await getIdentity();
-      const response = await fetch(
-        "https://693e61e0001e8e28c8e6.fra.appwrite.run",
-        {
+      const response = await fetch(API_ENDPOINTS.ASK_DOUBT, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

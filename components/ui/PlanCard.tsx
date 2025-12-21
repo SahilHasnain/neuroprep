@@ -8,6 +8,7 @@ interface PlanCardProps {
   planType: "free" | "pro";
   isCurrentPlan: boolean;
   onSelectPlan?: () => void;
+  onCancel?: () => void;
   features: Array<{
     text: string;
     freeIncluded: boolean;
@@ -20,6 +21,7 @@ export default function PlanCard({
   planType,
   isCurrentPlan,
   onSelectPlan,
+  onCancel,
   features,
 }: PlanCardProps) {
   const isPro = planType === "pro";
@@ -104,14 +106,9 @@ export default function PlanCard({
         />
       )}
 
-      {isCurrentPlan && isPro && (
-        <TouchableOpacity
-          onPress={() => {
-            /* Cancel subscription */
-          }}
-          className="py-3"
-        >
-          <Text className="text-sm text-center text-gray-600">
+      {isCurrentPlan && isPro && onCancel && (
+        <TouchableOpacity onPress={onCancel} className="py-3">
+          <Text className="text-sm text-center text-red-600">
             Cancel Subscription
           </Text>
         </TouchableOpacity>

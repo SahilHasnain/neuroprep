@@ -1,5 +1,8 @@
 import { create } from "zustand";
-import { PlanState, PlanType } from "@/lib/types/plan";
+import { PlanState, FeatureType, SubscriptionData } from "@/lib/types/plan";
+import { API_ENDPOINTS } from "@/constants";
+import { getIdentity } from "@/utils/identity";
+import { openRazorpayCheckout } from "@/utils/razorpay";
 
 // Default limits for free plan
 const FREE_PLAN_LIMITS = {
@@ -38,42 +41,29 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   fetchPlanStatus: async () => {
     set({ loading: true, error: null });
     try {
-      // Call backend to fetch user's plan status
-      // This should be updated with your actual backend endpoint
-      const response = await fetch(
-        "https://cloud.appwrite.io/v1/functions/get-plan-status",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-identity-type": "user", // Will be updated by the caller
-            "x-identity-id": "", // Will be updated by the caller
-          },
-        }
-      );
+      const identity = await getIdentity();
+      const response = await fetch(API_ENDPOINTS.GET_PLAN_STATUS, {
+        method: "GET",
+        headers: {
+          "x-identity-type": identity.type,
+          "x-identity-id": identity.id,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch plan status: ${response.statusText}`);
       }
 
-      const data = await response.json();
-
-      // Determine if daily reset is needed
-      const shouldReset = shouldResetUsage(
-        data.usage?.lastResetDate || getTodayDate()
-      );
+      const result = await response.json();
+      const data = result.data;
 
       set({
         planType: data.planType || "free",
         limits: data.planType === "pro" ? PRO_PLAN_LIMITS : FREE_PLAN_LIMITS,
-        usage: shouldReset
-          ? {
-              doubts: 0,
-              questions: 0,
-              notes: 0,
-              lastResetDate: getTodayDate(),
-            }
-          : data.usage,
+        usage: data.usage,
+        status: data.status,
+        trialEndsAt: data.trialEndsAt,
+        currentPeriodEnd: data.currentPeriodEnd,
         loading: false,
       });
     } catch (err) {
@@ -82,9 +72,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
     }
   },
 
-  incrementUsage: (
-    feature: keyof Omit<PlanState["usage"], "lastResetDate">
-  ) => {
+  incrementUsage: (feature: FeatureType) => {
     const state = get();
 
     // Check if daily reset is needed
@@ -100,7 +88,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
       : { ...state.usage };
 
     // Increment the usage
-    currentUsage[feature] = (currentUsage[feature] as number) + 1;
+    currentUsage[feature] = currentUsage[feature] + 1;
 
     set({ usage: currentUsage });
   },
@@ -116,71 +104,100 @@ export const usePlanStore = create<PlanState>((set, get) => ({
     });
   },
 
-  upgradePlan: async () => {
+  createSubscription: async (userData) => {
     set({ loading: true, error: null });
     try {
-      // Call backend to upgrade plan
-      const response = await fetch(
-        "https://cloud.appwrite.io/v1/functions/upgrade-plan",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-identity-type": "user",
-            "x-identity-id": "",
-          },
-        }
-      );
+      const identity = await getIdentity();
+      const response = await fetch(API_ENDPOINTS.CREATE_SUBSCRIPTION, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-identity-type": identity.type,
+          "x-identity-id": identity.id,
+        },
+        body: JSON.stringify(userData),
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to upgrade plan: ${response.statusText}`);
+        throw new Error(`Failed to create subscription: ${response.statusText}`);
       }
 
-      set({
-        planType: "pro",
-        limits: PRO_PLAN_LIMITS,
-        loading: false,
-      });
+      const result = await response.json();
+      set({ loading: false });
+      return result.data as SubscriptionData;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       set({ error: errorMessage, loading: false });
+      throw err;
     }
   },
 
-  downgradeToFree: async () => {
+  initiatePayment: async (subscriptionId) => {
     set({ loading: true, error: null });
     try {
-      // Call backend to downgrade plan
-      const response = await fetch(
-        "https://cloud.appwrite.io/v1/functions/downgrade-plan",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-identity-type": "user",
-            "x-identity-id": "",
-          },
-        }
-      );
+      const paymentData = await openRazorpayCheckout({ subscriptionId });
+      await get().verifyPayment(paymentData);
+      set({ loading: false });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Payment cancelled";
+      set({ error: errorMessage, loading: false });
+      throw err;
+    }
+  },
+
+  verifyPayment: async (paymentData) => {
+    set({ loading: true, error: null });
+    try {
+      const identity = await getIdentity();
+      const response = await fetch(API_ENDPOINTS.VERIFY_PAYMENT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-identity-type": identity.type,
+          "x-identity-id": identity.id,
+        },
+        body: JSON.stringify(paymentData),
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to downgrade plan: ${response.statusText}`);
+        throw new Error(`Payment verification failed: ${response.statusText}`);
       }
 
-      set({
-        planType: "free",
-        limits: FREE_PLAN_LIMITS,
-        usage: {
-          doubts: 0,
-          questions: 0,
-          notes: 0,
-          lastResetDate: getTodayDate(),
-        },
-        loading: false,
-      });
+      // Refresh plan status
+      await get().fetchPlanStatus();
+      set({ loading: false });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       set({ error: errorMessage, loading: false });
+      throw err;
+    }
+  },
+
+  cancelSubscription: async (reason) => {
+    set({ loading: true, error: null });
+    try {
+      const identity = await getIdentity();
+      const response = await fetch(API_ENDPOINTS.CANCEL_SUBSCRIPTION, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-identity-type": identity.type,
+          "x-identity-id": identity.id,
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to cancel subscription: ${response.statusText}`);
+      }
+
+      // Refresh plan status
+      await get().fetchPlanStatus();
+      set({ loading: false });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      set({ error: errorMessage, loading: false });
+      throw err;
     }
   },
 }));

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScrollView, Text, View, RefreshControl } from "react-native";
+import { ScrollView, Text, View, RefreshControl, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePlanStore } from "@/store/planStore";
 import { useAuthStore } from "@/store/authStore";
@@ -7,65 +7,10 @@ import PlanCard from "@/components/ui/PlanCard";
 import UsageProgressBar from "@/components/ui/UsageProgressBar";
 import UpgradeModal from "@/components/modals/UpgradeModal";
 import AuthModal from "@/components/ui/AuthModal";
-
-const PLAN_FEATURES = [
-  {
-    text: "5 Doubts per day",
-    freeIncluded: true,
-    proIncluded: false,
-  },
-  {
-    text: "10 Questions per day",
-    freeIncluded: true,
-    proIncluded: false,
-  },
-  {
-    text: "20 Notes per day",
-    freeIncluded: true,
-    proIncluded: false,
-  },
-  {
-    text: "Unlimited Doubts",
-    freeIncluded: false,
-    proIncluded: true,
-    highlighted: true,
-  },
-  {
-    text: "Unlimited Questions",
-    freeIncluded: false,
-    proIncluded: true,
-    highlighted: true,
-  },
-  {
-    text: "Unlimited Notes",
-    freeIncluded: false,
-    proIncluded: true,
-    highlighted: true,
-  },
-  {
-    text: "Priority Support",
-    freeIncluded: false,
-    proIncluded: true,
-  },
-  {
-    text: "Advanced Analytics",
-    freeIncluded: false,
-    proIncluded: true,
-  },
-  {
-    text: "Ad-Free Experience",
-    freeIncluded: false,
-    proIncluded: true,
-  },
-  {
-    text: "Offline Access",
-    freeIncluded: false,
-    proIncluded: true,
-  },
-];
+import { PLAN_FEATURES } from "@/constants";
 
 export default function SubscriptionScreen() {
-  const { planType, usage, limits, loading, fetchPlanStatus } = usePlanStore();
+  const { planType, usage, status, currentPeriodEnd, loading, fetchPlanStatus, cancelSubscription } = usePlanStore();
   const { user } = useAuthStore();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -85,6 +30,31 @@ export default function SubscriptionScreen() {
       return;
     }
     setShowUpgradeModal(true);
+  };
+
+  const handleCancelSubscription = () => {
+    Alert.alert(
+      "Cancel Subscription",
+      "You'll have access until the end of your billing period. Are you sure?",
+      [
+        { text: "Keep Subscription", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await cancelSubscription();
+              Alert.alert(
+                "Subscription Cancelled",
+                `You'll have Pro access until ${currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : "the end of your billing period"}`
+              );
+            } catch (err) {
+              Alert.alert("Error", "Failed to cancel subscription");
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -111,7 +81,7 @@ export default function SubscriptionScreen() {
         {!isPro && (
           <View className="px-6 py-6 bg-white border-b border-gray-200">
             <Text className="mb-4 text-lg font-semibold text-gray-900">
-              Today's Usage
+              Today&apos;s Usage
             </Text>
 
             <View className="mb-4">
@@ -161,6 +131,7 @@ export default function SubscriptionScreen() {
             isCurrentPlan={isPro}
             features={PLAN_FEATURES}
             onSelectPlan={handleUpgradePress}
+            onCancel={isPro ? handleCancelSubscription : undefined}
           />
 
           {/* Free Plan Card */}
@@ -182,7 +153,7 @@ export default function SubscriptionScreen() {
               Can I cancel anytime?
             </Text>
             <Text className="text-sm text-gray-600">
-              Yes! You can cancel your subscription at any time. You'll continue
+              Yes! You can cancel your subscription at any time. You&apos;ll continue
               to have Pro access until the end of your billing period.
             </Text>
           </View>
@@ -192,7 +163,7 @@ export default function SubscriptionScreen() {
               What happens after the free trial?
             </Text>
             <Text className="text-sm text-gray-600">
-              After 7 days, you'll be charged ₹199/month automatically. Cancel
+              After 7 days, you&apos;ll be charged ₹199/month automatically. Cancel
               before the trial ends to avoid charges.
             </Text>
           </View>
@@ -213,7 +184,7 @@ export default function SubscriptionScreen() {
             </Text>
             <Text className="text-sm text-gray-600">
               You can use the app as a guest with free limits. To upgrade to
-              Pro, you'll need to create an account.
+              Pro, you&apos;ll need to create an account.
             </Text>
           </View>
         </View>
@@ -223,10 +194,6 @@ export default function SubscriptionScreen() {
       <UpgradeModal
         visible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        onUpgrade={() => {
-          setShowUpgradeModal(false);
-          // Payment flow will be added in Phase 4
-        }}
       />
 
       <AuthModal

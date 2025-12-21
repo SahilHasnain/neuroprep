@@ -5,6 +5,7 @@ import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
 import AuthModal from "@/components/ui/AuthModal";
 import { getIdentity } from "@/utils/identity";
+import { API_ENDPOINTS, SUBJECTS, NOTE_LENGTHS } from "@/constants";
 import {
   loadNotesFromStorage,
   saveNoteToStorage,
@@ -25,19 +26,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MathMarkdown from "@/components/shared/MathMarkdown";
-
-const subjects = [
-  { label: "Physics", value: "physics" },
-  { label: "Chemistry", value: "chemistry" },
-  { label: "Biology", value: "biology" },
-  { label: "Mathematics", value: "mathematics" },
-];
-
-const noteLengths = [
-  { label: "Brief (Key Points)", value: "brief" },
-  { label: "Detailed (Comprehensive)", value: "detailed" },
-  { label: "Exam Focused", value: "exam" },
-];
 
 export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -84,9 +72,7 @@ export default function NotesScreen() {
 
     try {
       const identity = await getIdentity();
-      const response = await fetch(
-        "https://6942afbd002f2d29fdce.fra.appwrite.run",
-        {
+      const response = await fetch(API_ENDPOINTS.NOTES, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -219,7 +205,7 @@ export default function NotesScreen() {
             <Dropdown
               label="Filter by Subject"
               value={filterSubject}
-              options={[{ label: "All Subjects", value: "" }, ...subjects]}
+              options={[{ label: "All Subjects", value: "" }, ...SUBJECTS]}
               onSelect={setFilterSubject}
               placeholder="All Subjects"
             />
@@ -291,7 +277,7 @@ export default function NotesScreen() {
             <Dropdown
               label="Select Subject"
               value={generateConfig.subject}
-              options={subjects}
+              options={SUBJECTS}
               onSelect={(value) =>
                 setGenerateConfig({ ...generateConfig, subject: value })
               }
@@ -310,7 +296,7 @@ export default function NotesScreen() {
             <Dropdown
               label="Note Type"
               value={generateConfig.noteLength}
-              options={noteLengths}
+              options={NOTE_LENGTHS}
               onSelect={(value) =>
                 setGenerateConfig({ ...generateConfig, noteLength: value })
               }
@@ -407,7 +393,7 @@ export default function NotesScreen() {
                                 : "text-orange-700"
                         }`}
                       >
-                        {subjects.find((s) => s.value === selectedNote.subject)
+                        {SUBJECTS.find((s) => s.value === selectedNote.subject)
                           ?.label || selectedNote.subject}
                       </Text>
                     </View>
