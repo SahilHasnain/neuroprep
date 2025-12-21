@@ -93,9 +93,17 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   createSubscription: async (userData) => {
     set({ loading: true, error: null });
     try {
-      const result = await subscriptionService.createSubscription(userData);
+      const result = await subscriptionService.createSubscription({
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.contact || "",
+      });
       set({ loading: false });
-      return (result.data || result) as SubscriptionData;
+      return {
+        subscriptionId: result.data.subscriptionId,
+        razorpaySubscriptionId: result.data.planId,
+        status: result.data.status as any,
+      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       set({ error: errorMessage, loading: false });

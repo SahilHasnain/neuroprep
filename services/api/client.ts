@@ -1,10 +1,5 @@
 import { getIdentity } from "@/utils/identity";
-
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
+import type { ApiResponse } from "@/lib/types";
 
 class ApiClient {
   private async request<T>(
@@ -28,6 +23,7 @@ class ApiClient {
         if (response.status === 402) {
           return {
             success: false,
+            data: {} as T,
             message: "You've reached your daily limit. Please upgrade to continue.",
           };
         }
@@ -40,6 +36,7 @@ class ApiClient {
       console.error("API Error:", error);
       return {
         success: false,
+        data: {} as T,
         message: error instanceof Error ? error.message : "Request failed",
       };
     }

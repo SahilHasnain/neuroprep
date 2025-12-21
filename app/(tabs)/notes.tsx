@@ -4,19 +4,11 @@ import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
 import AuthModal from "@/components/ui/AuthModal";
-import { notesService } from "@/services/api/notes.service";
+import { useNotes } from "@/hooks/useNotes";
 import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
-import {
-  loadNotesFromStorage,
-  saveNoteToStorage,
-  deleteNoteFromStorage,
-  formatNotesContent,
-  type Note,
-} from "@/utils";
 import { BookOpen, Sparkles, X } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -28,121 +20,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MathMarkdown from "@/components/shared/MathMarkdown";
 
 export default function NotesScreen() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterSubject, setFilterSubject] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    notes,
+    searchQuery,
+    setSearchQuery,
+    filterSubject,
+    setFilterSubject,
+    isModalVisible,
+    setIsModalVisible,
+    isViewModalVisible,
+    setIsViewModalVisible,
+    selectedNote,
+    loading,
+    generateConfig,
+    setGenerateConfig,
+    filteredNotes,
+    generateNotes,
+    deleteNote,
+    viewNote,
+    canGenerate,
+  } = useNotes();
   const [authVisible, setAuthVisible] = useState(false);
-
-  const [generateConfig, setGenerateConfig] = useState({
-    subject: "",
-    topic: "",
-    noteLength: "detailed",
-  });
-
-  // Load notes from AsyncStorage on mount
-  useEffect(() => {
-    const loadNotes = async () => {
-      const storedNotes = await loadNotesFromStorage();
-      setNotes(storedNotes);
-    };
-    loadNotes();
-  }, []);
-
-  const filteredNotes = notes.filter((note) => {
-    const matchesSearch =
-      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSubject = filterSubject
-      ? note.subject === filterSubject
-      : true;
-    return matchesSearch && matchesSubject;
-  });
-
-  const handleGenerateNotes = async () => {
-    if (!generateConfig.subject || !generateConfig.topic.trim()) {
-      Alert.alert("Error", "Please select subject and enter topic");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await notesService.generateNotes({
-        subject: generateConfig.subject,
-        topic: generateConfig.topic,
-        noteLength: generateConfig.noteLength,
-      });
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || "Invalid response from server");
-      }
-
-      const apiNotes = response.data as any;
-      const content = formatNotesContent(apiNotes);
-
-      const note: Note = {
-        id: apiNotes?.id || Date.now().toString(),
-        title: generateConfig.topic,
-        subject: generateConfig.subject,
-        content: content,
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-      };
-
-      // Save to AsyncStorage with structured format
-      await saveNoteToStorage(note, {
-        subject: generateConfig.subject,
-        topic: generateConfig.topic,
-        noteLength: generateConfig.noteLength,
-      });
-
-      setNotes([note, ...notes]);
-      setGenerateConfig({ subject: "", topic: "", noteLength: "detailed" });
-      setIsModalVisible(false);
-      Alert.alert("Success", "AI notes generated and saved!");
-    } catch (err) {
-      console.error("Error generating notes:", err);
-      Alert.alert(
-        "Error",
-        err instanceof Error
-          ? err.message
-          : "Failed to generate notes. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteNote = async (id: string) => {
-    Alert.alert("Delete Note", "Are you sure you want to delete this note?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          // Remove from AsyncStorage
-          await deleteNoteFromStorage(id);
-          // Update UI state
-          setNotes(notes.filter((note) => note.id !== id));
-          setIsViewModalVisible(false);
-        },
-      },
-    ]);
-  };
-
-  const handleViewNote = (note: Note) => {
-    setSelectedNote(note);
-    setIsViewModalVisible(true);
-  };
-
-  const canGenerate = generateConfig.subject && generateConfig.topic.trim();
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -208,8 +106,8 @@ export default function NotesScreen() {
                   subject={note.subject}
                   content={note.content}
                   date={note.date}
-                  onPress={() => handleViewNote(note)}
-                  onDelete={() => handleDeleteNote(note.id)}
+                  onPress={() => viewNote(note)}
+                  onDelete={() => deleteNote(note.id)}
                 />
               ))}
             </View>
@@ -297,7 +195,7 @@ export default function NotesScreen() {
                 <View className="flex-1">
                   <Button
                     title="Generate Notes"
-                    onPress={handleGenerateNotes}
+                    onPress={generateNotes}
                     fullWidth
                     disabled={!canGenerate}
                   />
@@ -465,7 +363,7 @@ export default function NotesScreen() {
 
                   <Button
                     title="Delete Note"
-                    onPress={() => handleDeleteNote(selectedNote.id)}
+                    onPress={() => deleteNote(selectedNote.id)}
                     variant="outline"
                     fullWidth
                   />

@@ -3,13 +3,7 @@ import { useAuthStore } from "@/store/authStore";
 import { tablesDB } from "@/lib/appwrite";
 import { APPWRITE_CONFIG } from "@/config/appwrite";
 import { ID, Query } from "react-native-appwrite";
-
-export interface Doubt {
-  id: string;
-  text: string;
-  answer?: string;
-  createdAt: string;
-}
+import type { Doubt } from "@/lib/types";
 
 const STORAGE_KEY = "@neuroprep_doubts";
 

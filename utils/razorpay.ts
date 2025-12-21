@@ -16,7 +16,7 @@ export interface RazorpayOptions {
 
 export interface RazorpayResponse {
   razorpay_payment_id: string;
-  razorpay_order_id: string;
+  razorpay_subscription_id: string;
   razorpay_signature: string;
 }
 
@@ -27,18 +27,18 @@ export const openRazorpayCheckout = (
     const checkoutOptions = {
       key: RAZORPAY_KEY_ID,
       subscription_id: options.subscriptionId,
-      amount: options.amount || 19900, // ₹199 in paise
+      amount: String(options.amount || 19900),
       currency: options.currency || "INR",
       name: options.name || "NeuroPrep Pro",
       description: options.description || "Pro Subscription - ₹199/month",
       prefill: options.prefill || {},
       theme: {
-        color: "#f59e0b", // Amber color
+        color: "#f59e0b",
       },
     };
 
     RazorpayCheckout.open(checkoutOptions)
-      .then((data: RazorpayResponse) => {
+      .then((data) => {
         resolve(data);
       })
       .catch((error: any) => {

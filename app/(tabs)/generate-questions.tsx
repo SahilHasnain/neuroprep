@@ -3,116 +3,33 @@ import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import QuestionCard from "@/components/ui/QuestionCard";
 import AuthModal from "@/components/ui/AuthModal";
-import { questionsService } from "@/services/api/questions.service";
+import { useQuestions } from "@/hooks/useQuestions";
 import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
 import { Sparkles } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  loadQuestionsFromStorage,
-  saveQuestionsToStorage,
-  type Question,
-} from "@/utils";
 
 export default function GenerateQuestionsScreen() {
-  const [subject, setSubject] = useState("");
-  const [topic, setTopic] = useState("");
-  const [difficulty, setDifficulty] = useState("");
-  const [questionCount, setQuestionCount] = useState("");
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedAnswers, setSelectedAnswers] = useState<
-    Record<string, string>
-  >({});
+  const {
+    subject,
+    setSubject,
+    topic,
+    setTopic,
+    difficulty,
+    setDifficulty,
+    questionCount,
+    setQuestionCount,
+    questions,
+    loading,
+    error,
+    selectedAnswers,
+    generateQuestions,
+    selectAnswer,
+    reset,
+    canGenerate,
+  } = useQuestions();
   const [authVisible, setAuthVisible] = useState(false);
-
-  // Load questions from AsyncStorage on mount
-  useEffect(() => {
-    const loadQuestions = async () => {
-      const questionSets = await loadQuestionsFromStorage();
-      if (questionSets.length > 0) {
-        const latest = questionSets[0];
-        setQuestions(latest.questions);
-        setSubject(latest.subject);
-        setTopic(latest.topic);
-        setDifficulty(latest.difficulty);
-        setQuestionCount(latest.questionCount.toString());
-      }
-    };
-    loadQuestions();
-  }, []);
-
-  const handleGenerateQuestions = async () => {
-    // Validate inputs
-    if (!subject || !topic || !difficulty || !questionCount) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setQuestions([]);
-    setSelectedAnswers({});
-
-    try {
-      const res = await questionsService.generateQuestions({
-        subject,
-        topic,
-        difficulty,
-        questionCount,
-      });
-
-      if (!res.success) {
-        throw new Error(res.message || "Failed to generate questions");
-      }
-
-      const data = res.data;
-
-      // Validate response data
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        throw new Error("Invalid response from server");
-      }
-
-      setQuestions(data);
-
-      // Save to AsyncStorage with structured format
-      await saveQuestionsToStorage(data, {
-        subject,
-        topic,
-        difficulty,
-        questionCount: parseInt(questionCount, 10),
-      });
-    } catch (err) {
-      console.error("Error generating questions:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to generate questions. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAnswerSelect = (questionId: string, optionId: string) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [questionId]: optionId,
-    }));
-  };
-
-  const handleReset = () => {
-    setQuestions([]);
-    setSelectedAnswers({});
-    setError(null);
-    setSubject("");
-    setTopic("");
-    setDifficulty("");
-    setQuestionCount("");
-  };
-
-  const canGenerate = subject && topic && difficulty && questionCount;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -173,7 +90,7 @@ export default function GenerateQuestionsScreen() {
               <View className="mt-6">
                 <Button
                   title="Generate Questions"
-                  onPress={handleGenerateQuestions}
+                  onPress={generateQuestions}
                   loading={loading}
                   fullWidth
                 />
@@ -204,7 +121,7 @@ export default function GenerateQuestionsScreen() {
                     {questions.length} questions generated
                   </Text>
                 </View>
-                <Button title="Reset" onPress={handleReset} variant="outline" />
+                <Button title="Reset" onPress={reset} variant="outline" />
               </View>
 
               {questions.map((question, index) => (
@@ -218,7 +135,7 @@ export default function GenerateQuestionsScreen() {
                     correctAnswer={question.correctAnswer}
                     selectedAnswer={selectedAnswers[question.id]}
                     onAnswerSelect={(optionId) =>
-                      handleAnswerSelect(question.id, optionId)
+                      selectAnswer(question.id, optionId)
                     }
                   />
                 </View>
@@ -227,7 +144,7 @@ export default function GenerateQuestionsScreen() {
               <View className="pb-6">
                 <Button
                   title="Generate New Questions"
-                  onPress={handleReset}
+                  onPress={reset}
                   fullWidth
                 />
               </View>

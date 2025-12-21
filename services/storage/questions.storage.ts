@@ -9,24 +9,7 @@ import { tablesDB } from "@/lib/appwrite";
 import { useAuthStore } from "@/store/authStore";
 import { APPWRITE_CONFIG } from "@/config/appwrite";
 import { ID, Query } from "react-native-appwrite";
-
-export interface Question {
-  id: string;
-  question: string;
-  options: { id: string; text: string }[];
-  correctAnswer: string;
-}
-
-export interface StoredQuestionSet {
-  id: string;
-  label: string;
-  subject: string;
-  topic: string;
-  difficulty: string;
-  questionCount: number;
-  questions: Question[];
-  createdAt: string;
-}
+import type { Question, StoredQuestionSet } from "@/lib/types";
 
 const STORAGE_KEY = "@neuroprep_questions";
 

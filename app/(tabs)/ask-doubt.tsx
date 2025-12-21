@@ -2,8 +2,7 @@ import ChatBubble from "@/components/shared/ChatBubble";
 import Input from "@/components/ui/Input";
 import AuthModal from "@/components/ui/AuthModal";
 import { useAuthStore } from "@/store/authStore";
-import { loadDoubtsFromStorage, saveDoubtToStorage } from "@/utils";
-import { doubtsService } from "@/services/api/doubts.service";
+import { useDoubts } from "@/hooks/useDoubts";
 import { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
@@ -15,159 +14,21 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timeStamp: string;
-}
-
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hi! I'm your AI tutor. Ask me any doubt related to NEET/JEE and I'll help you understand it.",
-      isUser: false,
-      timeStamp: "Just Now",
-    },
-  ]);
-
+  const { messages, loading, askDoubt } = useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
 
-  // Check session on mount and load past doubts
   useEffect(() => {
     checkSession();
-
-    const loadPast = async () => {
-      const past = await loadDoubtsFromStorage();
-      if (past.length > 0) {
-        // we want oldest first so reverse (API returns most recent first)
-        const toRender = [...past].reverse();
-        const mapped: Message[] = [];
-        toRender.forEach((d) => {
-          mapped.push({
-            id: d.id + "_q",
-            text: d.text,
-            isUser: true,
-            timeStamp: new Date(d.createdAt).toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          });
-          if (d.answer) {
-            mapped.push({
-              id: d.id + "_a",
-              text: d.answer,
-              isUser: false,
-              timeStamp: new Date(d.createdAt).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            });
-          }
-        });
-        setMessages((prev) => [...prev, ...mapped]);
-      }
-    };
-
-    loadPast();
   }, []);
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      isUser: true,
-      timeStamp: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
     const doubtText = inputText.trim();
     setInputText("");
-
-    // Add loading message
-    const loadingMessage: Message = {
-      id: "loading",
-      text: "Thinking...",
-      isUser: false,
-      timeStamp: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-    setMessages((prev) => [...prev, loadingMessage]);
-
-    try {
-      const response = await doubtsService.askDoubt(doubtText);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || "Invalid response from server");
-      }
-
-      const aiData = response.data.answer;
-
-      // Format AI response
-      let formattedResponse = "";
-
-      if (aiData.explanation && Array.isArray(aiData.explanation)) {
-        aiData.explanation.forEach((step: string, idx: number) => {
-          formattedResponse += `**Step ${idx + 1}:**\n${step}\n\n`;
-        });
-      }
-
-      if (aiData.intuition) {
-        formattedResponse += `**💡 Intuition:**\n${aiData.intuition}\n\n`;
-      }
-
-      if (aiData.revisionTip) {
-        formattedResponse += `**📝 Revision Tip:**\n${aiData.revisionTip}`;
-      }
-
-      // Remove loading message and add AI response
-      setMessages((prev) => {
-        const filtered = prev.filter((msg) => msg.id !== "loading");
-        const aiResponse: Message = {
-          id: Date.now().toString(),
-          text: formattedResponse,
-          isUser: false,
-          timeStamp: new Date().toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        };
-
-        // Save the pair (user question + AI answer) to storage
-        saveDoubtToStorage(doubtText, formattedResponse).catch((err) => {
-          console.warn("Failed to save doubt:", err);
-        });
-
-        return [...filtered, aiResponse];
-      });
-    } catch (err) {
-      console.error("Error sending doubt:", err);
-
-      // Remove loading message and show error
-      setMessages((prev) => {
-        const filtered = prev.filter((msg) => msg.id !== "loading");
-        const errorResponse: Message = {
-          id: Date.now().toString(),
-          text: "Sorry, I couldn't process your doubt. Please try again.",
-          isUser: false,
-          timeStamp: new Date().toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        };
-        return [...filtered, errorResponse];
-      });
-    }
+    await askDoubt(doubtText);
   };
 
   return (

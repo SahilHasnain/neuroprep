@@ -10,23 +10,7 @@ import { tablesDB } from "@/lib/appwrite";
 import { useAuthStore } from "@/store/authStore";
 import { APPWRITE_CONFIG } from "@/config/appwrite";
 import { ID, Query } from "react-native-appwrite";
-
-export interface Note {
-  id: string;
-  title: string;
-  subject: string;
-  content: string;
-  date: string;
-}
-
-export interface StoredNoteSet {
-  id: string; // Unique identifier
-  label: string; // Human-readable label for clarity
-  subject: string;
-  topic: string;
-  noteLength: string;
-  note: Note;
-}
+import type { Note, StoredNoteSet } from "@/lib/types";
 
 const STORAGE_KEY = "@neuroprep_notes";
 
