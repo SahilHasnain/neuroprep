@@ -5,4 +5,4 @@
 
 export * from "./api.types";
 export * from "./domain.types";
-// plan.ts exports are re-exported through domain.types.ts
+export * from "./plan";

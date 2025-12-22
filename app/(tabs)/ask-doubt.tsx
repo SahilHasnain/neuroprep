@@ -13,10 +13,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
-  const { messages, loading, askDoubt } = useDoubts();
+  const { messages, loading, askDoubt, limitInfo, plan } = useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
 
@@ -30,6 +31,9 @@ export default function AskDoubtScreen() {
     setInputText("");
     await askDoubt(doubtText);
   };
+
+  const isPro = plan === "student_pro";
+  const showLimit = !isPro && limitInfo;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -54,23 +58,56 @@ export default function AskDoubtScreen() {
               onPress={() => {
                 if (!user) {
                   setAuthVisible(true);
+                } else if (!isPro) {
+                  router.push("/subscription");
                 }
               }}
               className={`px-4 py-2 rounded-full ${
-                user
+                isPro
                   ? "bg-blue-100"
+                  : user
+                  ? "bg-amber-100 border-[1px] border-amber-400"
                   : "bg-gray-100 border-[1px] border-blue-500"
               }`}
             >
               <Text
                 className={`text-sm font-semibold ${
-                  user ? "text-blue-700" : "text-blue-600"
+                  isPro
+                    ? "text-blue-700"
+                    : user
+                    ? "text-amber-700"
+                    : "text-blue-600"
                 }`}
               >
-                {user ? "Pro" : "Login"}
+                {isPro ? "Pro" : user ? "Free" : "Login"}
               </Text>
             </Pressable>
           </View>
+
+          {/* Usage Indicator */}
+          {showLimit && (
+            <View className="px-3 py-2 mt-3 border rounded-lg bg-amber-50 border-amber-200">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm text-amber-800">
+                  {limitInfo.used}/{limitInfo.limit} doubts used today
+                </Text>
+                {limitInfo.used >= limitInfo.limit * 0.8 && (
+                  <Pressable onPress={() => user ? router.push("/subscription") : setAuthVisible(true)}>
+                    <Text className="text-xs font-semibold text-blue-600">
+                      Upgrade
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+              {/* Progress Bar */}
+              <View className="mt-2 h-1.5 bg-amber-200 rounded-full overflow-hidden">
+                <View
+                  className="h-full rounded-full bg-amber-500"
+                  style={{ width: `${(limitInfo.used / limitInfo.limit) * 100}%` }}
+                />
+              </View>
+            </View>
+          )}
         </View>
 
         <ScrollView

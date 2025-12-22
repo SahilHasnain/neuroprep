@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { doubtsService } from "@/services/api/doubts.service";
-import { loadDoubtsFromStorage, saveDoubtToStorage } from "@/services/storage/doubts.storage";
+import { loadDoubtsFromStorage } from "@/services/storage/doubts.storage";
 import { Doubt } from "@/lib/models";
 import type { Message } from "@/lib/types";
 
@@ -14,6 +14,8 @@ export const useDoubts = () => {
     },
   ]);
   const [loading, setLoading] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; allowed: boolean } | null>(null);
+  const [plan, setPlan] = useState<string>("free")
 
   useEffect(() => {
     loadPastDoubts();
@@ -60,6 +62,12 @@ export const useDoubts = () => {
         throw new Error(response.message || "Invalid response from server");
       }
 
+      if (response.limitInfo) {
+        setLimitInfo(response.limitInfo);
+      }
+
+      setPlan(response.plan || "free");
+
       const aiData = response.data.answer;
       let formattedResponse = "";
 
@@ -89,19 +97,21 @@ export const useDoubts = () => {
           }),
         };
 
-        saveDoubtToStorage(doubtText, formattedResponse).catch((err) => {
-          console.warn("Failed to save doubt:", err);
-        });
-
         return [...filtered, aiResponse];
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending doubt:", err);
+      
+      let errorText = "Sorry, I couldn't process your doubt. Please try again.";
+      if (err.response?.status === 402) {
+        errorText = "Daily limit reached. Upgrade to Pro for unlimited doubts!";
+      }
+
       setMessages((prev) => {
         const filtered = prev.filter((msg) => msg.id !== "loading");
         const errorResponse: Message = {
           id: Date.now().toString(),
-          text: "Sorry, I couldn't process your doubt. Please try again.",
+          text: errorText,
           isUser: false,
           timeStamp: new Date().toLocaleTimeString("en-US", {
             hour: "2-digit",
@@ -115,5 +125,5 @@ export const useDoubts = () => {
     }
   };
 
-  return { messages, loading, askDoubt };
+  return { messages, loading, askDoubt, limitInfo, plan };
 };

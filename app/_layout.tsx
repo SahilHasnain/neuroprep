@@ -4,11 +4,17 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { usePlanStore } from "@/store/planStore";
 import "./globals.css";
 
 // SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const { fetchPlanStatus } = usePlanStore();
+
+  useEffect(() => {
+    fetchPlanStatus();
+  }, []);
   // // Load custom fonts
   // const [fontsLoaded] = useFonts({
   //   InterRegular: require("../assets/fonts/Inter-Regular.ttf"),

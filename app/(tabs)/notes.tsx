@@ -6,7 +6,7 @@ import SearchBar from "@/components/ui/SearchBar";
 import AuthModal from "@/components/ui/AuthModal";
 import { useNotes } from "@/hooks/useNotes";
 import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
-import { BookOpen, Sparkles, X } from "lucide-react-native";
+import { BookOpen, Sparkles, X, Crown, Lock } from "lucide-react-native";
 import { useState } from "react";
 import {
   Modal,
@@ -15,6 +15,7 @@ import {
   Text,
   View,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MathMarkdown from "@/components/shared/MathMarkdown";
@@ -39,8 +40,22 @@ export default function NotesScreen() {
     deleteNote,
     viewNote,
     canGenerate,
+    userPlan,
+    quota,
+    isNoteLengthLocked,
   } = useNotes();
   const [authVisible, setAuthVisible] = useState(false);
+
+  const showUpgradeAlert = () => {
+    Alert.alert(
+      "Upgrade to Pro",
+      "Unlock unlimited AI notes with Pro plan!",
+      [
+        { text: "Maybe Later", style: "cancel" },
+        { text: "Upgrade Now", onPress: () => setAuthVisible(true) },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -56,13 +71,35 @@ export default function NotesScreen() {
               </Text>
             </View>
           </View>
-          <Pressable
-            onPress={() => setIsModalVisible(true)}
-            className="p-3 bg-blue-500 rounded-full active:bg-blue-600"
-          >
-            <Sparkles size={24} color="#ffffff" />
-          </Pressable>
+          <View className="flex-row gap-2">
+            <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
+              {userPlan === "student_pro" && <Crown size={14} color="#3b82f6" />}
+              <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
+                {userPlan === "student_pro" ? "Pro" : "Free"}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                if (quota.used >= quota.limit) {
+                  showUpgradeAlert();
+                } else {
+                  setIsModalVisible(true);
+                }
+              }}
+              className="p-3 bg-blue-500 rounded-full active:bg-blue-600"
+            >
+              <Sparkles size={24} color="#ffffff" />
+            </Pressable>
+          </View>
         </View>
+        {quota && (
+          <View className="flex-row items-center justify-between px-3 py-2 mt-3 rounded-lg bg-gray-50">
+            <Text className="text-sm text-gray-600">Daily Usage</Text>
+            <Text className={`text-sm font-semibold ${quota.used >= quota.limit ? "text-red-600" : "text-gray-900"}`}>
+              {quota.used}/{quota.limit}
+            </Text>
+          </View>
+        )}
       </View>
 
       <ScrollView className="flex-1">
@@ -168,10 +205,18 @@ export default function NotesScreen() {
             <Dropdown
               label="Note Type"
               value={generateConfig.noteLength}
-              options={NOTE_LENGTHS}
-              onSelect={(value) =>
-                setGenerateConfig({ ...generateConfig, noteLength: value })
-              }
+              options={NOTE_LENGTHS.map((option) => ({
+                ...option,
+                disabled: isNoteLengthLocked(option.value),
+              }))}
+              onSelect={(value) => {
+                if (isNoteLengthLocked(value)) {
+                  showUpgradeAlert();
+                } else {
+                  setGenerateConfig({ ...generateConfig, noteLength: value });
+                }
+              }}
+              onLockedPress={showUpgradeAlert}
               placeholder="Choose note type"
             />
 

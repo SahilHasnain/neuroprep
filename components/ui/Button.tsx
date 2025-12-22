@@ -8,7 +8,8 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
-  className? : string;
+  className?: string;
+  icon?: React.ReactNode;
 }
 
 export default function Button({
@@ -18,7 +19,8 @@ export default function Button({
   disabled = false,
   loading = false,
   fullWidth = false,
-  className
+  className,
+  icon,
 }: ButtonProps) {
   return (
     <TouchableOpacity
@@ -39,16 +41,20 @@ export default function Button({
           color={variant === "primary" ? "#ffffff" : "#3b82f6"}
         />
       ) : (
-        <Text
-          className={clsx(
-            "text-base font-semibold",
-            variant === "primary" && "text-white",
-            variant === "secondary" && "text-gray-900",
-            variant === "outline" && "text-blue-500"
-          )}
-        >
-          {title}
-        </Text>
+        <>
+          {icon && <>{icon}</>}
+          <Text
+            className={clsx(
+              "text-base font-semibold",
+              variant === "primary" && "text-white",
+              variant === "secondary" && "text-gray-900",
+              variant === "outline" && "text-blue-500",
+              icon && "ml-2"
+            )}
+          >
+            {title}
+          </Text>
+        </>
       )}
     </TouchableOpacity>
   );

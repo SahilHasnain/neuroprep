@@ -7,6 +7,7 @@ export type FeatureType = "doubts" | "questions" | "notes";
  */
 export const hasReachedLimit = (feature: FeatureType): boolean => {
   const { usage, limits } = usePlanStore.getState();
+  if (!usage || !limits) return false;
   return usage[feature] >= limits[feature];
 };
 
@@ -15,6 +16,7 @@ export const hasReachedLimit = (feature: FeatureType): boolean => {
  */
 export const getRemainingUsage = (feature: FeatureType): number => {
   const { usage, limits } = usePlanStore.getState();
+  if (!usage || !limits) return 0;
   const remaining = limits[feature] - usage[feature];
   return Math.max(0, remaining);
 };
@@ -24,7 +26,7 @@ export const getRemainingUsage = (feature: FeatureType): number => {
  */
 export const getUsagePercentage = (feature: FeatureType): number => {
   const { usage, limits } = usePlanStore.getState();
-  if (limits[feature] === 0) return 0;
+  if (!usage || !limits || limits[feature] === 0) return 0;
   return Math.min(100, (usage[feature] / limits[feature]) * 100);
 };
 
@@ -33,6 +35,7 @@ export const getUsagePercentage = (feature: FeatureType): number => {
  */
 export const formatLimitDisplay = (feature: FeatureType): string => {
   const { usage, limits, planType } = usePlanStore.getState();
+  if (!usage || !limits) return "Loading...";
   if (planType === "pro" || limits[feature] >= 999) {
     return "Unlimited";
   }

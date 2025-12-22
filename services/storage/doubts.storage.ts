@@ -1,8 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "@/store/authStore";
-import { tablesDB } from "@/lib/appwrite";
-import { APPWRITE_CONFIG } from "@/config/appwrite";
-import { ID, Query } from "react-native-appwrite";
+import { doubtsService } from "@/services/api/doubts.service";
+import { ID } from "react-native-appwrite";
 import type { Doubt } from "@/lib/types";
 
 const STORAGE_KEY = "@neuroprep_doubts";
@@ -12,35 +11,19 @@ export const loadDoubtsFromStorage = async (): Promise<Doubt[]> => {
 
   if (user) {
     try {
-      const response = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId!,
-        tableId: APPWRITE_CONFIG.doubtsTableId!,
-        queries: [
-          Query.equal("userId", user.$id),
-          Query.orderDesc("createdAt"),
-        ],
-      });
-
-      const doubts: Doubt[] = response.rows.map((r: any) => ({
-        id: r.$id,
-        text: r.text,
-        answer: r.answer,
-        createdAt: r.createdAt,
-      }));
-
-      return doubts;
+      const response = await doubtsService.getHistory();
+      return response.data || [];
     } catch (err) {
-      console.error("❌ Error loading doubts from Appwrite:", err);
+      console.error("❌ Error loading doubts from backend:", err);
       return [];
     }
   }
 
-  // Guest / local
+  // Guest: Local storage
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
-    const local: Doubt[] = JSON.parse(stored);
-    return local;
+    return JSON.parse(stored);
   } catch (err) {
     console.error("❌ Error loading doubts from local storage:", err);
     return [];
@@ -53,27 +36,13 @@ export const saveDoubtToStorage = async (
 ): Promise<void> => {
   const { user } = useAuthStore.getState();
 
+  // Logged-in users: Backend already saved, skip frontend save
   if (user) {
-    try {
-      await tablesDB.createRow({
-        databaseId: APPWRITE_CONFIG.databaseId!,
-        tableId: APPWRITE_CONFIG.doubtsTableId!,
-        rowId: ID.unique(),
-        data: {
-          userId: user.$id,
-          doubtText: text,
-          answer,
-        },
-      });
-      console.log(`☁️ Saved doubt to Appwrite: ${text}`);
-    } catch (err) {
-      console.error("❌ Error saving doubt to Appwrite:", err);
-      throw err;
-    }
+    console.log("☁️ Doubt already saved by backend");
     return;
   }
 
-  // Local save
+  // Guest: Local save
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
     const existing: Doubt[] = stored ? JSON.parse(stored) : [];
@@ -86,7 +55,7 @@ export const saveDoubtToStorage = async (
     };
     const updated = [newDoubt, ...existing].slice(0, 20);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    console.log(`🏠 Saved doubt locally: ${text}`);
+    console.log("🏠 Saved doubt locally");
   } catch (err) {
     console.error("❌ Error saving doubt to local storage:", err);
   }
@@ -94,27 +63,20 @@ export const saveDoubtToStorage = async (
 
 export const deleteDoubtFromStorage = async (id: string): Promise<void> => {
   const { user } = useAuthStore.getState();
+  
   if (user) {
-    try {
-      await tablesDB.deleteRow({
-        databaseId: APPWRITE_CONFIG.databaseId!,
-        tableId: APPWRITE_CONFIG.doubtsTableId!,
-        rowId: id,
-      });
-      console.log(`☁️ Deleted doubt from Appwrite: ${id}`);
-    } catch (err) {
-      console.error("❌ Error deleting doubt from Appwrite:", err);
-    }
+    console.log("⚠️ Delete via backend not implemented yet");
     return;
   }
 
+  // Guest: Local delete
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
     if (!stored) return;
     const existing: Doubt[] = JSON.parse(stored);
     const updated = existing.filter((d) => d.id !== id);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    console.log(`🏠 Deleted doubt locally: ${id}`);
+    console.log("🏠 Deleted doubt locally");
   } catch (err) {
     console.error("❌ Error deleting doubt from local storage:", err);
   }

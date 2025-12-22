@@ -38,7 +38,7 @@ export interface StoredQuestionSet {
   difficulty: string;
   questionCount: number;
   questions: Question[];
-  createdAt: string;
+  createdAt?: string;
 }
 
 // Note Domain
@@ -58,7 +58,3 @@ export interface StoredNoteSet {
   noteLength: string;
   note: Note;
 }
-
-// Re-export from plan.ts to avoid duplication
-export type { PlanType, SubscriptionStatus, FeatureType } from "./plan";
-export type { PlanLimits as Limits, PlanUsage as Usage } from "./plan";

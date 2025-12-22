@@ -9,6 +9,8 @@ import {
 import { formatNotesContent } from "@/utils/formatters";
 import { Note } from "@/lib/models";
 import type { Note as NoteType } from "@/lib/types";
+import { usePlanStore } from "@/store/planStore";
+import { PLAN_LIMITS, canAccessNoteLength } from "@/utils/planRestrictions";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<NoteType[]>([]);
@@ -22,8 +24,13 @@ export const useNotes = () => {
   const [generateConfig, setGenerateConfig] = useState({
     subject: "",
     topic: "",
-    noteLength: "detailed",
+    noteLength: "brief",
   });
+
+  const { planType, usage, incrementUsage } = usePlanStore();
+  const userPlan = planType === "pro" ? "student_pro" : "free";
+  const dailyLimit = PLAN_LIMITS[userPlan].dailyNotes;
+  const quota = { used: usage?.notes || 0, limit: dailyLimit };
 
   useEffect(() => {
     loadNotes();
@@ -48,6 +55,14 @@ export const useNotes = () => {
       return;
     }
 
+    if (usage?.notes >= dailyLimit) {
+      Alert.alert(
+        "Daily Limit Reached",
+        `You've reached your daily limit of ${dailyLimit} notes. Upgrade to Pro for unlimited notes!`
+      );
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -61,7 +76,7 @@ export const useNotes = () => {
         throw new Error(response.message || "Invalid response from server");
       }
 
-      const apiNotes = response.data as any;
+      const apiNotes = (response.data as any)?.content || response.data;
       const content = formatNotesContent(apiNotes);
 
       const note = new Note(
@@ -82,8 +97,9 @@ export const useNotes = () => {
         noteLength: generateConfig.noteLength,
       });
 
+      incrementUsage("notes");
       setNotes([note, ...notes]);
-      setGenerateConfig({ subject: "", topic: "", noteLength: "detailed" });
+      setGenerateConfig({ subject: "", topic: "", noteLength: "brief" });
       setIsModalVisible(false);
       Alert.alert("Success", "AI notes generated and saved!");
     } catch (err) {
@@ -120,6 +136,7 @@ export const useNotes = () => {
   };
 
   const canGenerate = generateConfig.subject && generateConfig.topic.trim();
+  const isNoteLengthLocked = (noteLength: string) => !canAccessNoteLength(userPlan, noteLength);
 
   return {
     notes,
@@ -140,5 +157,8 @@ export const useNotes = () => {
     deleteNote,
     viewNote,
     canGenerate,
+    userPlan,
+    quota,
+    isNoteLengthLocked,
   };
 };

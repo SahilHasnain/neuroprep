@@ -24,6 +24,12 @@ export default function UsageProgressBar({
   className,
 }: UsageProgressBarProps) {
   const { planType, usage, limits } = usePlanStore();
+  
+  // Guard against undefined values
+  if (!usage || !limits) {
+    return null;
+  }
+  
   const usagePercentage = getUsagePercentage(feature);
   const remaining = getRemainingUsage(feature);
   const isPro = planType === "pro";

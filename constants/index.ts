@@ -1,8 +1,11 @@
 // API Endpoints
 export const API_ENDPOINTS = {
   ASK_DOUBT: "https://693e61e0001e8e28c8e6.fra.appwrite.run",
+  DOUBTS_HISTORY: "https://YOUR_DOUBTS_HISTORY_URL.fra.appwrite.run",
   GENERATE_QUESTIONS: "https://69423cba001540dea615.fra.appwrite.run",
+  QUESTIONS_HISTORY: "https://YOUR_QUESTIONS_HISTORY_URL.fra.appwrite.run",
   NOTES: "https://6942afbd002f2d29fdce.fra.appwrite.run",
+  NOTES_HISTORY: "https://YOUR_NOTES_HISTORY_URL.fra.appwrite.run",
   CREATE_SUBSCRIPTION: "https://6947ac26001044e8e8ed.fra.appwrite.run",
   VERIFY_PAYMENT: "https://6947ac55003801e0a004.fra.appwrite.run",
   GET_PLAN_STATUS: "https://6947ac7f002a1d447604.fra.appwrite.run",
@@ -42,17 +45,17 @@ export const NOTE_LENGTHS = [
 // Plan Features
 export const PLAN_FEATURES = [
   {
-    text: "5 Doubts per day",
+    text: "1 Doubt per day",
     freeIncluded: true,
     proIncluded: false,
   },
   {
-    text: "10 Questions per day",
+    text: "1 Question set per day (Easy, max 5)",
     freeIncluded: true,
     proIncluded: false,
   },
   {
-    text: "20 Notes per day",
+    text: "1 Note per day",
     freeIncluded: true,
     proIncluded: false,
   },

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { PlanState, FeatureType, SubscriptionData } from "@/lib/types/plan";
+import { PlanState, FeatureType, PlanSubscriptionData } from "@/lib/types/plan";
 import { subscriptionService } from "@/services/api/subscription.service";
 import { openRazorpayCheckout } from "@/utils/razorpay";
 
@@ -61,6 +61,19 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   incrementUsage: (feature: FeatureType) => {
     const state = get();
 
+    // Ensure usage exists
+    if (!state.usage) {
+      set({
+        usage: {
+          doubts: 0,
+          questions: 0,
+          notes: 0,
+          lastResetDate: getTodayDate(),
+        },
+      });
+      return;
+    }
+
     // Check if daily reset is needed
     const shouldReset = shouldResetUsage(state.usage.lastResetDate);
 
@@ -103,7 +116,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
         subscriptionId: result.data.subscriptionId,
         razorpaySubscriptionId: result.data.planId,
         status: result.data.status as any,
-      };
+      } as PlanSubscriptionData;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       set({ error: errorMessage, loading: false });

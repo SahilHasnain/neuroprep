@@ -11,7 +11,7 @@ export interface PlanUsage {
   doubts: number;
   questions: number;
   notes: number;
-  lastResetDate: string; // ISO date string for daily reset
+  lastResetDate: string;
 }
 
 export interface PlanStatus {
@@ -25,7 +25,7 @@ export interface PlanStatus {
 
 export type FeatureType = "doubts" | "questions" | "notes";
 
-export interface SubscriptionData {
+export interface PlanSubscriptionData {
   subscriptionId: string;
   razorpaySubscriptionId: string;
   status: SubscriptionStatus;
@@ -38,7 +38,7 @@ export interface PlanState extends PlanStatus {
   fetchPlanStatus: () => Promise<void>;
   incrementUsage: (feature: FeatureType) => void;
   resetDailyUsage: () => Promise<void>;
-  createSubscription: (userData: { name?: string; email?: string; contact?: string }) => Promise<SubscriptionData>;
+  createSubscription: (userData: { name?: string; email?: string; contact?: string }) => Promise<PlanSubscriptionData>;
   initiatePayment: (subscriptionId: string) => Promise<void>;
   verifyPayment: (paymentData: any) => Promise<void>;
   cancelSubscription: (reason?: string) => Promise<void>;

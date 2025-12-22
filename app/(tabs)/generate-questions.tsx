@@ -1,16 +1,22 @@
-import Button from "@/components/ui/Button";
-import Dropdown from "@/components/ui/Dropdown";
-import InputTopic from "@/components/ui/InputTopic";
-import QuestionCard from "@/components/ui/QuestionCard";
-import AuthModal from "@/components/ui/AuthModal";
-import { useQuestions } from "@/hooks/useQuestions";
-import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
-import { Sparkles } from "lucide-react-native";
-import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Sparkles, Crown, Plus } from "lucide-react-native";
+import { useQuestions } from "@/hooks/useQuestions";
+import Button from "@/components/ui/Button";
+import AuthModal from "@/components/ui/AuthModal";
+import QuestionSetList from "@/components/questions/QuestionSetList";
+import QuestionDisplay from "@/components/questions/QuestionDisplay";
+import GenerateQuestionsModal from "@/components/questions/GenerateQuestionsModal";
+import { loadQuestionsFromStorage, deleteQuestionFromStorage } from "@/services/storage/questions.storage";
+import type { StoredQuestionSet } from "@/lib/types";
 
 export default function GenerateQuestionsScreen() {
+  const [questionSets, setQuestionSets] = useState<StoredQuestionSet[]>([]);
+  const [loadingSets, setLoadingSets] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [authVisible, setAuthVisible] = useState(false);
+
   const {
     subject,
     setSubject,
@@ -28,130 +34,142 @@ export default function GenerateQuestionsScreen() {
     selectAnswer,
     reset,
     canGenerate,
+    userPlan,
+    quota,
+    isDifficultyLocked,
+    isQuestionCountLocked,
+    loadFromParams,
   } = useQuestions();
-  const [authVisible, setAuthVisible] = useState(false);
+
+  useEffect(() => {
+    loadSets();
+  }, []);
+
+  const loadSets = async () => {
+    setLoadingSets(true);
+    const sets = await loadQuestionsFromStorage();
+    setQuestionSets(sets);
+    setLoadingSets(false);
+  };
+
+  const handleGenerate = async () => {
+    await generateQuestions();
+    setModalVisible(false);
+    await loadSets();
+  };
+
+  const handleSelectSet = (set: StoredQuestionSet) => {
+    loadFromParams({
+      questions: set.questions,
+      subject: set.subject,
+      topic: set.topic,
+      difficulty: set.difficulty,
+      questionCount: set.questionCount.toString(),
+    });
+  };
+
+  const handleDelete = async (id: string, label: string) => {
+    await deleteQuestionFromStorage(id);
+    await loadSets();
+  };
+
+  const handleReset = () => {
+    reset();
+    loadSets();
+  };
+
+  const showUpgradeAlert = () => {
+    Alert.alert(
+      "Upgrade to Pro",
+      "Unlock all features with Pro plan",
+      [
+        { text: "Maybe Later", style: "cancel" },
+        { text: "Upgrade Now", onPress: () => setAuthVisible(true) },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} />
-      <ScrollView className="flex-1">
-        <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
-          <View className="flex-row items-center">
+      <GenerateQuestionsModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        subject={subject}
+        setSubject={setSubject}
+        topic={topic}
+        setTopic={setTopic}
+        difficulty={difficulty}
+        setDifficulty={setDifficulty}
+        questionCount={questionCount}
+        setQuestionCount={setQuestionCount}
+        onGenerate={handleGenerate}
+        loading={loading}
+        error={error}
+        canGenerate={Boolean(canGenerate)}
+        userPlan={userPlan}
+        isDifficultyLocked={isDifficultyLocked}
+        isQuestionCountLocked={isQuestionCountLocked}
+        onUpgradePress={showUpgradeAlert}
+      />
+
+      <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
             <Sparkles size={28} color="#3b82f6" />
             <View className="flex-1 ml-3">
               <Text className="text-2xl font-bold text-gray-900">
-                Generate Questions
+                {questions.length > 0 ? "Practice Questions" : "Question Sets"}
               </Text>
               <Text className="mt-1 text-base text-gray-600">
-                Create custom practice questions
+                {questions.length > 0 ? `${questions.length} questions` : `${questionSets.length} saved sets`}
               </Text>
             </View>
           </View>
+          <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
+            {userPlan === "student_pro" && <Crown size={14} color="#3b82f6" />}
+            <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
+              {userPlan === "student_pro" ? "Pro" : "Free"}
+            </Text>
+          </View>
         </View>
+        {quota && (
+          <View className="flex-row items-center justify-between px-3 py-2 mt-3 rounded-lg bg-gray-50">
+            <Text className="text-sm text-gray-600">Daily Usage</Text>
+            <Text className={`text-sm font-semibold ${quota.used >= quota.limit ? "text-red-600" : "text-gray-900"}`}>
+              {quota.used}/{quota.limit}
+            </Text>
+          </View>
+        )}
+      </View>
 
-        <View className="px-6 py-6">
-          {questions.length === 0 ? (
-            <View>
-              <Text className="mb-4 text-lg font-semibold text-gray-900">
-                Configure Your Questions
-              </Text>
-
-              <Dropdown
-                label="Select Subject"
-                value={subject}
-                options={SUBJECTS}
-                onSelect={setSubject}
-                placeholder="Choose a subject"
+      <View className="flex-1 px-6 py-6">
+        {questions.length === 0 ? (
+          <>
+            <View className="mb-4">
+              <Button
+                title="Generate New Questions"
+                onPress={() => setModalVisible(true)}
+                fullWidth
+                icon={<Plus size={20} color="#fff" />}
               />
-
-              <InputTopic
-                label="Enter Topic"
-                value={topic}
-                onChangeText={setTopic}
-                placeholder="e.g., Newton's Laws, Organic Reactions"
-              />
-
-              <Dropdown
-                label="Difficulty Level"
-                value={difficulty}
-                options={DIFFICULTY_LEVELS}
-                onSelect={setDifficulty}
-                placeholder="Choose difficulty"
-              />
-
-              <Dropdown
-                label="Number of Questions"
-                value={questionCount}
-                options={QUESTION_COUNTS}
-                onSelect={setQuestionCount}
-                placeholder="Choose count"
-              />
-
-              <View className="mt-6">
-                <Button
-                  title="Generate Questions"
-                  onPress={generateQuestions}
-                  loading={loading}
-                  fullWidth
-                />
-              </View>
-
-              {error && (
-                <View className="mt-3 p-3 bg-red-50 rounded-xl border-[1px] border-red-200">
-                  <Text className="text-sm text-center text-red-600">
-                    {error}
-                  </Text>
-                </View>
-              )}
-
-              {!canGenerate && !error && (
-                <Text className="mt-3 text-sm text-center text-gray-500">
-                  Please fill all fields to generate questions
-                </Text>
-              )}
             </View>
-          ) : (
-            <View>
-              <View className="flex-row items-center justify-between mb-4">
-                <View>
-                  <Text className="text-lg font-semibold text-gray-900">
-                    Your Questions
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    {questions.length} questions generated
-                  </Text>
-                </View>
-                <Button title="Reset" onPress={reset} variant="outline" />
-              </View>
-
-              {questions.map((question, index) => (
-                <View key={question.id} className="mb-2">
-                  <Text className="mb-2 text-sm font-medium text-gray-600">
-                    Question {index + 1} of {questions.length}
-                  </Text>
-                  <QuestionCard
-                    question={question.question}
-                    options={question.options}
-                    correctAnswer={question.correctAnswer}
-                    selectedAnswer={selectedAnswers[question.id]}
-                    onAnswerSelect={(optionId) =>
-                      selectAnswer(question.id, optionId)
-                    }
-                  />
-                </View>
-              ))}
-
-              <View className="pb-6">
-                <Button
-                  title="Generate New Questions"
-                  onPress={reset}
-                  fullWidth
-                />
-              </View>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+            <QuestionSetList
+              sets={questionSets}
+              onSelect={handleSelectSet}
+              onDelete={handleDelete}
+              loading={loadingSets}
+            />
+          </>
+        ) : (
+          <QuestionDisplay
+            questions={questions}
+            selectedAnswers={selectedAnswers}
+            onAnswerSelect={selectAnswer}
+            onReset={handleReset}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 }

@@ -6,6 +6,7 @@ import {
 } from "@/services/storage/questions.storage";
 import { Question } from "@/lib/models";
 import type { Question as QuestionType } from "@/lib/types";
+import { canAccessDifficulty, canAccessQuestionCount, type UserPlan } from "@/utils/planRestrictions";
 
 export const useQuestions = () => {
   const [subject, setSubject] = useState("");
@@ -16,6 +17,8 @@ export const useQuestions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [userPlan, setUserPlan] = useState<UserPlan>("free");
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
 
   useEffect(() => {
     loadQuestions();
@@ -31,6 +34,21 @@ export const useQuestions = () => {
       setDifficulty(latest.difficulty);
       setQuestionCount(latest.questionCount.toString());
     }
+  };
+
+  const loadFromParams = (data: {
+    questions: QuestionType[];
+    subject: string;
+    topic: string;
+    difficulty: string;
+    questionCount: string;
+  }) => {
+    setQuestions(data.questions);
+    setSubject(data.subject);
+    setTopic(data.topic);
+    setDifficulty(data.difficulty);
+    setQuestionCount(data.questionCount);
+    setSelectedAnswers({});
   };
 
   const generateQuestions = async () => {
@@ -53,6 +71,13 @@ export const useQuestions = () => {
 
       if (!res.success) {
         throw new Error(res.message || "Failed to generate questions");
+      }
+
+      if (res.plan) {
+        setUserPlan(res.plan as UserPlan);
+      }
+      if (res.quota) {
+        setQuota({ used: res.quota.used, limit: res.quota.limit });
       }
 
       const data = res.data;
@@ -101,6 +126,9 @@ export const useQuestions = () => {
 
   const canGenerate = subject && topic && difficulty && questionCount;
 
+  const isDifficultyLocked = (diff: string) => !canAccessDifficulty(userPlan, diff);
+  const isQuestionCountLocked = (count: string) => !canAccessQuestionCount(userPlan, parseInt(count, 10));
+
   return {
     subject,
     setSubject,
@@ -118,5 +146,10 @@ export const useQuestions = () => {
     selectAnswer,
     reset,
     canGenerate,
+    userPlan,
+    quota,
+    isDifficultyLocked,
+    isQuestionCountLocked,
+    loadFromParams,
   };
 };

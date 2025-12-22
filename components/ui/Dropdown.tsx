@@ -1,14 +1,15 @@
 import clsx from "clsx";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, Lock } from "lucide-react-native";
 import { useState } from "react";
 import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface DropdownProps {
   label: string;
   value: string;
-  options: { label: string; value: string }[];
+  options: { label: string; value: string; locked?: boolean; disabled?: boolean }[];
   onSelect: (value: string) => void;
   placeholder?: string;
+  onLockedPress?: () => void;
 }
 
 export default function Dropdown({
@@ -17,6 +18,7 @@ export default function Dropdown({
   options,
   onSelect,
   placeholder = "Select an option",
+  onLockedPress,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,12 +70,18 @@ export default function Dropdown({
                     <TouchableOpacity
                       key={option.value}
                       onPress={() => {
-                        onSelect(option.value);
-                        setIsOpen(false);
+                        if (option.locked || option.disabled) {
+                          setIsOpen(false);
+                          onLockedPress?.();
+                        } else {
+                          onSelect(option.value);
+                          setIsOpen(false);
+                        }
                       }}
                       className={clsx(
-                        "py-4 border-b-[1px] border-gray-100",
-                        value === option.value && "bg-blue-50"
+                        "py-4 border-b-[1px] border-gray-100 flex-row items-center justify-between",
+                        value === option.value && "bg-blue-50",
+                        (option.locked || option.disabled) && "opacity-60"
                       )}
                     >
                       <Text
@@ -81,11 +89,14 @@ export default function Dropdown({
                           "text-base",
                           value === option.value
                             ? "text-blue-600 font-semibold"
+                            : (option.locked || option.disabled)
+                            ? "text-gray-500"
                             : "text-gray-900"
                         )}
                       >
                         {option.label}
                       </Text>
+                      {(option.locked || option.disabled) && <Lock size={16} color="#9ca3af" />}
                     </TouchableOpacity>
                   ))}
                 </ScrollView>

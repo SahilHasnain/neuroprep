@@ -44,7 +44,6 @@ export default function TabsLayout() {
       />
 
       {/* Generate Questions */}
-
       <Tabs.Screen
         name="generate-questions"
         options={{

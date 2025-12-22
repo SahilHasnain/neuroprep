@@ -8,6 +8,11 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   plan?: string;
+  quota?: {
+    used: number;
+    limit: number;
+    allowed: boolean;
+  };
   limitInfo?: {
     used: number;
     limit: number;
