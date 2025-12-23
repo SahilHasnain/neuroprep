@@ -47,12 +47,12 @@ export default function GenerateQuestionsModal({
   isQuestionCountLocked,
   onUpgradePress,
 }: GenerateQuestionsModalProps) {
-  const difficultyOptions = DIFFICULTY_LEVELS.map(d => ({
+  const difficultyOptions = DIFFICULTY_LEVELS.map((d) => ({
     ...d,
     locked: isDifficultyLocked(d.value),
   }));
 
-  const questionCountOptions = QUESTION_COUNTS.map(q => ({
+  const questionCountOptions = QUESTION_COUNTS.map((q) => ({
     ...q,
     locked: isQuestionCountLocked(q.value),
   }));
@@ -65,7 +65,9 @@ export default function GenerateQuestionsModal({
     <Modal visible={visible} animationType="slide" transparent={false}>
       <View className="flex-1 bg-gray-50">
         <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200 flex-row items-center justify-between">
-          <Text className="text-xl font-bold text-gray-900">Generate Questions</Text>
+          <Text className="text-xl font-bold text-gray-900">
+            Generate Questions
+          </Text>
           <TouchableOpacity onPress={onClose} className="p-2">
             <X size={24} color="#000" />
           </TouchableOpacity>
@@ -93,7 +95,11 @@ export default function GenerateQuestionsModal({
             options={difficultyOptions}
             onSelect={setDifficulty}
             placeholder="Choose difficulty"
-            onLockedPress={() => showUpgradeAlert("Upgrade to Pro to unlock Medium and Hard difficulty levels!")}
+            onLockedPress={() =>
+              showUpgradeAlert(
+                "Upgrade to Pro to unlock Medium and Hard difficulty levels!"
+              )
+            }
           />
 
           <Dropdown
@@ -102,7 +108,11 @@ export default function GenerateQuestionsModal({
             options={questionCountOptions}
             onSelect={setQuestionCount}
             placeholder="Choose count"
-            onLockedPress={() => showUpgradeAlert("Upgrade to Pro to generate more than 5 questions!")}
+            onLockedPress={() =>
+              showUpgradeAlert(
+                "Upgrade to Pro to generate more than 5 questions!"
+              )
+            }
           />
 
           <View className="mt-6">

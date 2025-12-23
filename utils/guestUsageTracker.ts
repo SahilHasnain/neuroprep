@@ -8,7 +8,7 @@ let CACHED_LIMITS: PlanLimits | null = null;
 
 export const setGuestLimits = (limits: PlanLimits) => {
     CACHED_LIMITS = limits;
-};
+}; 
 
 export const getGuestLimits = (): PlanLimits => {
     return CACHED_LIMITS || {

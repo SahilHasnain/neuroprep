@@ -70,7 +70,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
 
       set({
         planType: data.planType || "free",
-        limits: data.limits || PRO_PLAN_LIMITS,
+        limits: data.limits || getGuestLimits(),
         usage: data.usage,
         status: data.status,
         trialEndsAt: data.trialEndsAt,

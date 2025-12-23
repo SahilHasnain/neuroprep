@@ -8,11 +8,16 @@ import { Question } from "@/lib/models";
 import type { Question as QuestionType } from "@/lib/types";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getRemainingUses, getGuestLimits } from "@/utils/guestUsageTracker";
+import {
+  checkGuestLimit,
+  incrementGuestUsage,
+  getRemainingUses,
+  getGuestLimits,
+} from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
 
-type UserPlan = "free" | "student_pro";
+type UserPlan = "free" | "pro";
 
 export const useQuestions = () => {
   const [subject, setSubject] = useState("");
@@ -22,9 +27,13 @@ export const useQuestions = () => {
   const [questions, setQuestions] = useState<QuestionType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<
+    Record<string, string>
+  >({});
   const [userPlan, setUserPlan] = useState<UserPlan>("free");
-  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(
+    null
+  );
   const { limits } = usePlanStore();
   const loadFromParams = (data: {
     questions: QuestionType[];
@@ -96,7 +105,7 @@ export const useQuestions = () => {
         throw new Error("Invalid response from server");
       }
 
-      const questionModels = data.map(q => Question.fromApi(q));
+      const questionModels = data.map((q) => Question.fromApi(q));
       setQuestions(questionModels);
       setError(null);
 
@@ -106,7 +115,12 @@ export const useQuestions = () => {
         await incrementGuestUsage("questions");
         const remaining = await getRemainingUses("questions");
         const limits = getGuestLimits();
-        setQuota({ used: limits.questions - remaining, limit: limits.questions });
+        setQuota({
+          used: limits.questions - remaining,
+          limit: limits.questions,
+        });
+        // Sync planStore for cross-screen consistency
+        await usePlanStore.getState().fetchPlanStatus();
       } else {
         // Logged-in: Refresh from backend
         await usePlanStore.getState().fetchPlanStatus();
@@ -122,8 +136,11 @@ export const useQuestions = () => {
       console.error("Error generating questions:", err);
       if (!error) {
         setError({
-          errorCode: 'SERVER_ERROR',
-          message: err instanceof Error ? err.message : "Failed to generate questions. Please try again."
+          errorCode: "SERVER_ERROR",
+          message:
+            err instanceof Error
+              ? err.message
+              : "Failed to generate questions. Please try again.",
         });
       }
     } finally {

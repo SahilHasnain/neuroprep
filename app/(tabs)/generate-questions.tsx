@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, Alert } from "react-native";
+import { View, Text, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Sparkles, Crown, Plus } from "lucide-react-native";
 import { useQuestions } from "@/hooks/useQuestions";
@@ -9,7 +9,13 @@ import LimitReachedModal from "@/components/ui/LimitReachedModal";
 import QuestionSetList from "@/components/questions/QuestionSetList";
 import QuestionDisplay from "@/components/questions/QuestionDisplay";
 import GenerateQuestionsModal from "@/components/questions/GenerateQuestionsModal";
-import { loadQuestionsFromStorage, deleteQuestionFromStorage } from "@/services/storage/questions.storage";
+import SearchBar from "@/components/ui/SearchBar";
+import Dropdown from "@/components/ui/Dropdown";
+import { SUBJECTS } from "@/constants";
+import {
+  loadQuestionsFromStorage,
+  deleteQuestionFromStorage,
+} from "@/services/storage/questions.storage";
 import type { StoredQuestionSet } from "@/lib/types";
 
 export default function GenerateQuestionsScreen() {
@@ -17,6 +23,8 @@ export default function GenerateQuestionsScreen() {
   const [loadingSets, setLoadingSets] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [authVisible, setAuthVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSubject, setFilterSubject] = useState("");
 
   const {
     subject,
@@ -80,15 +88,21 @@ export default function GenerateQuestionsScreen() {
   };
 
   const showUpgradeAlert = () => {
-    Alert.alert(
-      "Upgrade to Pro",
-      "Unlock all features with Pro plan",
-      [
-        { text: "Maybe Later", style: "cancel" },
-        { text: "Upgrade Now", onPress: () => setAuthVisible(true) },
-      ]
-    );
+    Alert.alert("Upgrade to Pro", "Unlock all features with Pro plan", [
+      { text: "Maybe Later", style: "cancel" },
+      { text: "Upgrade Now", onPress: () => setAuthVisible(true) },
+    ]);
   };
+
+  const filteredQuestionSets = questionSets.filter((set) => {
+    const matchesSearch =
+      set.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      set.topic.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSubject =
+      !filterSubject ||
+      set.subject.toLowerCase() === filterSubject.toLowerCase();
+    return matchesSearch && matchesSubject;
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -123,58 +137,99 @@ export default function GenerateQuestionsScreen() {
                 {questions.length > 0 ? "Practice Questions" : "Question Sets"}
               </Text>
               <Text className="mt-1 text-base text-gray-600">
-                {questions.length > 0 ? `${questions.length} questions` : `${questionSets.length} saved sets`}
+                {questions.length > 0
+                  ? `${questions.length} questions`
+                  : `${questionSets.length} saved sets`}
               </Text>
             </View>
           </View>
           <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
-            {userPlan === "student_pro" && <Crown size={14} color="#3b82f6" />}
+            {userPlan === "pro" && <Crown size={14} color="#3b82f6" />}
             <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
-              {userPlan === "student_pro" ? "Pro" : "Free"}
+              {userPlan === "pro" ? "Pro" : "Free"}
             </Text>
           </View>
         </View>
         {quota && (
           <View className="flex-row items-center justify-between px-3 py-2 mt-3 rounded-lg bg-gray-50">
             <Text className="text-sm text-gray-600">Daily Usage</Text>
-            <Text className={`text-sm font-semibold ${quota.used >= quota.limit ? "text-red-600" : "text-gray-900"}`}>
+            <Text
+              className={`text-sm font-semibold ${quota.used >= quota.limit ? "text-red-600" : "text-gray-900"}`}
+            >
               {quota.used}/{quota.limit}
             </Text>
           </View>
         )}
       </View>
 
-      <View className="flex-1 px-6 py-6">
-        {questions.length === 0 ? (
-          <>
+      {questions.length === 0 ? (
+        <ScrollView className="flex-1">
+          <View className="px-6 py-4">
+            <SearchBar
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search question sets..."
+            />
+
             <View className="mb-4">
-              <Button
-                title="Generate New Questions"
-                onPress={() => setModalVisible(true)}
-                fullWidth
-                icon={<Plus size={20} color="#fff" />}
+              <Dropdown
+                label="Filter by Subject"
+                value={filterSubject}
+                options={[{ label: "All Subjects", value: "" }, ...SUBJECTS]}
+                onSelect={setFilterSubject}
+                placeholder="All Subjects"
               />
             </View>
-            <QuestionSetList
-              sets={questionSets}
-              onSelect={handleSelectSet}
-              onDelete={handleDelete}
-              loading={loadingSets}
-            />
-          </>
-        ) : (
+
+            {filteredQuestionSets.length === 0 && !loadingSets ? (
+              <View className="items-center justify-center py-12">
+                <Sparkles size={48} color="#d1d5db" />
+                <Text className="mt-3 text-lg font-semibold text-gray-400">
+                  {searchQuery || filterSubject
+                    ? "No question sets found"
+                    : "No question sets yet"}
+                </Text>
+                <Text className="mt-1 text-sm text-center text-gray-400">
+                  {searchQuery || filterSubject
+                    ? "Try adjusting your filters"
+                    : "Generate your first question set"}
+                </Text>
+              </View>
+            ) : (
+              <View className="pb-6">
+                <QuestionSetList
+                  sets={filteredQuestionSets}
+                  onSelect={handleSelectSet}
+                  onDelete={handleDelete}
+                  loading={loadingSets}
+                />
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      ) : (
+        <View className="flex-1 px-6 py-6">
           <QuestionDisplay
             questions={questions}
             selectedAnswers={selectedAnswers}
             onAnswerSelect={selectAnswer}
             onReset={handleReset}
           />
-        )}
+        </View>
+      )}
+
+      <View className="px-6 py-4 bg-white border-t border-gray-200">
+        <Button
+          title="Generate New Questions"
+          onPress={() => setModalVisible(true)}
+          fullWidth
+          icon={<Plus size={20} color="#fff" />}
+        />
       </View>
 
       {/* Limit Reached Modal */}
       <LimitReachedModal
-        visible={error?.errorCode === 'DAILY_LIMIT_REACHED'}
+        visible={error?.errorCode === "DAILY_LIMIT_REACHED"}
         feature="questions"
         quota={quota || { used: 0, limit: 0 }}
         onUpgrade={showUpgradeAlert}

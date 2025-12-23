@@ -76,16 +76,18 @@ export default function NotesScreen() {
             </View>
           </View>
           <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
-            {userPlan === "student_pro" && <Crown size={14} color="#3b82f6" />}
+            {userPlan === "pro" && <Crown size={14} color="#3b82f6" />}
             <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
-              {userPlan === "student_pro" ? "Pro" : "Free"}
+              {userPlan === "pro" ? "Pro" : "Free"}
             </Text>
           </View>
         </View>
         {quota && (
           <View className="flex-row items-center justify-between px-3 py-2 mt-3 rounded-lg bg-gray-50">
             <Text className="text-sm text-gray-600">Daily Usage</Text>
-            <Text className={`text-sm font-semibold ${quota.used >= quota.limit ? "text-red-600" : "text-gray-900"}`}>
+            <Text
+              className={`text-sm font-semibold ${quota.used >= quota.limit ? "text-red-600" : "text-gray-900"}`}
+            >
               {quota.used}/{quota.limit}
             </Text>
           </View>
@@ -411,33 +413,26 @@ export default function NotesScreen() {
 
       {/* Limit Reached Modal */}
       <LimitReachedModal
-        visible={error?.errorCode === 'DAILY_LIMIT_REACHED'}
+        visible={error?.errorCode === "DAILY_LIMIT_REACHED"}
         feature="notes"
         quota={quota}
         onUpgrade={showUpgradeAlert}
         onClose={() => {}}
       />
 
-      {/* Floating Create Button */}
-      <Pressable
-        onPress={() => {
-          if (quota.used >= quota.limit) {
-            // Modal will show automatically via error state
-          } else {
+      <View className="px-6 py-4 bg-white border-t border-gray-200">
+        <Button
+          title="Generate Notes"
+          onPress={() => {
+            if (quota.used >= quota.limit) {
+              return;
+            }
             setIsModalVisible(true);
-          }
-        }}
-        className="absolute bottom-6 right-6 p-4 bg-blue-500 rounded-full shadow-lg active:bg-blue-600"
-        style={{
-          elevation: 8,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4.65,
-        }}
-      >
-        <Plus size={28} color="#ffffff" strokeWidth={2.5} />
-      </Pressable>
+          }}
+          fullWidth
+          icon={<Plus size={20} color="#fff" />}
+        />
+      </View>
     </SafeAreaView>
   );
 }

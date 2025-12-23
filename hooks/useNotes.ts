@@ -12,10 +12,15 @@ import type { Note as NoteType } from "@/lib/types";
 import { usePlanStore } from "@/store/planStore";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getGuestUsage, getGuestLimits } from "@/utils/guestUsageTracker";
+import {
+  checkGuestLimit,
+  incrementGuestUsage,
+  getGuestUsage,
+  getGuestLimits,
+} from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 
-type UserPlan = "free" | "student_pro";
+type UserPlan = "free" | "pro";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<NoteType[]>([]);
@@ -34,7 +39,7 @@ export const useNotes = () => {
   });
 
   const { planType, usage, limits } = usePlanStore();
-  const userPlan: UserPlan = planType === "pro" ? "student_pro" : "free";
+  const userPlan: UserPlan = planType === "pro" ? "pro" : "free";
   const dailyLimit = limits?.notes || 1;
   const quota = { used: usage?.notes || 0, limit: dailyLimit };
 
@@ -61,7 +66,9 @@ export const useNotes = () => {
     const matchesSearch =
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSubject = filterSubject ? note.subject === filterSubject : true;
+    const matchesSubject = filterSubject
+      ? note.subject === filterSubject
+      : true;
     return matchesSearch && matchesSubject;
   });
 
@@ -139,18 +146,24 @@ export const useNotes = () => {
       if (!user) {
         // Guest: Increment AsyncStorage
         await incrementGuestUsage("notes");
+        // Sync planStore for cross-screen consistency
+        await usePlanStore.getState().fetchPlanStatus();
       } else {
         // Logged-in: Refresh from backend
         await usePlanStore.getState().fetchPlanStatus();
       }
-      
+
       setNotes([note, ...notes]);
       setGenerateConfig({ subject: "", topic: "", noteLength: "brief" });
       setIsModalVisible(false);
       Alert.alert("Success", "AI notes generated and saved!");
     } catch (err) {
       console.error("Error generating notes:", err);
-      const errorMessage = error?.message || (err instanceof Error ? err.message : "Failed to generate notes. Please try again.");
+      const errorMessage =
+        error?.message ||
+        (err instanceof Error
+          ? err.message
+          : "Failed to generate notes. Please try again.");
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
@@ -180,7 +193,7 @@ export const useNotes = () => {
   const canGenerate = generateConfig.subject && generateConfig.topic.trim();
 
   const isNoteLengthLocked = (noteLength: string) => {
-    if (userPlan === "student_pro") return false;
+    if (userPlan === "pro") return false;
     if (!limits) return false;
     return !limits.allowedNoteLengths.includes(noteLength);
   };

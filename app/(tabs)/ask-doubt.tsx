@@ -33,7 +33,7 @@ export default function AskDoubtScreen() {
     await askDoubt(doubtText);
   };
 
-  const isPro = plan === "student_pro";
+  const isPro = plan === "pro";
   const showLimit = !isPro && limitInfo;
 
   return (
@@ -67,8 +67,8 @@ export default function AskDoubtScreen() {
                 isPro
                   ? "bg-blue-100"
                   : user
-                  ? "bg-amber-100 border-[1px] border-amber-400"
-                  : "bg-gray-100 border-[1px] border-blue-500"
+                    ? "bg-amber-100 border-[1px] border-amber-400"
+                    : "bg-gray-100 border-[1px] border-blue-500"
               }`}
             >
               <Text
@@ -76,8 +76,8 @@ export default function AskDoubtScreen() {
                   isPro
                     ? "text-blue-700"
                     : user
-                    ? "text-amber-700"
-                    : "text-blue-600"
+                      ? "text-amber-700"
+                      : "text-blue-600"
                 }`}
               >
                 {isPro ? "Pro" : user ? "Free" : "Login"}
@@ -93,7 +93,11 @@ export default function AskDoubtScreen() {
                   {limitInfo.used}/{limitInfo.limit} doubts used today
                 </Text>
                 {limitInfo.used >= limitInfo.limit * 0.8 && (
-                  <Pressable onPress={() => user ? router.push("/subscription") : setAuthVisible(true)}>
+                  <Pressable
+                    onPress={() =>
+                      router.push("/subscription")
+                    }
+                  >
                     <Text className="text-xs font-semibold text-blue-600">
                       Upgrade
                     </Text>
@@ -104,7 +108,9 @@ export default function AskDoubtScreen() {
               <View className="mt-2 h-1.5 bg-amber-200 rounded-full overflow-hidden">
                 <View
                   className="h-full rounded-full bg-amber-500"
-                  style={{ width: `${(limitInfo.used / limitInfo.limit) * 100}%` }}
+                  style={{
+                    width: `${(limitInfo.used / limitInfo.limit) * 100}%`,
+                  }}
                 />
               </View>
             </View>
@@ -136,24 +142,15 @@ export default function AskDoubtScreen() {
 
         {/* Limit Reached Modal */}
         <LimitReachedModal
-          visible={error?.errorCode === 'DAILY_LIMIT_REACHED'}
+          visible={error?.errorCode === "DAILY_LIMIT_REACHED"}
           feature="doubts"
           quota={limitInfo || { used: 0, limit: 0 }}
           onUpgrade={() => {
-            if (user) {
-              router.push("/subscription");
-            } else {
-              setAuthVisible(true);
-            }
+            router.push("/subscription");
           }}
           onClose={() => {}}
         />
 
-        {/* Auth Modal for Paid Upgrade */}
-        <AuthModal
-          visible={authVisible}
-          onClose={() => setAuthVisible(false)}
-        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -3,9 +3,14 @@ import { doubtsService } from "@/services/api/doubts.service";
 import { loadDoubtsFromStorage } from "@/services/storage/doubts.storage";
 import { Doubt } from "@/lib/models";
 import type { Message } from "@/lib/types";
-import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getRemainingUses, getGuestLimits, getGuestUsage } from "@/utils/guestUsageTracker";
+import {
+  checkGuestLimit,
+  incrementGuestUsage,
+  getRemainingUses,
+  getGuestLimits,
+  getGuestUsage,
+} from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
 
@@ -19,7 +24,11 @@ export const useDoubts = () => {
     },
   ]);
   const [loading, setLoading] = useState(false);
-  const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; allowed: boolean } | null>(null);
+  const [limitInfo, setLimitInfo] = useState<{
+    used: number;
+    limit: number;
+    allowed: boolean;
+  } | null>(null);
   const [plan, setPlan] = useState<string>("free");
   const [error, setError] = useState<ApiError | null>(null);
 
@@ -38,15 +47,15 @@ export const useDoubts = () => {
     setLimitInfo({
       used: usage.doubts,
       limit: limits.doubts,
-      allowed: usage.doubts < limits.doubts
+      allowed: usage.doubts < limits.doubts,
     });
   };
 
   const loadPastDoubts = async () => {
     const past = await loadDoubtsFromStorage();
     if (past.length > 0) {
-      const doubts = past.map(d => Doubt.fromStorage(d));
-      const mapped = doubts.flatMap(d => d.toMessages());
+      const doubts = past.map((d) => Doubt.fromStorage(d));
+      const mapped = doubts.flatMap((d) => d.toMessages());
       setMessages((prev) => [...prev, ...mapped]);
     }
   };
@@ -58,12 +67,15 @@ export const useDoubts = () => {
     if (!user) {
       const canUse = await checkGuestLimit("doubts");
       if (!canUse) {
-        const remaining = await getRemainingUses("doubts");
         const limits = getGuestLimits();
-        setLimitInfo({ used: limits.doubts, limit: limits.doubts, allowed: false });
+        setLimitInfo({
+          used: limits.doubts,
+          limit: limits.doubts,
+          allowed: false,
+        });
         setError({
           errorCode: "DAILY_LIMIT_REACHED",
-          message: "Daily limit reached. Sign up to continue!",
+          message: "Daily limit reached. Upgrade to Pro!",
         });
         return;
       }
@@ -120,7 +132,13 @@ export const useDoubts = () => {
         await incrementGuestUsage("doubts");
         const remaining = await getRemainingUses("doubts");
         const limits = getGuestLimits();
-        setLimitInfo({ used: limits.doubts - remaining, limit: limits.doubts, allowed: true });
+        setLimitInfo({
+          used: limits.doubts - remaining,
+          limit: limits.doubts,
+          allowed: true,
+        });
+        // Sync planStore for cross-screen consistency
+        await usePlanStore.getState().fetchPlanStatus();
       } else {
         // Logged-in: Refresh from backend
         await usePlanStore.getState().fetchPlanStatus();
@@ -159,8 +177,10 @@ export const useDoubts = () => {
       });
     } catch (err: any) {
       console.error("Error sending doubt:", err);
-      
-      const errorText = error?.message || "Sorry, I couldn't process your doubt. Please try again.";
+
+      const errorText =
+        error?.message ||
+        "Sorry, I couldn't process your doubt. Please try again.";
 
       setMessages((prev) => {
         const filtered = prev.filter((msg) => msg.id !== "loading");
