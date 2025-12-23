@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { ID, Models } from "react-native-appwrite";
 import { account } from "@/lib/appwrite";
 import { usePlanStore } from "./planStore";
+import { GUEST_LIMITS } from "@/utils/guestUsageTracker";
 
 interface AuthState {
   user: Models.User<Models.Preferences> | null;
@@ -63,16 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       sessionId: "current",
     });
     set({ user: null });
-    // Reset plan store on logout
-    usePlanStore.setState({
-      planType: "free",
-      limits: { doubts: 5, questions: 10, notes: 20 },
-      usage: {
-        doubts: 0,
-        questions: 0,
-        notes: 0,
-        lastResetDate: new Date().toISOString().split("T")[0],
-      },
-    });
+    // Reset to guest state
+    await usePlanStore.getState().fetchPlanStatus();
   },
 }));

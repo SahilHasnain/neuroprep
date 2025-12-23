@@ -10,6 +10,7 @@ import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
 import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
+import { usePlanStore } from "@/store/planStore";
 
 type UserPlan = "free" | "student_pro";
 
@@ -101,11 +102,15 @@ export const useQuestions = () => {
       setQuestions(questionModels);
       setError(null);
 
-      // Increment guest usage after successful response
+      // Update usage
       if (!user) {
+        // Guest: Increment AsyncStorage
         await incrementGuestUsage("questions");
         const remaining = await getRemainingUses("questions");
         setQuota({ used: GUEST_LIMITS.questions - remaining, limit: GUEST_LIMITS.questions });
+      } else {
+        // Logged-in: Refresh from backend
+        await usePlanStore.getState().fetchPlanStatus();
       }
 
       await saveQuestionsToStorage(data, {

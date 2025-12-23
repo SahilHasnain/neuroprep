@@ -130,11 +130,13 @@ export const useNotes = () => {
         noteLength: generateConfig.noteLength,
       });
 
-      incrementUsage("notes");
-      
-      // Increment guest usage after successful response
+      // Update usage
       if (!user) {
+        // Guest: Increment AsyncStorage
         await incrementGuestUsage("notes");
+      } else {
+        // Logged-in: Refresh from backend
+        await usePlanStore.getState().fetchPlanStatus();
       }
       
       setNotes([note, ...notes]);

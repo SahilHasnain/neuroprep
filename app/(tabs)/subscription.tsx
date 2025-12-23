@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
-import { ScrollView, Text, View, RefreshControl, Alert } from "react-native";
+import { ScrollView, Text, View, RefreshControl, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LogOut, LogIn } from "lucide-react-native";
 import { usePlanStore } from "@/store/planStore";
 import { useAuthStore } from "@/store/authStore";
 import PlanCard from "@/components/ui/PlanCard";
@@ -8,10 +9,11 @@ import UsageProgressBar from "@/components/ui/UsageProgressBar";
 import UpgradeModal from "@/components/modals/UpgradeModal";
 import AuthModal from "@/components/ui/AuthModal";
 import { getPlanFeatures } from "@/utils/planFeatures";
+import { GUEST_LIMITS } from "@/utils/guestUsageTracker";
 
 export default function SubscriptionScreen() {
   const { planType, usage, status, currentPeriodEnd, loading, fetchPlanStatus, cancelSubscription, limits } = usePlanStore();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -19,7 +21,7 @@ export default function SubscriptionScreen() {
   const isPro = planType === "pro";
 
   const planFeatures = useMemo(() => 
-    getPlanFeatures(limits || { doubts: 2, questions: 1, notes: 1 }), 
+    getPlanFeatures(limits || GUEST_LIMITS), 
     [limits]
   );
 
@@ -66,6 +68,27 @@ export default function SubscriptionScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (err) {
+              Alert.alert("Error", "Failed to logout");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView
@@ -76,9 +99,28 @@ export default function SubscriptionScreen() {
       >
         {/* Header */}
         <View className="px-6 py-8 bg-white border-b border-gray-200">
-          <Text className="mb-2 text-3xl font-bold text-gray-900">
-            Subscription
-          </Text>
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-3xl font-bold text-gray-900">
+              Subscription
+            </Text>
+            {user ? (
+              <TouchableOpacity
+                onPress={handleLogout}
+                className="flex-row items-center px-4 py-2 bg-red-50 rounded-lg"
+              >
+                <LogOut size={18} color="#ef4444" />
+                <Text className="ml-2 text-sm font-medium text-red-600">Logout</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setShowAuthModal(true)}
+                className="flex-row items-center px-4 py-2 bg-blue-50 rounded-lg"
+              >
+                <LogIn size={18} color="#3b82f6" />
+                <Text className="ml-2 text-sm font-medium text-blue-600">Login</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <Text className="text-base text-gray-600">
             {isPro
               ? "You're on the Pro plan with unlimited access"

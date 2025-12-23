@@ -7,6 +7,7 @@ import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
 import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
+import { usePlanStore } from "@/store/planStore";
 
 export const useDoubts = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -24,7 +25,10 @@ export const useDoubts = () => {
   const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
-    loadPastDoubts();
+    const { user } = useAuthStore.getState();
+    if (user) {
+      loadPastDoubts();
+    }
   }, []);
 
   const loadPastDoubts = async () => {
@@ -102,11 +106,15 @@ export const useDoubts = () => {
       setPlan(response.plan || "free");
       setError(null);
 
-      // Increment guest usage after successful response
+      // Update usage
       if (!user) {
+        // Guest: Increment AsyncStorage
         await incrementGuestUsage("doubts");
         const remaining = await getRemainingUses("doubts");
         setLimitInfo({ used: GUEST_LIMITS.doubts - remaining, limit: GUEST_LIMITS.doubts, allowed: true });
+      } else {
+        // Logged-in: Refresh from backend
+        await usePlanStore.getState().fetchPlanStatus();
       }
 
       const aiData = response.data.answer;

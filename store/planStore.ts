@@ -2,13 +2,8 @@ import { create } from "zustand";
 import { PlanState, FeatureType, PlanSubscriptionData } from "@/lib/types/plan";
 import { subscriptionService } from "@/services/api/subscription.service";
 import { openRazorpayCheckout } from "@/utils/razorpay";
-
-// Default limits for free plan
-const FREE_PLAN_LIMITS = {
-  doubts: 2,
-  questions: 1,
-  notes: 1,
-};
+import { getGuestUsage, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { useAuthStore } from "./authStore";
 
 // Default limits for pro plan
 const PRO_PLAN_LIMITS = {
@@ -17,22 +12,14 @@ const PRO_PLAN_LIMITS = {
   notes: 1000,
 };
 
-// Get today's date in ISO format (YYYY-MM-DD)
-const getTodayDate = () => new Date().toISOString().split("T")[0];
-
-// Check if usage should be reset (different day)
-const shouldResetUsage = (lastResetDate: string): boolean => {
-  return lastResetDate !== getTodayDate();
-};
-
 export const usePlanStore = create<PlanState>((set, get) => ({
   planType: "free",
-  limits: FREE_PLAN_LIMITS,
+  limits: GUEST_LIMITS,
   usage: {
     doubts: 0,
     questions: 0,
     notes: 0,
-    lastResetDate: getTodayDate(),
+    lastResetDate: new Date().toISOString().split("T")[0],
   },
   loading: false,
   error: null,
@@ -40,12 +27,32 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   fetchPlanStatus: async () => {
     set({ loading: true, error: null });
     try {
+      const { user } = useAuthStore.getState();
+
+      // Guest: Read from AsyncStorage
+      if (!user) {
+        const guestUsage = await getGuestUsage();
+        set({
+          planType: "free",
+          limits: GUEST_LIMITS,
+          usage: {
+            doubts: guestUsage.doubts,
+            questions: guestUsage.questions,
+            notes: guestUsage.notes,
+            lastResetDate: guestUsage.date,
+          },
+          loading: false,
+        });
+        return;
+      }
+
+      // Logged-in: Fetch from backend
       const result = await subscriptionService.getPlanStatus();
       const data = result.data as any;
 
       set({
         planType: data.planType || "free",
-        limits: data.planType === "pro" ? PRO_PLAN_LIMITS : FREE_PLAN_LIMITS,
+        limits: data.planType === "pro" ? PRO_PLAN_LIMITS : GUEST_LIMITS,
         usage: data.usage,
         status: data.status,
         trialEndsAt: data.trialEndsAt,
@@ -59,46 +66,33 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   },
 
   incrementUsage: (feature: FeatureType) => {
+    const { user } = useAuthStore.getState();
+    
+    // Guests: handled by guestUsageTracker in hooks
+    if (!user) return;
+
+    // Logged-in users: update Zustand
     const state = get();
+    if (!state.usage) return;
 
-    // Ensure usage exists
-    if (!state.usage) {
-      set({
-        usage: {
-          doubts: 0,
-          questions: 0,
-          notes: 0,
-          lastResetDate: getTodayDate(),
-        },
-      });
-      return;
-    }
-
-    // Check if daily reset is needed
-    const shouldReset = shouldResetUsage(state.usage.lastResetDate);
-
-    const currentUsage = shouldReset
-      ? {
-          doubts: 0,
-          questions: 0,
-          notes: 0,
-          lastResetDate: getTodayDate(),
-        }
-      : { ...state.usage };
-
-    // Increment the usage
+    const currentUsage = { ...state.usage };
     currentUsage[feature] = currentUsage[feature] + 1;
-
     set({ usage: currentUsage });
   },
 
   resetDailyUsage: async () => {
+    const { user } = useAuthStore.getState();
+    
+    // Guests: handled by guestUsageTracker
+    if (!user) return;
+
+    // Logged-in users: reset Zustand
     set({
       usage: {
         doubts: 0,
         questions: 0,
         notes: 0,
-        lastResetDate: getTodayDate(),
+        lastResetDate: new Date().toISOString().split("T")[0],
       },
     });
   },
