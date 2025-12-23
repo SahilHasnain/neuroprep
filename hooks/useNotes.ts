@@ -12,7 +12,7 @@ import type { Note as NoteType } from "@/lib/types";
 import { usePlanStore } from "@/store/planStore";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage } from "@/utils/guestUsageTracker";
+import { checkGuestLimit, incrementGuestUsage, getGuestUsage, getGuestLimits } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 
 type UserPlan = "free" | "student_pro";
@@ -40,7 +40,17 @@ export const useNotes = () => {
 
   useEffect(() => {
     loadNotes();
+    loadGuestUsage();
   }, []);
+
+  const loadGuestUsage = async () => {
+    const { user } = useAuthStore.getState();
+    if (!user) {
+      const usage = await getGuestUsage();
+      // quota is already calculated from planStore.usage
+      // This ensures it's loaded on mount
+    }
+  };
 
   const loadNotes = async () => {
     const storedNotes = await loadNotesFromStorage();

@@ -5,7 +5,7 @@ import { Doubt } from "@/lib/models";
 import type { Message } from "@/lib/types";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getRemainingUses, getGuestLimits } from "@/utils/guestUsageTracker";
+import { checkGuestLimit, incrementGuestUsage, getRemainingUses, getGuestLimits, getGuestUsage } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
 
@@ -27,8 +27,20 @@ export const useDoubts = () => {
     const { user } = useAuthStore.getState();
     if (user) {
       loadPastDoubts();
+    } else {
+      loadGuestUsage();
     }
   }, []);
+
+  const loadGuestUsage = async () => {
+    const usage = await getGuestUsage();
+    const limits = getGuestLimits();
+    setLimitInfo({
+      used: usage.doubts,
+      limit: limits.doubts,
+      allowed: usage.doubts < limits.doubts
+    });
+  };
 
   const loadPastDoubts = async () => {
     const past = await loadDoubtsFromStorage();
