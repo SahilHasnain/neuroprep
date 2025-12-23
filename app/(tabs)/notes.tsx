@@ -4,10 +4,12 @@ import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
 import AuthModal from "@/components/ui/AuthModal";
+import LimitReachedModal from "@/components/ui/LimitReachedModal";
 import { useNotes } from "@/hooks/useNotes";
 import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
-import { BookOpen, Sparkles, X, Crown, Lock } from "lucide-react-native";
+import { BookOpen, Sparkles, X, Crown, Lock, Plus } from "lucide-react-native";
 import { useState } from "react";
+import { useRouter } from "expo-router";
 import {
   Modal,
   Pressable,
@@ -21,6 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MathMarkdown from "@/components/shared/MathMarkdown";
 
 export default function NotesScreen() {
+  const router = useRouter();
   const {
     notes,
     searchQuery,
@@ -43,16 +46,17 @@ export default function NotesScreen() {
     userPlan,
     quota,
     isNoteLengthLocked,
+    error,
   } = useNotes();
   const [authVisible, setAuthVisible] = useState(false);
 
   const showUpgradeAlert = () => {
     Alert.alert(
       "Upgrade to Pro",
-      "Unlock unlimited AI notes with Pro plan!",
+      "This feature is only available for Pro users. Upgrade now to unlock detailed and exam-focused notes!",
       [
-        { text: "Maybe Later", style: "cancel" },
-        { text: "Upgrade Now", onPress: () => setAuthVisible(true) },
+        { text: "Cancel", style: "cancel" },
+        { text: "Upgrade", onPress: () => router.push("/(tabs)/subscription") },
       ]
     );
   };
@@ -71,25 +75,11 @@ export default function NotesScreen() {
               </Text>
             </View>
           </View>
-          <View className="flex-row gap-2">
-            <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
-              {userPlan === "student_pro" && <Crown size={14} color="#3b82f6" />}
-              <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
-                {userPlan === "student_pro" ? "Pro" : "Free"}
-              </Text>
-            </View>
-            <Pressable
-              onPress={() => {
-                if (quota.used >= quota.limit) {
-                  showUpgradeAlert();
-                } else {
-                  setIsModalVisible(true);
-                }
-              }}
-              className="p-3 bg-blue-500 rounded-full active:bg-blue-600"
-            >
-              <Sparkles size={24} color="#ffffff" />
-            </Pressable>
+          <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
+            {userPlan === "student_pro" && <Crown size={14} color="#3b82f6" />}
+            <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
+              {userPlan === "student_pro" ? "Pro" : "Free"}
+            </Text>
           </View>
         </View>
         {quota && (
@@ -418,6 +408,36 @@ export default function NotesScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Limit Reached Modal */}
+      <LimitReachedModal
+        visible={error?.errorCode === 'DAILY_LIMIT_REACHED'}
+        feature="notes"
+        quota={quota}
+        onUpgrade={showUpgradeAlert}
+        onClose={() => {}}
+      />
+
+      {/* Floating Create Button */}
+      <Pressable
+        onPress={() => {
+          if (quota.used >= quota.limit) {
+            // Modal will show automatically via error state
+          } else {
+            setIsModalVisible(true);
+          }
+        }}
+        className="absolute bottom-6 right-6 p-4 bg-blue-500 rounded-full shadow-lg active:bg-blue-600"
+        style={{
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4.65,
+        }}
+      >
+        <Plus size={28} color="#ffffff" strokeWidth={2.5} />
+      </Pressable>
     </SafeAreaView>
   );
 }

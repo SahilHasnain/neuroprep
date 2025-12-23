@@ -1,6 +1,7 @@
 import ChatBubble from "@/components/shared/ChatBubble";
 import Input from "@/components/ui/Input";
 import AuthModal from "@/components/ui/AuthModal";
+import LimitReachedModal from "@/components/ui/LimitReachedModal";
 import { useAuthStore } from "@/store/authStore";
 import { useDoubts } from "@/hooks/useDoubts";
 import { useState, useEffect } from "react";
@@ -17,7 +18,7 @@ import { router } from "expo-router";
 
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
-  const { messages, loading, askDoubt, limitInfo, plan } = useDoubts();
+  const { messages, loading, askDoubt, limitInfo, plan, error } = useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
 
@@ -131,6 +132,21 @@ export default function AskDoubtScreen() {
           onChangeText={setInputText}
           placeholder="Type your doubt here..."
           multiline
+        />
+
+        {/* Limit Reached Modal */}
+        <LimitReachedModal
+          visible={error?.errorCode === 'DAILY_LIMIT_REACHED'}
+          feature="doubts"
+          quota={limitInfo || { used: 0, limit: 0 }}
+          onUpgrade={() => {
+            if (user) {
+              router.push("/subscription");
+            } else {
+              setAuthVisible(true);
+            }
+          }}
+          onClose={() => {}}
         />
 
         {/* Auth Modal for Paid Upgrade */}

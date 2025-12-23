@@ -46,7 +46,7 @@ export default function QuestionDisplay({
       ))}
 
       <View className="pb-6">
-        <Button title="Back to History" onPress={onReset} fullWidth />
+        <Button title="Back to Question Sets" onPress={onReset} fullWidth />
       </View>
     </ScrollView>
   );

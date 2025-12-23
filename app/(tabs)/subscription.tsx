@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { ScrollView, Text, View, RefreshControl, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePlanStore } from "@/store/planStore";
@@ -7,16 +7,25 @@ import PlanCard from "@/components/ui/PlanCard";
 import UsageProgressBar from "@/components/ui/UsageProgressBar";
 import UpgradeModal from "@/components/modals/UpgradeModal";
 import AuthModal from "@/components/ui/AuthModal";
-import { PLAN_FEATURES } from "@/constants";
+import { getPlanFeatures } from "@/utils/planFeatures";
 
 export default function SubscriptionScreen() {
-  const { planType, usage, status, currentPeriodEnd, loading, fetchPlanStatus, cancelSubscription } = usePlanStore();
+  const { planType, usage, status, currentPeriodEnd, loading, fetchPlanStatus, cancelSubscription, limits } = usePlanStore();
   const { user } = useAuthStore();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
 
   const isPro = planType === "pro";
+
+  const planFeatures = useMemo(() => 
+    getPlanFeatures(limits || { doubts: 2, questions: 1, notes: 1 }), 
+    [limits]
+  );
+
+  useEffect(() => {
+    fetchPlanStatus();
+  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -129,7 +138,7 @@ export default function SubscriptionScreen() {
           <PlanCard
             planType="pro"
             isCurrentPlan={isPro}
-            features={PLAN_FEATURES}
+            features={planFeatures}
             onSelectPlan={handleUpgradePress}
             onCancel={isPro ? handleCancelSubscription : undefined}
           />
@@ -138,7 +147,7 @@ export default function SubscriptionScreen() {
           <PlanCard
             planType="free"
             isCurrentPlan={!isPro}
-            features={PLAN_FEATURES}
+            features={planFeatures}
           />
         </View>
 

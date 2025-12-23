@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
+import type { ApiError } from "@/utils/errorHandler";
 
 interface GenerateQuestionsModalProps {
   visible: boolean;
@@ -18,7 +19,7 @@ interface GenerateQuestionsModalProps {
   setQuestionCount: (value: string) => void;
   onGenerate: () => void;
   loading: boolean;
-  error: string | null;
+  error: ApiError | null;
   canGenerate: boolean;
   userPlan: string;
   isDifficultyLocked: (diff: string) => boolean;
@@ -117,7 +118,7 @@ export default function GenerateQuestionsModal({
             <View className="mt-3 p-3 bg-red-50 rounded-xl border-[1px] border-red-200 flex-row items-start">
               <AlertCircle size={18} color="#dc2626" style={{ marginTop: 2 }} />
               <Text className="ml-2 text-sm text-red-600 flex-1">
-                {error}
+                {error.message}
               </Text>
             </View>
           )}

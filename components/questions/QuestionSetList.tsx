@@ -55,11 +55,11 @@ export default function QuestionSetList({ sets, onSelect, onDelete, loading }: Q
                 {set.label}
               </Text>
               <Text className="mt-1 text-sm text-gray-500">
-                {new Date(set.createdAt).toLocaleDateString("en-IN", {
+                {set.createdAt ? new Date(set.createdAt).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
-                })}
+                }) : "Recently created"}
               </Text>
             </View>
             <View className="flex-row items-center gap-2">

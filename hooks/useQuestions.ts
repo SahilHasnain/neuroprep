@@ -6,7 +6,12 @@ import {
 } from "@/services/storage/questions.storage";
 import { Question } from "@/lib/models";
 import type { Question as QuestionType } from "@/lib/types";
-import { canAccessDifficulty, canAccessQuestionCount, type UserPlan } from "@/utils/planRestrictions";
+import type { PlanLimits } from "@/types/plan";
+import { parseApiError, type ApiError } from "@/utils/errorHandler";
+import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { useAuthStore } from "@/store/authStore";
+
+type UserPlan = "free" | "student_pro";
 
 export const useQuestions = () => {
   const [subject, setSubject] = useState("");
@@ -15,27 +20,11 @@ export const useQuestions = () => {
   const [questionCount, setQuestionCount] = useState("");
   const [questions, setQuestions] = useState<QuestionType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [userPlan, setUserPlan] = useState<UserPlan>("free");
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
-
-  useEffect(() => {
-    loadQuestions();
-  }, []);
-
-  const loadQuestions = async () => {
-    const questionSets = await loadQuestionsFromStorage();
-    if (questionSets.length > 0) {
-      const latest = questionSets[0];
-      setQuestions(latest.questions);
-      setSubject(latest.subject);
-      setTopic(latest.topic);
-      setDifficulty(latest.difficulty);
-      setQuestionCount(latest.questionCount.toString());
-    }
-  };
-
+  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
   const loadFromParams = (data: {
     questions: QuestionType[];
     subject: string;
@@ -56,6 +45,21 @@ export const useQuestions = () => {
       return;
     }
 
+    const { user } = useAuthStore.getState();
+
+    // Guest limit check
+    if (!user) {
+      const canUse = await checkGuestLimit("questions");
+      if (!canUse) {
+        setQuota({ used: GUEST_LIMITS.questions, limit: GUEST_LIMITS.questions });
+        setError({
+          errorCode: "DAILY_LIMIT_REACHED",
+          message: "Daily limit reached. Sign up to continue!",
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
     setQuestions([]);
@@ -70,6 +74,10 @@ export const useQuestions = () => {
       });
 
       if (!res.success) {
+        const apiError = parseApiError(res);
+        if (apiError) {
+          setError(apiError);
+        }
         throw new Error(res.message || "Failed to generate questions");
       }
 
@@ -78,6 +86,9 @@ export const useQuestions = () => {
       }
       if (res.quota) {
         setQuota({ used: res.quota.used, limit: res.quota.limit });
+      }
+      if (res.planLimits) {
+        setPlanLimits(res.planLimits);
       }
 
       const data = res.data;
@@ -88,6 +99,14 @@ export const useQuestions = () => {
 
       const questionModels = data.map(q => Question.fromApi(q));
       setQuestions(questionModels);
+      setError(null);
+
+      // Increment guest usage after successful response
+      if (!user) {
+        await incrementGuestUsage("questions");
+        const remaining = await getRemainingUses("questions");
+        setQuota({ used: GUEST_LIMITS.questions - remaining, limit: GUEST_LIMITS.questions });
+      }
 
       await saveQuestionsToStorage(data, {
         subject,
@@ -97,11 +116,12 @@ export const useQuestions = () => {
       });
     } catch (err) {
       console.error("Error generating questions:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to generate questions. Please try again."
-      );
+      if (!error) {
+        setError({
+          errorCode: 'SERVER_ERROR',
+          message: err instanceof Error ? err.message : "Failed to generate questions. Please try again."
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -126,8 +146,15 @@ export const useQuestions = () => {
 
   const canGenerate = subject && topic && difficulty && questionCount;
 
-  const isDifficultyLocked = (diff: string) => !canAccessDifficulty(userPlan, diff);
-  const isQuestionCountLocked = (count: string) => !canAccessQuestionCount(userPlan, parseInt(count, 10));
+  const isDifficultyLocked = (diff: string) => {
+    if (!planLimits) return false;
+    return !planLimits.allowedDifficulties.includes(diff.toLowerCase());
+  };
+
+  const isQuestionCountLocked = (count: string) => {
+    if (!planLimits) return false;
+    return parseInt(count, 10) > planLimits.maxQuestions;
+  };
 
   return {
     subject,
@@ -148,6 +175,7 @@ export const useQuestions = () => {
     canGenerate,
     userPlan,
     quota,
+    planLimits,
     isDifficultyLocked,
     isQuestionCountLocked,
     loadFromParams,

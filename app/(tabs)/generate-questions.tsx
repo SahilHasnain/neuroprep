@@ -5,6 +5,7 @@ import { Sparkles, Crown, Plus } from "lucide-react-native";
 import { useQuestions } from "@/hooks/useQuestions";
 import Button from "@/components/ui/Button";
 import AuthModal from "@/components/ui/AuthModal";
+import LimitReachedModal from "@/components/ui/LimitReachedModal";
 import QuestionSetList from "@/components/questions/QuestionSetList";
 import QuestionDisplay from "@/components/questions/QuestionDisplay";
 import GenerateQuestionsModal from "@/components/questions/GenerateQuestionsModal";
@@ -170,6 +171,15 @@ export default function GenerateQuestionsScreen() {
           />
         )}
       </View>
+
+      {/* Limit Reached Modal */}
+      <LimitReachedModal
+        visible={error?.errorCode === 'DAILY_LIMIT_REACHED'}
+        feature="questions"
+        quota={quota || { used: 0, limit: 0 }}
+        onUpgrade={showUpgradeAlert}
+        onClose={() => {}}
+      />
     </SafeAreaView>
   );
 }

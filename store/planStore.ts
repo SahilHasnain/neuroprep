@@ -5,16 +5,16 @@ import { openRazorpayCheckout } from "@/utils/razorpay";
 
 // Default limits for free plan
 const FREE_PLAN_LIMITS = {
-  doubts: 5,
-  questions: 10,
-  notes: 20,
+  doubts: 2,
+  questions: 1,
+  notes: 1,
 };
 
 // Default limits for pro plan
 const PRO_PLAN_LIMITS = {
-  doubts: 999, // Effectively unlimited
-  questions: 999,
-  notes: 999,
+  doubts: 1000,
+  questions: 1000,
+  notes: 1000,
 };
 
 // Get today's date in ISO format (YYYY-MM-DD)

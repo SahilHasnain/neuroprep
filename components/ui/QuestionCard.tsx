@@ -33,6 +33,7 @@ export default function QuestionCard({
   const handleOptionPress = (optionId: string) => {
     if (onAnswerSelect && !isAnswerRevealed) {
       onAnswerSelect(optionId);
+      setIsAnswerRevealed(true);
     }
   };
 
@@ -140,16 +141,7 @@ export default function QuestionCard({
         })}
       </View>
 
-      {correctAnswer && !showAnswer && !isAnswerRevealed && selectedAnswer && (
-        <TouchableOpacity
-          onPress={handleRevealAnswer}
-          className="items-center justify-center py-3 mt-4 bg-blue-500 rounded-xl"
-        >
-          <Text className="text-base font-semibold text-white">
-            Show Answer
-          </Text>
-        </TouchableOpacity>
-      )}
+
     </View>
   );
 }

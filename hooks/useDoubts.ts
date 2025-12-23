@@ -3,6 +3,10 @@ import { doubtsService } from "@/services/api/doubts.service";
 import { loadDoubtsFromStorage } from "@/services/storage/doubts.storage";
 import { Doubt } from "@/lib/models";
 import type { Message } from "@/lib/types";
+import type { PlanLimits } from "@/types/plan";
+import { parseApiError, type ApiError } from "@/utils/errorHandler";
+import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { useAuthStore } from "@/store/authStore";
 
 export const useDoubts = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -15,7 +19,9 @@ export const useDoubts = () => {
   ]);
   const [loading, setLoading] = useState(false);
   const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; allowed: boolean } | null>(null);
-  const [plan, setPlan] = useState<string>("free")
+  const [plan, setPlan] = useState<string>("free");
+  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     loadPastDoubts();
@@ -31,6 +37,21 @@ export const useDoubts = () => {
   };
 
   const askDoubt = async (doubtText: string) => {
+    const { user } = useAuthStore.getState();
+
+    // Guest limit check
+    if (!user) {
+      const canUse = await checkGuestLimit("doubts");
+      if (!canUse) {
+        const remaining = await getRemainingUses("doubts");
+        setLimitInfo({ used: GUEST_LIMITS.doubts, limit: GUEST_LIMITS.doubts, allowed: false });
+        setError({
+          errorCode: "DAILY_LIMIT_REACHED",
+          message: "Daily limit reached. Sign up to continue!",
+        });
+        return;
+      }
+    }
     const userMessage: Message = {
       id: Date.now().toString(),
       text: doubtText,
@@ -58,15 +79,35 @@ export const useDoubts = () => {
     try {
       const response = await doubtsService.askDoubt(doubtText);
 
-      if (!response.success || !response.data) {
+      if (!response.success) {
+        const apiError = parseApiError(response);
+        if (apiError) {
+          setError(apiError);
+        }
         throw new Error(response.message || "Invalid response from server");
+      }
+
+      if (!response.data) {
+        throw new Error("Invalid response from server");
       }
 
       if (response.limitInfo) {
         setLimitInfo(response.limitInfo);
       }
 
+      if (response.planLimits) {
+        setPlanLimits(response.planLimits);
+      }
+
       setPlan(response.plan || "free");
+      setError(null);
+
+      // Increment guest usage after successful response
+      if (!user) {
+        await incrementGuestUsage("doubts");
+        const remaining = await getRemainingUses("doubts");
+        setLimitInfo({ used: GUEST_LIMITS.doubts - remaining, limit: GUEST_LIMITS.doubts, allowed: true });
+      }
 
       const aiData = response.data.answer;
       let formattedResponse = "";
@@ -102,10 +143,7 @@ export const useDoubts = () => {
     } catch (err: any) {
       console.error("Error sending doubt:", err);
       
-      let errorText = "Sorry, I couldn't process your doubt. Please try again.";
-      if (err.response?.status === 402) {
-        errorText = "Daily limit reached. Upgrade to Pro for unlimited doubts!";
-      }
+      const errorText = error?.message || "Sorry, I couldn't process your doubt. Please try again.";
 
       setMessages((prev) => {
         const filtered = prev.filter((msg) => msg.id !== "loading");
@@ -125,5 +163,5 @@ export const useDoubts = () => {
     }
   };
 
-  return { messages, loading, askDoubt, limitInfo, plan };
+  return { messages, loading, askDoubt, limitInfo, plan, planLimits, error };
 };

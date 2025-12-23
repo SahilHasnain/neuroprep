@@ -1,9 +1,9 @@
 // API Endpoints
 export const API_ENDPOINTS = {
   ASK_DOUBT: "https://693e61e0001e8e28c8e6.fra.appwrite.run",
-  DOUBTS_HISTORY: "https://69492694088b6e7b7e89.fra.appwrite.run",
+  DOUBTS_HISTORY: "https://69492691002f35be1da1.fra.appwrite.run",
   GENERATE_QUESTIONS: "https://69423cba001540dea615.fra.appwrite.run",
-  QUESTIONS_HISTORY: "https://694926d100266667f1bb.fra.appwrite.run",
+  QUESTIONS_HISTORY: "https://694926d2000145b262a6.fra.appwrite.run",
   NOTES: "https://6942afbd002f2d29fdce.fra.appwrite.run",
   NOTES_HISTORY: "https://6949271d003661a0358a.fra.appwrite.run",
   CREATE_SUBSCRIPTION: "https://6947ac26001044e8e8ed.fra.appwrite.run",

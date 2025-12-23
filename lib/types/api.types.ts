@@ -2,6 +2,8 @@
  * API Request & Response Types
  */
 
+import type { PlanLimits } from "@/types/plan";
+
 // Generic API Response Wrapper
 export interface ApiResponse<T> {
   success: boolean;
@@ -18,6 +20,8 @@ export interface ApiResponse<T> {
     limit: number;
     allowed: boolean;
   };
+  planLimits?: PlanLimits;
+  errorCode?: string;
 }
 
 // Doubts API

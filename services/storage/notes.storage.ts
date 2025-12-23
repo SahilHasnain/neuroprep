@@ -16,10 +16,14 @@ export const loadNotesFromStorage = async (): Promise<Note[]> => {
       const notes = response.data || [];
       
       // Format content for each note
-      return notes.map(note => ({
+      return notes.map((note: any) => ({
         ...note,
         content: formatNotesContent(note.content),
-        date: new Date(note.createdAt).toLocaleDateString("en-US", {
+        date: note.createdAt ? new Date(note.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }) : new Date().toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",

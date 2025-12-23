@@ -10,7 +10,12 @@ import { formatNotesContent } from "@/utils/formatters";
 import { Note } from "@/lib/models";
 import type { Note as NoteType } from "@/lib/types";
 import { usePlanStore } from "@/store/planStore";
-import { PLAN_LIMITS, canAccessNoteLength } from "@/utils/planRestrictions";
+import type { PlanLimits } from "@/types/plan";
+import { parseApiError, type ApiError } from "@/utils/errorHandler";
+import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { useAuthStore } from "@/store/authStore";
+
+type UserPlan = "free" | "student_pro";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<NoteType[]>([]);
@@ -20,6 +25,8 @@ export const useNotes = () => {
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   const [generateConfig, setGenerateConfig] = useState({
     subject: "",
@@ -28,8 +35,8 @@ export const useNotes = () => {
   });
 
   const { planType, usage, incrementUsage } = usePlanStore();
-  const userPlan = planType === "pro" ? "student_pro" : "free";
-  const dailyLimit = PLAN_LIMITS[userPlan].dailyNotes;
+  const userPlan: UserPlan = planType === "pro" ? "student_pro" : "free";
+  const dailyLimit = planLimits?.dailyNotes || 1;
   const quota = { used: usage?.notes || 0, limit: dailyLimit };
 
   useEffect(() => {
@@ -55,7 +62,19 @@ export const useNotes = () => {
       return;
     }
 
-    if (usage?.notes >= dailyLimit) {
+    const { user } = useAuthStore.getState();
+
+    // Guest limit check
+    if (!user) {
+      const canUse = await checkGuestLimit("notes");
+      if (!canUse) {
+        setError({
+          errorCode: "DAILY_LIMIT_REACHED",
+          message: "Daily limit reached. Sign up to continue!",
+        });
+        return;
+      }
+    } else if (usage?.notes >= dailyLimit) {
       Alert.alert(
         "Daily Limit Reached",
         `You've reached your daily limit of ${dailyLimit} notes. Upgrade to Pro for unlimited notes!`
@@ -72,9 +91,23 @@ export const useNotes = () => {
         noteLength: generateConfig.noteLength,
       });
 
-      if (!response.success || !response.data) {
+      if (!response.success) {
+        const apiError = parseApiError(response);
+        if (apiError) {
+          setError(apiError);
+        }
         throw new Error(response.message || "Invalid response from server");
       }
+
+      if (!response.data) {
+        throw new Error("Invalid response from server");
+      }
+
+      if (response.planLimits) {
+        setPlanLimits(response.planLimits);
+      }
+
+      setError(null);
 
       const apiNotes = (response.data as any)?.content || response.data;
       const content = formatNotesContent(apiNotes);
@@ -98,18 +131,20 @@ export const useNotes = () => {
       });
 
       incrementUsage("notes");
+      
+      // Increment guest usage after successful response
+      if (!user) {
+        await incrementGuestUsage("notes");
+      }
+      
       setNotes([note, ...notes]);
       setGenerateConfig({ subject: "", topic: "", noteLength: "brief" });
       setIsModalVisible(false);
       Alert.alert("Success", "AI notes generated and saved!");
     } catch (err) {
       console.error("Error generating notes:", err);
-      Alert.alert(
-        "Error",
-        err instanceof Error
-          ? err.message
-          : "Failed to generate notes. Please try again."
-      );
+      const errorMessage = error?.message || (err instanceof Error ? err.message : "Failed to generate notes. Please try again.");
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -136,7 +171,11 @@ export const useNotes = () => {
   };
 
   const canGenerate = generateConfig.subject && generateConfig.topic.trim();
-  const isNoteLengthLocked = (noteLength: string) => !canAccessNoteLength(userPlan, noteLength);
+
+  const isNoteLengthLocked = (noteLength: string) => {
+    if (userPlan === "student_pro") return false;
+    return noteLength === "detailed" || noteLength === "exam";
+  };
 
   return {
     notes,
@@ -159,6 +198,8 @@ export const useNotes = () => {
     canGenerate,
     userPlan,
     quota,
+    planLimits,
+    error,
     isNoteLengthLocked,
   };
 };

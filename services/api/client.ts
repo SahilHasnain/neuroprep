@@ -7,11 +7,6 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      // Validate URL
-      if (!url || typeof url !== 'string') {
-        throw new Error('Invalid API endpoint URL');
-      }
-
       const identity = await getIdentity();
       
       const response = await fetch(url, {
