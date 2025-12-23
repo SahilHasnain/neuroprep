@@ -21,7 +21,6 @@ export const useDoubts = () => {
   const [loading, setLoading] = useState(false);
   const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number; allowed: boolean } | null>(null);
   const [plan, setPlan] = useState<string>("free");
-  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
@@ -100,10 +99,6 @@ export const useDoubts = () => {
         setLimitInfo(response.limitInfo);
       }
 
-      if (response.planLimits) {
-        setPlanLimits(response.planLimits);
-      }
-
       setPlan(response.plan || "free");
       setError(null);
 
@@ -173,5 +168,5 @@ export const useDoubts = () => {
     }
   };
 
-  return { messages, loading, askDoubt, limitInfo, plan, planLimits, error };
+  return { messages, loading, askDoubt, limitInfo, plan, error };
 };

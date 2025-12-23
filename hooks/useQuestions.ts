@@ -25,7 +25,7 @@ export const useQuestions = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [userPlan, setUserPlan] = useState<UserPlan>("free");
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
-  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
+  const { limits } = usePlanStore();
   const loadFromParams = (data: {
     questions: QuestionType[];
     subject: string;
@@ -89,9 +89,6 @@ export const useQuestions = () => {
       if (res.quota) {
         setQuota({ used: res.quota.used, limit: res.quota.limit });
       }
-      if (res.planLimits) {
-        setPlanLimits(res.planLimits);
-      }
 
       const data = res.data;
 
@@ -154,13 +151,13 @@ export const useQuestions = () => {
   const canGenerate = subject && topic && difficulty && questionCount;
 
   const isDifficultyLocked = (diff: string) => {
-    if (!planLimits) return false;
-    return !planLimits.allowedDifficulties.includes(diff.toLowerCase());
+    if (!limits) return false;
+    return !limits.allowedDifficulties.includes(diff.toLowerCase());
   };
 
   const isQuestionCountLocked = (count: string) => {
-    if (!planLimits) return false;
-    return parseInt(count, 10) > planLimits.maxQuestions;
+    if (!limits) return false;
+    return parseInt(count, 10) > limits.maxQuestions;
   };
 
   return {
@@ -182,7 +179,6 @@ export const useQuestions = () => {
     canGenerate,
     userPlan,
     quota,
-    planLimits,
     isDifficultyLocked,
     isQuestionCountLocked,
     loadFromParams,

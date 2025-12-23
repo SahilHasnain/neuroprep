@@ -10,11 +10,21 @@ const PRO_PLAN_LIMITS = {
   doubts: 1000,
   questions: 1000,
   notes: 1000,
+  maxQuestions: 20,
+  allowedDifficulties: ['easy', 'medium', 'hard'],
+  allowedNoteLengths: ['brief', 'detailed', 'exam']
 };
 
 export const usePlanStore = create<PlanState>((set, get) => ({
   planType: "free",
-  limits: { doubts: 2, questions: 1, notes: 1 }, // Default fallback
+  limits: {
+    doubts: 2,
+    questions: 1,
+    notes: 1,
+    maxQuestions: 5,
+    allowedDifficulties: ['easy'],
+    allowedNoteLengths: ['brief']
+  },
   usage: {
     doubts: 0,
     questions: 0,

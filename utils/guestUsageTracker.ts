@@ -1,16 +1,24 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { PlanLimits } from "@/lib/types/plan";
 
 const STORAGE_KEY = "guestUsage";
 
 // Limits will be fetched from backend
-let CACHED_LIMITS: { doubts: number; questions: number; notes: number } | null = null;
+let CACHED_LIMITS: PlanLimits | null = null;
 
-export const setGuestLimits = (limits: { doubts: number; questions: number; notes: number }) => {
+export const setGuestLimits = (limits: PlanLimits) => {
     CACHED_LIMITS = limits;
 };
 
-export const getGuestLimits = () => {
-    return CACHED_LIMITS || { doubts: 2, questions: 1, notes: 1 }; // Fallback
+export const getGuestLimits = (): PlanLimits => {
+    return CACHED_LIMITS || {
+        doubts: 2,
+        questions: 1,
+        notes: 1,
+        maxQuestions: 5,
+        allowedDifficulties: ['easy'],
+        allowedNoteLengths: ['brief']
+    };
 };
 
 type FeatureType = "doubts" | "questions" | "notes";

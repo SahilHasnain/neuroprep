@@ -5,6 +5,9 @@ export interface PlanLimits {
   doubts: number;
   questions: number;
   notes: number;
+  maxQuestions: number;
+  allowedDifficulties: string[];
+  allowedNoteLengths: string[];
 }
 
 export interface PlanUsage {

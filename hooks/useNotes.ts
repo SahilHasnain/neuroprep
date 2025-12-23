@@ -25,7 +25,6 @@ export const useNotes = () => {
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
   const [loading, setLoading] = useState(false);
-  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   const [generateConfig, setGenerateConfig] = useState({
@@ -34,9 +33,9 @@ export const useNotes = () => {
     noteLength: "brief",
   });
 
-  const { planType, usage, incrementUsage } = usePlanStore();
+  const { planType, usage, limits } = usePlanStore();
   const userPlan: UserPlan = planType === "pro" ? "student_pro" : "free";
-  const dailyLimit = planLimits?.dailyNotes || 1;
+  const dailyLimit = limits?.notes || 1;
   const quota = { used: usage?.notes || 0, limit: dailyLimit };
 
   useEffect(() => {
@@ -101,10 +100,6 @@ export const useNotes = () => {
 
       if (!response.data) {
         throw new Error("Invalid response from server");
-      }
-
-      if (response.planLimits) {
-        setPlanLimits(response.planLimits);
       }
 
       setError(null);
@@ -176,7 +171,8 @@ export const useNotes = () => {
 
   const isNoteLengthLocked = (noteLength: string) => {
     if (userPlan === "student_pro") return false;
-    return noteLength === "detailed" || noteLength === "exam";
+    if (!limits) return false;
+    return !limits.allowedNoteLengths.includes(noteLength);
   };
 
   return {
@@ -200,7 +196,6 @@ export const useNotes = () => {
     canGenerate,
     userPlan,
     quota,
-    planLimits,
     error,
     isNoteLengthLocked,
   };
