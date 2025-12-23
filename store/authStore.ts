@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { ID, Models } from "react-native-appwrite";
 import { account } from "@/lib/appwrite";
 import { usePlanStore } from "./planStore";
-import { GUEST_LIMITS } from "@/utils/guestUsageTracker";
 
 interface AuthState {
   user: Models.User<Models.Preferences> | null;

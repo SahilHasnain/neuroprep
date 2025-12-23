@@ -12,7 +12,7 @@ import type { Note as NoteType } from "@/lib/types";
 import { usePlanStore } from "@/store/planStore";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { checkGuestLimit, incrementGuestUsage } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 
 type UserPlan = "free" | "student_pro";

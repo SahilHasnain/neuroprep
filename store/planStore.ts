@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { PlanState, FeatureType, PlanSubscriptionData } from "@/lib/types/plan";
 import { subscriptionService } from "@/services/api/subscription.service";
 import { openRazorpayCheckout } from "@/utils/razorpay";
-import { getGuestUsage, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { getGuestUsage, setGuestLimits, getGuestLimits } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "./authStore";
 
 // Default limits for pro plan
@@ -14,7 +14,7 @@ const PRO_PLAN_LIMITS = {
 
 export const usePlanStore = create<PlanState>((set, get) => ({
   planType: "free",
-  limits: GUEST_LIMITS,
+  limits: { doubts: 2, questions: 1, notes: 1 }, // Default fallback
   usage: {
     doubts: 0,
     questions: 0,
@@ -31,10 +31,18 @@ export const usePlanStore = create<PlanState>((set, get) => ({
 
       // Guest: Read from AsyncStorage
       if (!user) {
+        const result = await subscriptionService.getPlanStatus();
+        const data = result.data as any;
+        
+        // Set limits from backend
+        if (data.limits) {
+          setGuestLimits(data.limits);
+        }
+        
         const guestUsage = await getGuestUsage();
         set({
           planType: "free",
-          limits: GUEST_LIMITS,
+          limits: data.limits || getGuestLimits(),
           usage: {
             doubts: guestUsage.doubts,
             questions: guestUsage.questions,
@@ -52,7 +60,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
 
       set({
         planType: data.planType || "free",
-        limits: data.planType === "pro" ? PRO_PLAN_LIMITS : GUEST_LIMITS,
+        limits: data.limits || PRO_PLAN_LIMITS,
         usage: data.usage,
         status: data.status,
         trialEndsAt: data.trialEndsAt,

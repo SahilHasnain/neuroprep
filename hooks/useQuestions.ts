@@ -8,7 +8,7 @@ import { Question } from "@/lib/models";
 import type { Question as QuestionType } from "@/lib/types";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { checkGuestLimit, incrementGuestUsage, getRemainingUses, getGuestLimits } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
 
@@ -52,7 +52,8 @@ export const useQuestions = () => {
     if (!user) {
       const canUse = await checkGuestLimit("questions");
       if (!canUse) {
-        setQuota({ used: GUEST_LIMITS.questions, limit: GUEST_LIMITS.questions });
+        const limits = getGuestLimits();
+        setQuota({ used: limits.questions, limit: limits.questions });
         setError({
           errorCode: "DAILY_LIMIT_REACHED",
           message: "Daily limit reached. Sign up to continue!",
@@ -107,7 +108,8 @@ export const useQuestions = () => {
         // Guest: Increment AsyncStorage
         await incrementGuestUsage("questions");
         const remaining = await getRemainingUses("questions");
-        setQuota({ used: GUEST_LIMITS.questions - remaining, limit: GUEST_LIMITS.questions });
+        const limits = getGuestLimits();
+        setQuota({ used: limits.questions - remaining, limit: limits.questions });
       } else {
         // Logged-in: Refresh from backend
         await usePlanStore.getState().fetchPlanStatus();

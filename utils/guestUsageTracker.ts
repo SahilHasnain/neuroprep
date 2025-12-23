@@ -2,13 +2,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "guestUsage";
 
-export const GUEST_LIMITS = {
-    doubts: 3,
-    questions: 5,
-    notes: 2,
+// Limits will be fetched from backend
+let CACHED_LIMITS: { doubts: number; questions: number; notes: number } | null = null;
+
+export const setGuestLimits = (limits: { doubts: number; questions: number; notes: number }) => {
+    CACHED_LIMITS = limits;
 };
 
-type FeatureType = keyof typeof GUEST_LIMITS;
+export const getGuestLimits = () => {
+    return CACHED_LIMITS || { doubts: 2, questions: 1, notes: 1 }; // Fallback
+};
+
+type FeatureType = "doubts" | "questions" | "notes";
 
 interface GuestUsage {
     date: string;
@@ -39,7 +44,8 @@ const getUsage = async (): Promise<GuestUsage> => {
 
 export const checkGuestLimit = async (feature: FeatureType): Promise<boolean> => {
     const usage = await getUsage();
-    return usage[feature] < GUEST_LIMITS[feature];
+    const limits = getGuestLimits();
+    return usage[feature] < limits[feature];
 };
 
 export const incrementGuestUsage = async (feature: FeatureType): Promise<void> => {
@@ -54,5 +60,6 @@ export const getGuestUsage = async (): Promise<GuestUsage> => {
 
 export const getRemainingUses = async (feature: FeatureType): Promise<number> => {
     const usage = await getUsage();
-    return Math.max(0, GUEST_LIMITS[feature] - usage[feature]);
+    const limits = getGuestLimits();
+    return Math.max(0, limits[feature] - usage[feature]);
 };

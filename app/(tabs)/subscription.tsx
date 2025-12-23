@@ -9,7 +9,6 @@ import UsageProgressBar from "@/components/ui/UsageProgressBar";
 import UpgradeModal from "@/components/modals/UpgradeModal";
 import AuthModal from "@/components/ui/AuthModal";
 import { getPlanFeatures } from "@/utils/planFeatures";
-import { GUEST_LIMITS } from "@/utils/guestUsageTracker";
 
 export default function SubscriptionScreen() {
   const { planType, usage, status, currentPeriodEnd, loading, fetchPlanStatus, cancelSubscription, limits } = usePlanStore();
@@ -21,7 +20,7 @@ export default function SubscriptionScreen() {
   const isPro = planType === "pro";
 
   const planFeatures = useMemo(() => 
-    getPlanFeatures(limits || GUEST_LIMITS), 
+    getPlanFeatures(limits || { doubts: 2, questions: 1, notes: 1 }), 
     [limits]
   );
 

@@ -5,7 +5,7 @@ import { Doubt } from "@/lib/models";
 import type { Message } from "@/lib/types";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
-import { checkGuestLimit, incrementGuestUsage, getRemainingUses, GUEST_LIMITS } from "@/utils/guestUsageTracker";
+import { checkGuestLimit, incrementGuestUsage, getRemainingUses, getGuestLimits } from "@/utils/guestUsageTracker";
 import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
 
@@ -48,7 +48,8 @@ export const useDoubts = () => {
       const canUse = await checkGuestLimit("doubts");
       if (!canUse) {
         const remaining = await getRemainingUses("doubts");
-        setLimitInfo({ used: GUEST_LIMITS.doubts, limit: GUEST_LIMITS.doubts, allowed: false });
+        const limits = getGuestLimits();
+        setLimitInfo({ used: limits.doubts, limit: limits.doubts, allowed: false });
         setError({
           errorCode: "DAILY_LIMIT_REACHED",
           message: "Daily limit reached. Sign up to continue!",
@@ -111,7 +112,8 @@ export const useDoubts = () => {
         // Guest: Increment AsyncStorage
         await incrementGuestUsage("doubts");
         const remaining = await getRemainingUses("doubts");
-        setLimitInfo({ used: GUEST_LIMITS.doubts - remaining, limit: GUEST_LIMITS.doubts, allowed: true });
+        const limits = getGuestLimits();
+        setLimitInfo({ used: limits.doubts - remaining, limit: limits.doubts, allowed: true });
       } else {
         // Logged-in: Refresh from backend
         await usePlanStore.getState().fetchPlanStatus();
