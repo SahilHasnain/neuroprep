@@ -5,10 +5,10 @@ import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
 import ComingSoonModal from "@/components/modals/ComingSoonModal";
+import { NoteViewer } from "@/components/notes";
 import { useNotes } from "@/hooks/useNotes";
 import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
 import { BookOpen, Sparkles, X, Plus } from "lucide-react-native";
-import { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -18,7 +18,24 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MathMarkdown from "@/components/shared/MathMarkdown";
+
+// Motivational messages for loading state
+const motivationalMessages = [
+  "Breaking down complex concepts into simple ideas...",
+  "Organizing key points for easy understanding...",
+  "Creating exam-focused content just for you...",
+  "Crafting clear explanations to boost your confidence...",
+  "Preparing practical examples to help you learn...",
+  "Structuring notes for quick revision...",
+  "Making difficult topics easier to grasp...",
+  "Building your personalized study guide...",
+];
+
+const getMotivationalMessage = () => {
+  return motivationalMessages[
+    Math.floor(Math.random() * motivationalMessages.length)
+  ];
+};
 
 export default function NotesScreen() {
   const {
@@ -191,8 +208,11 @@ export default function NotesScreen() {
             {loading ? (
               <View className="py-8">
                 <ActivityIndicator size="large" color="#3b82f6" />
-                <Text className="mt-3 text-sm text-center text-gray-600">
+                <Text className="mt-3 text-sm font-semibold text-center text-gray-900">
                   AI is generating your notes...
+                </Text>
+                <Text className="mt-2 text-xs text-center text-gray-600">
+                  {getMotivationalMessage()}
                 </Text>
               </View>
             ) : (
@@ -225,167 +245,12 @@ export default function NotesScreen() {
         </View>
       </Modal>
 
-      {/* View Note Modal */}
-      <Modal
+      {/* View Note Modal - Using new NoteViewer component */}
+      <NoteViewer
         visible={isViewModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setIsViewModalVisible(false)}
-      >
-        <View className="justify-end flex-1 bg-black/50">
-          <View className="bg-white rounded-t-3xl">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <Text
-                className="flex-1 mr-3 text-xl font-bold text-gray-900"
-                numberOfLines={1}
-              >
-                {selectedNote?.title}
-              </Text>
-              <Pressable
-                onPress={() => setIsViewModalVisible(false)}
-                className="p-2 rounded-full active:bg-gray-100"
-              >
-                <X size={24} color="#6b7280" />
-              </Pressable>
-            </View>
-
-            <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
-              {selectedNote && (
-                <>
-                  <View className="mb-4">
-                    <Text className="mb-2 text-sm font-semibold text-gray-500">
-                      Subject
-                    </Text>
-                    <View
-                      className={`self-start px-4 py-2 rounded-full ${
-                        selectedNote.subject === "physics"
-                          ? "bg-blue-100"
-                          : selectedNote.subject === "chemistry"
-                            ? "bg-purple-100"
-                            : selectedNote.subject === "biology"
-                              ? "bg-green-100"
-                              : "bg-orange-100"
-                      }`}
-                    >
-                      <Text
-                        className={`text-sm font-semibold ${
-                          selectedNote.subject === "physics"
-                            ? "text-blue-700"
-                            : selectedNote.subject === "chemistry"
-                              ? "text-purple-700"
-                              : selectedNote.subject === "biology"
-                                ? "text-green-700"
-                                : "text-orange-700"
-                        }`}
-                      >
-                        {SUBJECTS.find((s) => s.value === selectedNote.subject)
-                          ?.label || selectedNote.subject}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View className="mb-4">
-                    <Text className="mb-2 text-sm font-semibold text-gray-500">
-                      Date Created
-                    </Text>
-                    <Text className="text-base text-gray-700">
-                      {selectedNote.date}
-                    </Text>
-                  </View>
-
-                  <View className="mb-4">
-                    <Text className="mb-2 text-sm font-semibold text-gray-500">
-                      Content
-                    </Text>
-                    <MathMarkdown
-                      style={{
-                        body: {
-                          color: "#374151",
-                          fontSize: 15,
-                          lineHeight: 24,
-                        },
-                        heading1: {
-                          color: "#111827",
-                          fontSize: 24,
-                          fontWeight: "bold",
-                          marginTop: 16,
-                          marginBottom: 8,
-                        },
-                        heading2: {
-                          color: "#1f2937",
-                          fontSize: 20,
-                          fontWeight: "bold",
-                          marginTop: 14,
-                          marginBottom: 6,
-                        },
-                        heading3: {
-                          color: "#374151",
-                          fontSize: 18,
-                          fontWeight: "600",
-                          marginTop: 12,
-                          marginBottom: 4,
-                        },
-                        strong: { color: "#1f2937", fontWeight: "bold" },
-                        em: { color: "#4b5563", fontStyle: "italic" },
-                        code_inline: {
-                          backgroundColor: "#f3f4f6",
-                          color: "#dc2626",
-                          paddingHorizontal: 4,
-                          paddingVertical: 2,
-                          borderRadius: 4,
-                          fontFamily: "monospace",
-                        },
-                        code_block: {
-                          backgroundColor: "#f9fafb",
-                          color: "#111827",
-                          padding: 12,
-                          borderRadius: 8,
-                          fontFamily: "monospace",
-                          fontSize: 13,
-                        },
-                        fence: {
-                          backgroundColor: "#f9fafb",
-                          color: "#111827",
-                          padding: 12,
-                          borderRadius: 8,
-                          fontFamily: "monospace",
-                          fontSize: 13,
-                        },
-                        blockquote: {
-                          backgroundColor: "#dbeafe",
-                          borderLeftColor: "#3b82f6",
-                          borderLeftWidth: 4,
-                          paddingLeft: 12,
-                          paddingVertical: 8,
-                          marginVertical: 8,
-                          borderRadius: 4,
-                        },
-                        bullet_list: { marginVertical: 4 },
-                        ordered_list: { marginVertical: 4 },
-                        list_item: { marginVertical: 2, color: "#374151" },
-                        paragraph: {
-                          marginVertical: 4,
-                          color: "#4b5563",
-                          lineHeight: 22,
-                        },
-                      }}
-                    >
-                      {selectedNote.content}
-                    </MathMarkdown>
-                  </View>
-
-                  <Button
-                    title="Delete Note"
-                    onPress={() => deleteNote(selectedNote.id)}
-                    variant="outline"
-                    fullWidth
-                  />
-                </>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        note={selectedNote}
+        onClose={() => setIsViewModalVisible(false)}
+      />
 
       {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}
       <ComingSoonModal

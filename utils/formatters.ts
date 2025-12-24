@@ -4,8 +4,24 @@
 
 /**
  * Format notes API response into readable markdown content
+ * Now supports both new structured format (JSON) and legacy markdown format
  */
 export const formatNotesContent = (apiNotes: any): string => {
+  // Check if this is the new structured format with all required fields
+  if (
+    apiNotes.quickSummary &&
+    apiNotes.sections &&
+    Array.isArray(apiNotes.sections) &&
+    apiNotes.formulas &&
+    apiNotes.misconceptions &&
+    apiNotes.examTips &&
+    apiNotes.encouragement
+  ) {
+    // New format: Store as JSON string for proper parsing in NoteViewer
+    return JSON.stringify(apiNotes);
+  }
+
+  // Legacy format: Convert to markdown for backward compatibility
   let content = `📚 ${apiNotes.title || "AI-Generated Notes"}\n\n`;
 
   if (apiNotes.sections && Array.isArray(apiNotes.sections)) {

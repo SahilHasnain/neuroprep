@@ -89,6 +89,7 @@ export const useNotes = () => {
     }
 
     setLoading(true);
+    setError(null);
 
     try {
       const response = await notesService.generateNotes({
@@ -101,18 +102,42 @@ export const useNotes = () => {
         const apiError = parseApiError(response);
         if (apiError) {
           setError(apiError);
+          // Show friendly error message based on error type
+          const errorMessage =
+            apiError.errorCode === "RATE_LIMIT_EXCEEDED"
+              ? "You've reached your daily limit. Please try again tomorrow."
+              : apiError.errorCode === "INVALID_INPUT"
+                ? "Please check your input and try again."
+                : apiError.message ||
+                  "We couldn't generate your notes right now. Please try again.";
+          Alert.alert("Generation Failed", errorMessage);
+          return;
         }
         throw new Error(response.message || "Invalid response from server");
       }
 
       if (!response.data) {
-        throw new Error("Invalid response from server");
+        throw new Error("No content received from server");
       }
 
       setError(null);
 
       const apiNotes = (response.data as any)?.content || response.data;
+
+      // Validate that we received meaningful content
+      if (
+        !apiNotes ||
+        (typeof apiNotes === "object" && Object.keys(apiNotes).length === 0)
+      ) {
+        throw new Error("Received empty content from server");
+      }
+
       const content = formatNotesContent(apiNotes);
+
+      // Additional validation for formatted content
+      if (!content || content.trim() === "" || content === "{}") {
+        throw new Error("Generated content is empty or invalid");
+      }
 
       const note = new Note(
         apiNotes?.id || Date.now().toString(),
@@ -143,12 +168,38 @@ export const useNotes = () => {
       Alert.alert("Success", "AI notes generated and saved!");
     } catch (err) {
       console.error("Error generating notes:", err);
-      const errorMessage =
-        error?.message ||
-        (err instanceof Error
-          ? err.message
-          : "Failed to generate notes. Please try again.");
-      Alert.alert("Error", errorMessage);
+
+      // Provide user-friendly error messages
+      let errorMessage =
+        "We couldn't generate your notes right now. Please try again.";
+
+      if (err instanceof Error) {
+        if (err.message.includes("network") || err.message.includes("fetch")) {
+          errorMessage =
+            "Network error. Please check your connection and try again.";
+        } else if (err.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+        } else if (
+          err.message.includes("empty") ||
+          err.message.includes("invalid")
+        ) {
+          errorMessage =
+            "The generated content was incomplete. Please try again.";
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+      }
+
+      setError({
+        errorCode: "GENERATION_FAILED",
+        message: errorMessage,
+      });
+
+      Alert.alert(
+        "Generation Failed",
+        errorMessage +
+          "\n\nIf this problem persists, please try a different topic or contact support."
+      );
     } finally {
       setLoading(false);
     }
