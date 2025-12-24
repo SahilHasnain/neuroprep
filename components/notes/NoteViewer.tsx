@@ -5,7 +5,6 @@ import QuickSummary from "./QuickSummary";
 import NoteSection from "./NoteSection";
 import FormulaCard from "./FormulaCard";
 import TipCard from "./TipCard";
-import MisconceptionCard from "./MisconceptionCard";
 import MathMarkdown from "@/components/shared/MathMarkdown";
 
 interface NoteViewerProps {
@@ -23,25 +22,15 @@ interface NoteViewerProps {
 interface ParsedNote {
   quickSummary?: string;
   sections?: Array<{
-    id: string;
     heading: string;
-    concept: string;
     content: string;
     keyPoints: string[];
-    example: string;
   }>;
   formulas?: Array<{
     name: string;
     formula: string;
-    whenToUse: string;
-  }>;
-  misconceptions?: Array<{
-    wrong: string;
-    right: string;
-    why: string;
   }>;
   examTips?: string[];
-  encouragement?: string;
 }
 
 export default function NoteViewer({
@@ -90,7 +79,6 @@ export default function NoteViewer({
     !parsedNote.quickSummary &&
     (!parsedNote.sections || parsedNote.sections.length === 0) &&
     (!parsedNote.formulas || parsedNote.formulas.length === 0) &&
-    (!parsedNote.misconceptions || parsedNote.misconceptions.length === 0) &&
     (!parsedNote.examTips || parsedNote.examTips.length === 0)
   ) {
     parseError = true;
@@ -174,16 +162,16 @@ export default function NoteViewer({
                       }
                       return (
                         <NoteSection
-                          key={section.id || index}
+                          key={index}
                           heading={section.heading || "Untitled Section"}
-                          concept={section.concept || ""}
+                          concept=""
                           content={section.content || ""}
                           keyPoints={
                             Array.isArray(section.keyPoints)
                               ? section.keyPoints
                               : []
                           }
-                          example={section.example || ""}
+                          example=""
                           defaultExpanded={index === 0}
                         />
                       );
@@ -211,27 +199,12 @@ export default function NoteViewer({
                           key={index}
                           name={formula.name || "Formula"}
                           formula={formula.formula}
-                          whenToUse={formula.whenToUse || ""}
+                          whenToUse=""
                         />
                       );
                     })}
                   </View>
                 )}
-
-                {/* Misconceptions */}
-                {parsedNote.misconceptions &&
-                  parsedNote.misconceptions.length > 0 && (
-                    <View className="mb-6">
-                      <MisconceptionCard
-                        misconceptions={parsedNote.misconceptions.filter(
-                          (m) =>
-                            m &&
-                            typeof m === "object" &&
-                            (m.wrong || m.right || m.why)
-                        )}
-                      />
-                    </View>
-                  )}
 
                 {/* Exam Tips */}
                 {parsedNote.examTips && parsedNote.examTips.length > 0 && (
@@ -244,21 +217,10 @@ export default function NoteViewer({
                   </View>
                 )}
 
-                {/* Encouragement Message */}
-                {parsedNote.encouragement && (
-                  <View className="p-5 mb-4 rounded-xl bg-green-50 border border-green-200">
-                    <Text className="text-base font-semibold leading-6 text-center text-green-800">
-                      🌟 {parsedNote.encouragement}
-                    </Text>
-                  </View>
-                )}
-
                 {/* Fallback message if no content sections rendered */}
                 {!parsedNote.quickSummary &&
                   (!parsedNote.sections || parsedNote.sections.length === 0) &&
                   (!parsedNote.formulas || parsedNote.formulas.length === 0) &&
-                  (!parsedNote.misconceptions ||
-                    parsedNote.misconceptions.length === 0) &&
                   (!parsedNote.examTips ||
                     parsedNote.examTips.length === 0) && (
                     <View className="items-center justify-center py-8">
