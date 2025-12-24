@@ -1,3 +1,4 @@
+// MVP_BYPASS: Simplified hook - removed auth checks, treat all as guests, use ComingSoonModal for limits
 import { useState, useEffect } from "react";
 import { questionsService } from "@/services/api/questions.service";
 import {
@@ -14,10 +15,7 @@ import {
   getRemainingUses,
   getGuestLimits,
 } from "@/utils/guestUsageTracker";
-import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
-
-type UserPlan = "free" | "pro";
 
 export const useQuestions = () => {
   const [subject, setSubject] = useState("");
@@ -30,10 +28,12 @@ export const useQuestions = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
   >({});
-  const [userPlan, setUserPlan] = useState<UserPlan>("free");
+  // MVP_BYPASS: Removed userPlan state, no free/pro badge logic
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(
     null
   );
+  // MVP_BYPASS: Added state for coming soon modal
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const { limits } = usePlanStore();
   const loadFromParams = (data: {
     questions: QuestionType[];
@@ -55,20 +55,18 @@ export const useQuestions = () => {
       return;
     }
 
-    const { user } = useAuthStore.getState();
-
-    // Guest limit check
-    if (!user) {
-      const canUse = await checkGuestLimit("questions");
-      if (!canUse) {
-        const limits = getGuestLimits();
-        setQuota({ used: limits.questions, limit: limits.questions });
-        setError({
-          errorCode: "DAILY_LIMIT_REACHED",
-          message: "Daily limit reached. Sign up to continue!",
-        });
-        return;
-      }
+    // MVP_BYPASS: Always check guest limit, no auth user checks
+    const canUse = await checkGuestLimit("questions");
+    if (!canUse) {
+      const limits = getGuestLimits();
+      setQuota({ used: limits.questions, limit: limits.questions });
+      // MVP_BYPASS: Show coming soon modal instead of upgrade prompt
+      setShowComingSoon(true);
+      setError({
+        errorCode: "DAILY_LIMIT_REACHED",
+        message: "Daily limit reached. More features coming soon!",
+      });
+      return;
     }
 
     setLoading(true);
@@ -92,9 +90,7 @@ export const useQuestions = () => {
         throw new Error(res.message || "Failed to generate questions");
       }
 
-      if (res.plan) {
-        setUserPlan(res.plan as UserPlan);
-      }
+      // MVP_BYPASS: Removed plan state logic
       if (res.quota) {
         setQuota({ used: res.quota.used, limit: res.quota.limit });
       }
@@ -109,22 +105,16 @@ export const useQuestions = () => {
       setQuestions(questionModels);
       setError(null);
 
-      // Update usage
-      if (!user) {
-        // Guest: Increment AsyncStorage
-        await incrementGuestUsage("questions");
-        const remaining = await getRemainingUses("questions");
-        const limits = getGuestLimits();
-        setQuota({
-          used: limits.questions - remaining,
-          limit: limits.questions,
-        });
-        // Sync planStore for cross-screen consistency
-        await usePlanStore.getState().fetchPlanStatus();
-      } else {
-        // Logged-in: Refresh from backend
-        await usePlanStore.getState().fetchPlanStatus();
-      }
+      // MVP_BYPASS: Always increment guest usage, no auth checks
+      await incrementGuestUsage("questions");
+      const remaining = await getRemainingUses("questions");
+      const limits = getGuestLimits();
+      setQuota({
+        used: limits.questions - remaining,
+        limit: limits.questions,
+      });
+      // Sync planStore for cross-screen consistency
+      await usePlanStore.getState().fetchPlanStatus();
 
       await saveQuestionsToStorage(data, {
         subject,
@@ -177,6 +167,7 @@ export const useQuestions = () => {
     return parseInt(count, 10) > limits.maxQuestions;
   };
 
+  // MVP_BYPASS: Return showComingSoon state for modal control
   return {
     subject,
     setSubject,
@@ -194,10 +185,11 @@ export const useQuestions = () => {
     selectAnswer,
     reset,
     canGenerate,
-    userPlan,
     quota,
     isDifficultyLocked,
     isQuestionCountLocked,
     loadFromParams,
+    showComingSoon,
+    setShowComingSoon,
   };
 };

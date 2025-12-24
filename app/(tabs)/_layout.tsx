@@ -6,6 +6,7 @@ import {
   PencilRuler,
   Crown,
 } from "lucide-react-native";
+import { isMVPBypassMode } from "@/config/featureFlags";
 
 export default function TabsLayout() {
   return (
@@ -64,13 +65,17 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* MVP_BYPASS: START - Subscription tab hidden for MVP launch */}
+      {/* To restore: set FEATURE_FLAGS.MVP_BYPASS_MODE = false in config/featureFlags.ts */}
       <Tabs.Screen
         name="subscription"
         options={{
           title: "Pro",
           tabBarIcon: ({ color, size }) => <Crown size={size} color={color} />,
+          href: isMVPBypassMode() ? null : undefined,
         }}
       />
+      {/* MVP_BYPASS: END */}
     </Tabs>
   );
 }

@@ -1,4 +1,5 @@
-import { useState, useEffect, use } from "react";
+// MVP_BYPASS: Simplified hook - removed auth checks, treat all as guests, use ComingSoonModal for limits
+import { useState, useEffect } from "react";
 import { doubtsService } from "@/services/api/doubts.service";
 import { loadDoubtsFromStorage } from "@/services/storage/doubts.storage";
 import { Doubt } from "@/lib/models";
@@ -11,7 +12,6 @@ import {
   getGuestLimits,
   getGuestUsage,
 } from "@/utils/guestUsageTracker";
-import { useAuthStore } from "@/store/authStore";
 import { usePlanStore } from "@/store/planStore";
 
 export const useDoubts = () => {
@@ -29,16 +29,13 @@ export const useDoubts = () => {
     limit: number;
     allowed: boolean;
   } | null>(null);
-  const [plan, setPlan] = useState<string>("free");
   const [error, setError] = useState<ApiError | null>(null);
+  // MVP_BYPASS: Added state for coming soon modal
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
-    const { user } = useAuthStore.getState();
-    if (user) {
-      loadPastDoubts();
-    } else {
-      loadGuestUsage();
-    }
+    // MVP_BYPASS: Always load as guest, no auth checks
+    loadGuestUsage();
   }, []);
 
   const loadGuestUsage = async () => {
@@ -51,34 +48,23 @@ export const useDoubts = () => {
     });
   };
 
-  const loadPastDoubts = async () => {
-    const past = await loadDoubtsFromStorage();
-    if (past.length > 0) {
-      const doubts = past.map((d) => Doubt.fromStorage(d));
-      const mapped = doubts.flatMap((d) => d.toMessages());
-      setMessages((prev) => [...prev, ...mapped]);
-    }
-  };
-
   const askDoubt = async (doubtText: string) => {
-    const { user } = useAuthStore.getState();
-
-    // Guest limit check
-    if (!user) {
-      const canUse = await checkGuestLimit("doubts");
-      if (!canUse) {
-        const limits = getGuestLimits();
-        setLimitInfo({
-          used: limits.doubts,
-          limit: limits.doubts,
-          allowed: false,
-        });
-        setError({
-          errorCode: "DAILY_LIMIT_REACHED",
-          message: "Daily limit reached. Upgrade to Pro!",
-        });
-        return;
-      }
+    // MVP_BYPASS: Always check guest limit, no auth user checks
+    const canUse = await checkGuestLimit("doubts");
+    if (!canUse) {
+      const limits = getGuestLimits();
+      setLimitInfo({
+        used: limits.doubts,
+        limit: limits.doubts,
+        allowed: false,
+      });
+      // MVP_BYPASS: Show coming soon modal instead of upgrade prompt
+      setShowComingSoon(true);
+      setError({
+        errorCode: "DAILY_LIMIT_REACHED",
+        message: "Daily limit reached. More features coming soon!",
+      });
+      return;
     }
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -123,33 +109,27 @@ export const useDoubts = () => {
         setLimitInfo(response.limitInfo);
       }
 
-      setPlan(response.plan || "free");
+      // MVP_BYPASS: Removed plan state and free/pro badge logic
       setError(null);
 
-      // Update usage
-      if (!user) {
-        // Guest: Increment AsyncStorage
-        await incrementGuestUsage("doubts");
-        const remaining = await getRemainingUses("doubts");
-        const limits = getGuestLimits();
-        setLimitInfo({
-          used: limits.doubts - remaining,
-          limit: limits.doubts,
-          allowed: true,
-        });
-        // Sync planStore for cross-screen consistency
-        await usePlanStore.getState().fetchPlanStatus();
-      } else {
-        // Logged-in: Refresh from backend
-        await usePlanStore.getState().fetchPlanStatus();
-      }
+      // MVP_BYPASS: Always increment guest usage, no auth checks
+      await incrementGuestUsage("doubts");
+      const remaining = await getRemainingUses("doubts");
+      const limits = getGuestLimits();
+      setLimitInfo({
+        used: limits.doubts - remaining,
+        limit: limits.doubts,
+        allowed: true,
+      });
+      // Sync planStore for cross-screen consistency
+      await usePlanStore.getState().fetchPlanStatus();
 
       const aiData = response.data.answer;
       let formattedResponse = "";
 
       if (aiData.explanation && Array.isArray(aiData.explanation)) {
         aiData.explanation.forEach((step: string, idx: number) => {
-          formattedResponse += `**Step ${idx + 1}:**\n${step}\n\n`;
+          formattedResponse += `${step}\n\n`;
         });
       }
 
@@ -178,6 +158,7 @@ export const useDoubts = () => {
     } catch (err: any) {
       console.error("Error sending doubt:", err);
 
+      // MVP_BYPASS: Show coming soon message for errors
       const errorText =
         error?.message ||
         "Sorry, I couldn't process your doubt. Please try again.";
@@ -200,5 +181,14 @@ export const useDoubts = () => {
     }
   };
 
-  return { messages, loading, askDoubt, limitInfo, plan, error };
+  // MVP_BYPASS: Return showComingSoon state for modal control
+  return {
+    messages,
+    loading,
+    askDoubt,
+    limitInfo,
+    error,
+    showComingSoon,
+    setShowComingSoon,
+  };
 };

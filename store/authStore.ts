@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { ID, Models } from "react-native-appwrite";
 import { account } from "@/lib/appwrite";
 import { usePlanStore } from "./planStore";
+// MVP_BYPASS: Import feature flags for MVP bypass mode
+import { isMVPBypassMode } from "@/config/featureFlags";
 
 interface AuthState {
   user: Models.User<Models.Preferences> | null;
@@ -14,10 +16,18 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
+  // MVP_BYPASS: Keep user always null in bypass mode
   user: null,
-  loading: true,
+  // MVP_BYPASS: Set loading to false immediately in bypass mode
+  loading: isMVPBypassMode() ? false : true,
 
   checkSession: async () => {
+    // MVP_BYPASS: Disable session check in bypass mode
+    if (isMVPBypassMode()) {
+      set({ user: null, loading: false });
+      return;
+    }
+
     try {
       const currentUser = await account.get();
       set({ user: currentUser });
@@ -31,6 +41,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signup: async (email, password, name) => {
+    // MVP_BYPASS: Make signup a no-op in bypass mode
+    if (isMVPBypassMode()) {
+      console.log("Signup is disabled in MVP bypass mode");
+      return;
+    }
+
     await account.create({
       userId: ID.unique(),
       name,
@@ -48,6 +64,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (email, password) => {
+    // MVP_BYPASS: Make login a no-op in bypass mode
+    if (isMVPBypassMode()) {
+      console.log("Login is disabled in MVP bypass mode");
+      return;
+    }
+
     await account.createEmailPasswordSession({
       email,
       password,
@@ -59,6 +81,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    // MVP_BYPASS: Make logout a no-op in bypass mode
+    if (isMVPBypassMode()) {
+      console.log("Logout is disabled in MVP bypass mode");
+      return;
+    }
+
     await account.deleteSession({
       sessionId: "current",
     });

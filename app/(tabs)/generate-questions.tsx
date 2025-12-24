@@ -1,11 +1,11 @@
+// MVP_BYPASS: Removed auth and upgrade prompts, using ComingSoonModal for limits
 import { useState, useEffect } from "react";
-import { View, Text, Alert, ScrollView } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Sparkles, Crown, Plus } from "lucide-react-native";
+import { Sparkles, Plus } from "lucide-react-native";
 import { useQuestions } from "@/hooks/useQuestions";
 import Button from "@/components/ui/Button";
-import AuthModal from "@/components/ui/AuthModal";
-import LimitReachedModal from "@/components/ui/LimitReachedModal";
+import ComingSoonModal from "@/components/modals/ComingSoonModal";
 import QuestionSetList from "@/components/questions/QuestionSetList";
 import QuestionDisplay from "@/components/questions/QuestionDisplay";
 import GenerateQuestionsModal from "@/components/questions/GenerateQuestionsModal";
@@ -22,7 +22,6 @@ export default function GenerateQuestionsScreen() {
   const [questionSets, setQuestionSets] = useState<StoredQuestionSet[]>([]);
   const [loadingSets, setLoadingSets] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [authVisible, setAuthVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
 
@@ -37,17 +36,17 @@ export default function GenerateQuestionsScreen() {
     setQuestionCount,
     questions,
     loading,
-    error,
     selectedAnswers,
     generateQuestions,
     selectAnswer,
     reset,
     canGenerate,
-    userPlan,
     quota,
     isDifficultyLocked,
     isQuestionCountLocked,
     loadFromParams,
+    showComingSoon,
+    setShowComingSoon,
   } = useQuestions();
 
   useEffect(() => {
@@ -87,13 +86,6 @@ export default function GenerateQuestionsScreen() {
     loadSets();
   };
 
-  const showUpgradeAlert = () => {
-    Alert.alert("Upgrade to Pro", "Unlock all features with Pro plan", [
-      { text: "Maybe Later", style: "cancel" },
-      { text: "Upgrade Now", onPress: () => setAuthVisible(true) },
-    ]);
-  };
-
   const filteredQuestionSets = questionSets.filter((set) => {
     const matchesSearch =
       set.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -106,7 +98,7 @@ export default function GenerateQuestionsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} />
+      {/* MVP_BYPASS: Removed AuthModal */}
       <GenerateQuestionsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -120,14 +112,12 @@ export default function GenerateQuestionsScreen() {
         setQuestionCount={setQuestionCount}
         onGenerate={handleGenerate}
         loading={loading}
-        error={error}
         canGenerate={Boolean(canGenerate)}
-        userPlan={userPlan}
         isDifficultyLocked={isDifficultyLocked}
         isQuestionCountLocked={isQuestionCountLocked}
-        onUpgradePress={showUpgradeAlert}
       />
 
+      {/* MVP_BYPASS: Removed Free/Pro badge from header */}
       <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
@@ -143,14 +133,9 @@ export default function GenerateQuestionsScreen() {
               </Text>
             </View>
           </View>
-          <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
-            {userPlan === "pro" && <Crown size={14} color="#3b82f6" />}
-            <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
-              {userPlan === "pro" ? "Pro" : "Free"}
-            </Text>
-          </View>
         </View>
-        {quota && (
+        {/* MVP_BYPASS: Usage progress bar commented out */}
+        {/* {quota && (
           <View className="flex-row items-center justify-between px-3 py-2 mt-3 rounded-lg bg-gray-50">
             <Text className="text-sm text-gray-600">Daily Usage</Text>
             <Text
@@ -159,7 +144,7 @@ export default function GenerateQuestionsScreen() {
               {quota.used}/{quota.limit}
             </Text>
           </View>
-        )}
+        )} */}
       </View>
 
       {questions.length === 0 ? (
@@ -227,13 +212,11 @@ export default function GenerateQuestionsScreen() {
         />
       </View>
 
-      {/* Limit Reached Modal */}
-      <LimitReachedModal
-        visible={error?.errorCode === "DAILY_LIMIT_REACHED"}
+      {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}
+      <ComingSoonModal
+        visible={showComingSoon}
+        onClose={() => setShowComingSoon(false)}
         feature="questions"
-        quota={quota || { used: 0, limit: 0 }}
-        onUpgrade={showUpgradeAlert}
-        onClose={() => {}}
       />
     </SafeAreaView>
   );

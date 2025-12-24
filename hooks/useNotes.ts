@@ -1,3 +1,4 @@
+// MVP_BYPASS: Simplified hook - removed auth checks, treat all as guests, use ComingSoonModal for limits
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import { notesService } from "@/services/api/notes.service";
@@ -18,9 +19,6 @@ import {
   getGuestUsage,
   getGuestLimits,
 } from "@/utils/guestUsageTracker";
-import { useAuthStore } from "@/store/authStore";
-
-type UserPlan = "free" | "pro";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<NoteType[]>([]);
@@ -31,6 +29,8 @@ export const useNotes = () => {
   const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  // MVP_BYPASS: Added state for coming soon modal
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const [generateConfig, setGenerateConfig] = useState({
     subject: "",
@@ -38,23 +38,21 @@ export const useNotes = () => {
     noteLength: "brief",
   });
 
-  const { planType, usage, limits } = usePlanStore();
-  const userPlan: UserPlan = planType === "pro" ? "pro" : "free";
-  const dailyLimit = limits?.notes || 1;
+  // MVP_BYPASS: Removed userPlan state, no free/pro badge logic
+  const { usage, limits } = usePlanStore();
+  const dailyLimit = limits?.notes || 20;
   const quota = { used: usage?.notes || 0, limit: dailyLimit };
 
+  // MVP_BYPASS: Always load as guest, no auth checks
   useEffect(() => {
     loadNotes();
     loadGuestUsage();
   }, []);
 
   const loadGuestUsage = async () => {
-    const { user } = useAuthStore.getState();
-    if (!user) {
-      const usage = await getGuestUsage();
-      // quota is already calculated from planStore.usage
-      // This ensures it's loaded on mount
-    }
+    const usage = await getGuestUsage();
+    // quota is already calculated from planStore.usage
+    // This ensures it's loaded on mount
   };
 
   const loadNotes = async () => {
@@ -78,23 +76,15 @@ export const useNotes = () => {
       return;
     }
 
-    const { user } = useAuthStore.getState();
-
-    // Guest limit check
-    if (!user) {
-      const canUse = await checkGuestLimit("notes");
-      if (!canUse) {
-        setError({
-          errorCode: "DAILY_LIMIT_REACHED",
-          message: "Daily limit reached. Sign up to continue!",
-        });
-        return;
-      }
-    } else if (usage?.notes >= dailyLimit) {
-      Alert.alert(
-        "Daily Limit Reached",
-        `You've reached your daily limit of ${dailyLimit} notes. Upgrade to Pro for unlimited notes!`
-      );
+    // MVP_BYPASS: Always check guest limit, no auth user checks
+    const canUse = await checkGuestLimit("notes");
+    if (!canUse) {
+      // MVP_BYPASS: Show coming soon modal instead of upgrade prompt
+      setShowComingSoon(true);
+      setError({
+        errorCode: "DAILY_LIMIT_REACHED",
+        message: "Daily limit reached. More features coming soon!",
+      });
       return;
     }
 
@@ -142,16 +132,10 @@ export const useNotes = () => {
         noteLength: generateConfig.noteLength,
       });
 
-      // Update usage
-      if (!user) {
-        // Guest: Increment AsyncStorage
-        await incrementGuestUsage("notes");
-        // Sync planStore for cross-screen consistency
-        await usePlanStore.getState().fetchPlanStatus();
-      } else {
-        // Logged-in: Refresh from backend
-        await usePlanStore.getState().fetchPlanStatus();
-      }
+      // MVP_BYPASS: Always increment guest usage, no auth checks
+      await incrementGuestUsage("notes");
+      // Sync planStore for cross-screen consistency
+      await usePlanStore.getState().fetchPlanStatus();
 
       setNotes([note, ...notes]);
       setGenerateConfig({ subject: "", topic: "", noteLength: "brief" });
@@ -193,11 +177,11 @@ export const useNotes = () => {
   const canGenerate = generateConfig.subject && generateConfig.topic.trim();
 
   const isNoteLengthLocked = (noteLength: string) => {
-    if (userPlan === "pro") return false;
     if (!limits) return false;
     return !limits.allowedNoteLengths.includes(noteLength);
   };
 
+  // MVP_BYPASS: Return showComingSoon state for modal control
   return {
     notes,
     searchQuery,
@@ -217,9 +201,10 @@ export const useNotes = () => {
     deleteNote,
     viewNote,
     canGenerate,
-    userPlan,
     quota,
     error,
     isNoteLengthLocked,
+    showComingSoon,
+    setShowComingSoon,
   };
 };

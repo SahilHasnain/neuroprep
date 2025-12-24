@@ -1,12 +1,9 @@
+// MVP_BYPASS: Removed auth and upgrade prompts, using ComingSoonModal for limits
 import ChatBubble from "@/components/shared/ChatBubble";
-import Input from "@/components/ui/Input";
-import AuthModal from "@/components/ui/AuthModal";
-import LimitReachedModal from "@/components/ui/LimitReachedModal";
-import { useAuthStore } from "@/store/authStore";
+import ComingSoonModal from "@/components/modals/ComingSoonModal";
 import { useDoubts } from "@/hooks/useDoubts";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-  Pressable,
   ScrollView,
   Text,
   View,
@@ -15,18 +12,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
 
 export default function AskDoubtScreen() {
-  const { user, checkSession } = useAuthStore();
-  const { messages, loading, askDoubt, limitInfo, plan, error } = useDoubts();
+  // MVP_BYPASS: Removed auth checks and plan state
+  const { messages, askDoubt, limitInfo, showComingSoon, setShowComingSoon } =
+    useDoubts();
   const [inputText, setInputText] = useState("");
-  const [authVisible, setAuthVisible] = useState(false);
   const [inputModalVisible, setInputModalVisible] = useState(false);
-
-  useEffect(() => {
-    checkSession();
-  }, [checkSession]);
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -36,12 +28,13 @@ export default function AskDoubtScreen() {
     await askDoubt(doubtText);
   };
 
-  const isPro = plan === "pro";
-  const showLimit = !isPro && limitInfo;
+  // MVP_BYPASS: Always show limit info, no pro/free distinction
+  const showLimit = limitInfo;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <View className="flex-1">
+        {/* MVP_BYPASS: Removed login/user badge and upgrade prompts */}
         <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
@@ -52,64 +45,28 @@ export default function AskDoubtScreen() {
                 Get instant help with your queries
               </Text>
             </View>
-
-            {/* Login/User Badge Button */}
-            <Pressable
-              onPress={() => {
-                if (!user) {
-                  setAuthVisible(true);
-                } else if (!isPro) {
-                  router.push("/subscription");
-                }
-              }}
-              className={`px-4 py-2 rounded-full ${
-                isPro
-                  ? "bg-blue-100"
-                  : user
-                    ? "bg-amber-100 border-[1px] border-amber-400"
-                    : "bg-gray-100 border-[1px] border-blue-500"
-              }`}
-            >
-              <Text
-                className={`text-sm font-semibold ${
-                  isPro
-                    ? "text-blue-700"
-                    : user
-                      ? "text-amber-700"
-                      : "text-blue-600"
-                }`}
-              >
-                {isPro ? "Pro" : user ? "Free" : "Login"}
-              </Text>
-            </Pressable>
           </View>
 
-          {/* Usage Indicator */}
-          {showLimit && (
-            <View className="px-3 py-2 mt-3 border rounded-lg bg-amber-50 border-amber-200">
+          {/* MVP_BYPASS: Simplified usage indicator without upgrade prompts */}
+          {/* {showLimit && (
+            <View className="px-3 py-2 mt-3 border rounded-lg bg-blue-50 border-blue-200">
               <View className="flex-row items-center justify-between">
-                <Text className="text-sm text-amber-800">
+                <Text className="text-sm text-blue-800">
                   {limitInfo.used}/{limitInfo.limit} doubts used today
                 </Text>
-                {limitInfo.used >= limitInfo.limit * 0.8 && (
-                  <Pressable onPress={() => router.push("/subscription")}>
-                    <Text className="text-xs font-semibold text-blue-600">
-                      Upgrade
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
+              </View> */}
               {/* Progress Bar */}
-              <View className="mt-2 h-1.5 bg-amber-200 rounded-full overflow-hidden">
+              {/* <View className="mt-2 h-1.5 bg-blue-200 rounded-full overflow-hidden">
                 <View
-                  className="h-full rounded-full bg-amber-500"
+                  className="h-full rounded-full bg-blue-500"
                   style={{
                     width: `${(limitInfo.used / limitInfo.limit) * 100}%`,
                   }}
                 />
               </View>
             </View>
-          )}
+          )}  */}
+
         </View>
 
         <ScrollView
@@ -194,15 +151,11 @@ export default function AskDoubtScreen() {
           </SafeAreaView>
         </Modal>
 
-        {/* Limit Reached Modal */}
-        <LimitReachedModal
-          visible={error?.errorCode === "DAILY_LIMIT_REACHED"}
+        {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}
+        <ComingSoonModal
+          visible={showComingSoon}
+          onClose={() => setShowComingSoon(false)}
           feature="doubts"
-          quota={limitInfo || { used: 0, limit: 0 }}
-          onUpgrade={() => {
-            router.push("/subscription");
-          }}
-          onClose={() => {}}
         />
       </View>
     </SafeAreaView>

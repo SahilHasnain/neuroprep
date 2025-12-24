@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { PlanLimits } from "@/lib/types/plan";
+// MVP_BYPASS: Import feature flags for MVP limits
+import { isMVPBypassMode, getMVPLimits } from "@/config/featureFlags";
 
 const STORAGE_KEY = "guestUsage";
 
@@ -7,67 +9,82 @@ const STORAGE_KEY = "guestUsage";
 let CACHED_LIMITS: PlanLimits | null = null;
 
 export const setGuestLimits = (limits: PlanLimits) => {
-    CACHED_LIMITS = limits;
-}; 
+  CACHED_LIMITS = limits;
+};
 
+// MVP_BYPASS: Modified to use MVP limits when in bypass mode
 export const getGuestLimits = (): PlanLimits => {
-    return CACHED_LIMITS || {
-        doubts: 2,
-        questions: 1,
-        notes: 1,
-        maxQuestions: 5,
-        allowedDifficulties: ['easy'],
-        allowedNoteLengths: ['brief']
-    };
+  // When in MVP bypass mode, use generous MVP limits (20 per feature)
+  if (isMVPBypassMode()) {
+    return getMVPLimits();
+  }
+
+  // Otherwise use cached limits from backend or fallback defaults
+  return (
+    CACHED_LIMITS || {
+      doubts: 2,
+      questions: 1,
+      notes: 1,
+      maxQuestions: 5,
+      allowedDifficulties: ["easy"],
+      allowedNoteLengths: ["brief"],
+    }
+  );
 };
 
 type FeatureType = "doubts" | "questions" | "notes";
 
 interface GuestUsage {
-    date: string;
-    doubts: number;
-    questions: number;
-    notes: number;
+  date: string;
+  doubts: number;
+  questions: number;
+  notes: number;
 }
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
 const getUsage = async (): Promise<GuestUsage> => {
-    const stored = await AsyncStorage.getItem(STORAGE_KEY);
-    const today = getTodayDate();
+  const stored = await AsyncStorage.getItem(STORAGE_KEY);
+  const today = getTodayDate();
 
-    if (!stored) {
-        return { date: today, doubts: 0, questions: 0, notes: 0 };
-    }
+  if (!stored) {
+    return { date: today, doubts: 0, questions: 0, notes: 0 };
+  }
 
-    const usage: GuestUsage = JSON.parse(stored);
+  const usage: GuestUsage = JSON.parse(stored);
 
-    // Reset if new day
-    if (usage.date !== today) {
-        return { date: today, doubts: 0, questions: 0, notes: 0 };
-    }
+  // Reset if new day
+  if (usage.date !== today) {
+    return { date: today, doubts: 0, questions: 0, notes: 0 };
+  }
 
-    return usage;
+  return usage;
 };
 
-export const checkGuestLimit = async (feature: FeatureType): Promise<boolean> => {
-    const usage = await getUsage();
-    const limits = getGuestLimits();
-    return usage[feature] < limits[feature];
+export const checkGuestLimit = async (
+  feature: FeatureType
+): Promise<boolean> => {
+  const usage = await getUsage();
+  const limits = getGuestLimits();
+  return usage[feature] < limits[feature];
 };
 
-export const incrementGuestUsage = async (feature: FeatureType): Promise<void> => {
-    const usage = await getUsage();
-    usage[feature] += 1;
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
+export const incrementGuestUsage = async (
+  feature: FeatureType
+): Promise<void> => {
+  const usage = await getUsage();
+  usage[feature] += 1;
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
 };
 
 export const getGuestUsage = async (): Promise<GuestUsage> => {
-    return await getUsage();
+  return await getUsage();
 };
 
-export const getRemainingUses = async (feature: FeatureType): Promise<number> => {
-    const usage = await getUsage();
-    const limits = getGuestLimits();
-    return Math.max(0, limits[feature] - usage[feature]);
+export const getRemainingUses = async (
+  feature: FeatureType
+): Promise<number> => {
+  const usage = await getUsage();
+  const limits = getGuestLimits();
+  return Math.max(0, limits[feature] - usage[feature]);
 };

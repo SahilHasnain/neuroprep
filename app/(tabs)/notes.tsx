@@ -1,15 +1,14 @@
+// MVP_BYPASS: Removed auth and upgrade prompts, using ComingSoonModal for limits
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import NoteCard from "@/components/ui/NoteCard";
 import SearchBar from "@/components/ui/SearchBar";
-import AuthModal from "@/components/ui/AuthModal";
-import LimitReachedModal from "@/components/ui/LimitReachedModal";
+import ComingSoonModal from "@/components/modals/ComingSoonModal";
 import { useNotes } from "@/hooks/useNotes";
 import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
-import { BookOpen, Sparkles, X, Crown, Lock, Plus } from "lucide-react-native";
+import { BookOpen, Sparkles, X, Plus } from "lucide-react-native";
 import { useState } from "react";
-import { useRouter } from "expo-router";
 import {
   Modal,
   Pressable,
@@ -17,13 +16,11 @@ import {
   Text,
   View,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MathMarkdown from "@/components/shared/MathMarkdown";
 
 export default function NotesScreen() {
-  const router = useRouter();
   const {
     notes,
     searchQuery,
@@ -43,27 +40,16 @@ export default function NotesScreen() {
     deleteNote,
     viewNote,
     canGenerate,
-    userPlan,
     quota,
     isNoteLengthLocked,
-    error,
+    showComingSoon,
+    setShowComingSoon,
   } = useNotes();
-  const [authVisible, setAuthVisible] = useState(false);
-
-  const showUpgradeAlert = () => {
-    Alert.alert(
-      "Upgrade to Pro",
-      "This feature is only available for Pro users. Upgrade now to unlock detailed and exam-focused notes!",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Upgrade", onPress: () => router.push("/(tabs)/subscription") },
-      ]
-    );
-  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} />
+      {/* MVP_BYPASS: Removed AuthModal */}
+      {/* MVP_BYPASS: Removed Free/Pro badge from header */}
       <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
@@ -75,14 +61,8 @@ export default function NotesScreen() {
               </Text>
             </View>
           </View>
-          <View className="flex-row items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border-[1px] border-blue-200">
-            {userPlan === "pro" && <Crown size={14} color="#3b82f6" />}
-            <Text className="ml-1 text-xs font-semibold text-blue-600 uppercase">
-              {userPlan === "pro" ? "Pro" : "Free"}
-            </Text>
-          </View>
         </View>
-        {quota && (
+        {/* {quota && (
           <View className="flex-row items-center justify-between px-3 py-2 mt-3 rounded-lg bg-gray-50">
             <Text className="text-sm text-gray-600">Daily Usage</Text>
             <Text
@@ -91,7 +71,7 @@ export default function NotesScreen() {
               {quota.used}/{quota.limit}
             </Text>
           </View>
-        )}
+        )} */}
       </View>
 
       <ScrollView className="flex-1">
@@ -202,13 +182,9 @@ export default function NotesScreen() {
                 disabled: isNoteLengthLocked(option.value),
               }))}
               onSelect={(value) => {
-                if (isNoteLengthLocked(value)) {
-                  showUpgradeAlert();
-                } else {
-                  setGenerateConfig({ ...generateConfig, noteLength: value });
-                }
+                // MVP_BYPASS: Removed upgrade alert, just set the value
+                setGenerateConfig({ ...generateConfig, noteLength: value });
               }}
-              onLockedPress={showUpgradeAlert}
               placeholder="Choose note type"
             />
 
@@ -411,13 +387,11 @@ export default function NotesScreen() {
         </View>
       </Modal>
 
-      {/* Limit Reached Modal */}
-      <LimitReachedModal
-        visible={error?.errorCode === "DAILY_LIMIT_REACHED"}
+      {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}
+      <ComingSoonModal
+        visible={showComingSoon}
+        onClose={() => setShowComingSoon(false)}
         feature="notes"
-        quota={quota}
-        onUpgrade={showUpgradeAlert}
-        onClose={() => {}}
       />
 
       <View className="px-6 py-4 bg-white border-t border-gray-200">

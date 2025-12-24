@@ -1,11 +1,12 @@
+// MVP_BYPASS: Removed userPlan, error, and upgrade prompts
 import { Modal, View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { X, AlertCircle } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
-import type { ApiError } from "@/utils/errorHandler";
 
+// MVP_BYPASS: Removed userPlan, error, and upgrade prompts
 interface GenerateQuestionsModalProps {
   visible: boolean;
   onClose: () => void;
@@ -19,12 +20,9 @@ interface GenerateQuestionsModalProps {
   setQuestionCount: (value: string) => void;
   onGenerate: () => void;
   loading: boolean;
-  error: ApiError | null;
   canGenerate: boolean;
-  userPlan: string;
   isDifficultyLocked: (diff: string) => boolean;
   isQuestionCountLocked: (count: string) => boolean;
-  onUpgradePress: () => void;
 }
 
 export default function GenerateQuestionsModal({
@@ -40,12 +38,9 @@ export default function GenerateQuestionsModal({
   setQuestionCount,
   onGenerate,
   loading,
-  error,
   canGenerate,
-  userPlan,
   isDifficultyLocked,
   isQuestionCountLocked,
-  onUpgradePress,
 }: GenerateQuestionsModalProps) {
   const difficultyOptions = DIFFICULTY_LEVELS.map((d) => ({
     ...d,
@@ -56,10 +51,6 @@ export default function GenerateQuestionsModal({
     ...q,
     locked: isQuestionCountLocked(q.value),
   }));
-
-  const showUpgradeAlert = (message: string) => {
-    onUpgradePress();
-  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
@@ -95,11 +86,6 @@ export default function GenerateQuestionsModal({
             options={difficultyOptions}
             onSelect={setDifficulty}
             placeholder="Choose difficulty"
-            onLockedPress={() =>
-              showUpgradeAlert(
-                "Upgrade to Pro to unlock Medium and Hard difficulty levels!"
-              )
-            }
           />
 
           <Dropdown
@@ -108,11 +94,6 @@ export default function GenerateQuestionsModal({
             options={questionCountOptions}
             onSelect={setQuestionCount}
             placeholder="Choose count"
-            onLockedPress={() =>
-              showUpgradeAlert(
-                "Upgrade to Pro to generate more than 5 questions!"
-              )
-            }
           />
 
           <View className="mt-6">
@@ -124,27 +105,11 @@ export default function GenerateQuestionsModal({
             />
           </View>
 
-          {error && (
-            <View className="mt-3 p-3 bg-red-50 rounded-xl border-[1px] border-red-200 flex-row items-start">
-              <AlertCircle size={18} color="#dc2626" style={{ marginTop: 2 }} />
-              <Text className="ml-2 text-sm text-red-600 flex-1">
-                {error.message}
-              </Text>
-            </View>
-          )}
-
-          {!canGenerate && !error && (
+          {/* MVP_BYPASS: Removed error display and free plan info */}
+          {!canGenerate && (
             <Text className="mt-3 text-sm text-center text-gray-500">
               Please fill all fields to generate questions
             </Text>
-          )}
-
-          {userPlan === "free" && !error && (
-            <View className="mt-3 p-3 bg-blue-50 rounded-xl border-[1px] border-blue-200">
-              <Text className="text-xs text-blue-700 text-center">
-                Free plan: 1 set/day • Easy only • Max 5 questions
-              </Text>
-            </View>
           )}
         </ScrollView>
       </View>

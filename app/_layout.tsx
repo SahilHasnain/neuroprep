@@ -1,20 +1,35 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { usePlanStore } from "@/store/planStore";
+import { isMVPBypassMode } from "@/config/featureFlags";
 import "./globals.css";
 
 // SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { fetchPlanStatus } = usePlanStore();
+  const router = useRouter();
+  const segments = useSegments();
 
   useEffect(() => {
     fetchPlanStatus();
   }, []);
+
+  // MVP_BYPASS: START - Redirect subscription deep links to home
+  // To restore: Remove this useEffect when MVP_BYPASS_MODE is disabled
+  useEffect(() => {
+    if (isMVPBypassMode()) {
+      const currentPath = segments.join("/");
+      if (currentPath.includes("subscription")) {
+        router.replace("/");
+      }
+    }
+  }, [segments]);
+  // MVP_BYPASS: END
   // // Load custom fonts
   // const [fontsLoaded] = useFonts({
   //   InterRegular: require("../assets/fonts/Inter-Regular.ttf"),
