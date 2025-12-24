@@ -6,12 +6,13 @@ import { useAuthStore } from "@/store/authStore";
 import { useDoubts } from "@/hooks/useDoubts";
 import { useState, useEffect } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   View,
+  Modal,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -21,15 +22,17 @@ export default function AskDoubtScreen() {
   const { messages, loading, askDoubt, limitInfo, plan, error } = useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
+  const [inputModalVisible, setInputModalVisible] = useState(false);
 
   useEffect(() => {
     checkSession();
-  }, []);
+  }, [checkSession]);
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
     const doubtText = inputText.trim();
     setInputText("");
+    setInputModalVisible(false);
     await askDoubt(doubtText);
   };
 
@@ -38,11 +41,7 @@ export default function AskDoubtScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
+      <View className="flex-1">
         <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
@@ -93,11 +92,7 @@ export default function AskDoubtScreen() {
                   {limitInfo.used}/{limitInfo.limit} doubts used today
                 </Text>
                 {limitInfo.used >= limitInfo.limit * 0.8 && (
-                  <Pressable
-                    onPress={() =>
-                      router.push("/subscription")
-                    }
-                  >
+                  <Pressable onPress={() => router.push("/subscription")}>
                     <Text className="text-xs font-semibold text-blue-600">
                       Upgrade
                     </Text>
@@ -119,7 +114,7 @@ export default function AskDoubtScreen() {
 
         <ScrollView
           className="flex-1 px-6 py-4"
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 80 }}
           keyboardShouldPersistTaps="handled"
         >
           {messages.map((message) => (
@@ -132,13 +127,72 @@ export default function AskDoubtScreen() {
           ))}
         </ScrollView>
 
-        <Input
-          value={inputText}
-          onSend={handleSend}
-          onChangeText={setInputText}
-          placeholder="Type your doubt here..."
-          multiline
-        />
+        {/* Fixed Bottom Button */}
+        <View className="absolute bottom-0 left-0 right-0 bg-white border-t-[1px] border-gray-200 px-4 py-3">
+          <TouchableOpacity
+            onPress={() => setInputModalVisible(true)}
+            className="bg-blue-500 py-4 rounded-full items-center"
+          >
+            <Text className="text-white font-semibold text-base">
+              Ask Your Doubt
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Input Modal */}
+        <Modal
+          visible={inputModalVisible}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setInputModalVisible(false)}
+        >
+          <SafeAreaView className="flex-1 bg-white">
+            <View className="flex-1">
+              {/* Header */}
+              <View className="px-6 py-4 border-b-[1px] border-gray-200 flex-row items-center justify-between">
+                <Text className="text-xl font-bold text-gray-900">
+                  Type Your Doubt
+                </Text>
+                <TouchableOpacity onPress={() => setInputModalVisible(false)}>
+                  <Text className="text-blue-500 font-semibold">Cancel</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Text Input */}
+              <View className="flex-1 px-6 py-4">
+                <TextInput
+                  value={inputText}
+                  onChangeText={setInputText}
+                  placeholder="Type your doubt here..."
+                  placeholderTextColor="#9ca3af"
+                  multiline
+                  autoFocus
+                  className="flex-1 text-base text-gray-900 p-4 bg-gray-50 rounded-2xl"
+                  style={{ textAlignVertical: "top" }}
+                />
+              </View>
+
+              {/* Send Button */}
+              <View className="px-6 py-4 border-t-[1px] border-gray-200">
+                <TouchableOpacity
+                  onPress={handleSend}
+                  disabled={!inputText.trim()}
+                  className={`py-4 rounded-full items-center ${
+                    inputText.trim() ? "bg-blue-500" : "bg-gray-200"
+                  }`}
+                >
+                  <Text
+                    className={`font-semibold text-base ${
+                      inputText.trim() ? "text-white" : "text-gray-400"
+                    }`}
+                  >
+                    Send Doubt
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </SafeAreaView>
+        </Modal>
 
         {/* Limit Reached Modal */}
         <LimitReachedModal
@@ -150,8 +204,7 @@ export default function AskDoubtScreen() {
           }}
           onClose={() => {}}
         />
-
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
