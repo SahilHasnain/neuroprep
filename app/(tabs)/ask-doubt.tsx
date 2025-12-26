@@ -5,34 +5,25 @@ import { useAuthStore } from "@/store/authStore";
 import { useDoubts } from "@/hooks/useDoubts";
 import { LAUNCH_V1_BYPASS } from "@/constants";
 import { useState, useEffect } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Send, X } from "lucide-react-native";
+import { Send } from "lucide-react-native";
 
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
   const { messages, loading, askDoubt, limitInfo, error } = useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     checkSession();
-  }, []);
+  }, [checkSession]);
 
   const handleSend = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || loading) return;
     const doubtText = inputText.trim();
     setInputText("");
-    setModalVisible(false);
     await askDoubt(doubtText);
   };
 
@@ -42,7 +33,7 @@ export default function AskDoubtScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center justify-between mb-4">
           <View className="flex-1">
             <Text className="text-2xl font-bold text-gray-900">Ask Doubt</Text>
             <Text className="mt-1 text-base text-gray-600">
@@ -77,9 +68,33 @@ export default function AskDoubtScreen() {
           )}
         </View>
 
+        {/* Input Area */}
+        <View className="flex-row items-end p-3 mb-3 bg-gray-100 rounded-2xl">
+          <TextInput
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type your doubt here..."
+            placeholderTextColor="#9CA3AF"
+            multiline
+            className="flex-1 text-base text-gray-900 max-h-32"
+            style={{ minHeight: 40 }}
+            onSubmitEditing={handleSend}
+            editable={!loading}
+          />
+          <Pressable
+            onPress={handleSend}
+            disabled={!inputText.trim() || loading}
+            className={`ml-3 p-2.5 rounded-full ${
+              inputText.trim() && !loading ? "bg-blue-600" : "bg-gray-300"
+            }`}
+          >
+            <Send size={20} color="white" />
+          </Pressable>
+        </View>
+
         {/* Usage Indicator */}
         {!LAUNCH_V1_BYPASS && showLimit && (
-          <View className="px-3 py-2 mt-3 border rounded-lg bg-amber-50 border-amber-200">
+          <View className="px-3 py-2 border rounded-lg bg-amber-50 border-amber-200">
             <View className="flex-row items-center justify-between">
               <Text className="text-sm text-amber-800">
                 {limitInfo.used}/{limitInfo.limit} doubts used today
@@ -107,8 +122,13 @@ export default function AskDoubtScreen() {
 
       <ScrollView
         className="flex-1 px-6 py-4"
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
+        {loading && messages.length === 0 && (
+          <View className="items-center justify-center py-8">
+            <Text className="text-base text-gray-500">Thinking...</Text>
+          </View>
+        )}
         {messages.map((message) => (
           <ChatBubble
             key={message.id}
@@ -118,75 +138,6 @@ export default function AskDoubtScreen() {
           />
         ))}
       </ScrollView>
-
-      {/* Ask Doubt Button */}
-      <View className="absolute bottom-6 left-6 right-6">
-        <Pressable
-          onPress={() => setModalVisible(true)}
-          disabled={loading}
-          className={`flex-row items-center justify-center px-6 py-4 bg-blue-600 rounded-2xl shadow-lg ${
-            loading ? "opacity-50" : "active:opacity-80"
-          }`}
-        >
-          <Text className="text-lg font-semibold text-white">
-            {loading ? "Thinking..." : "Ask a Doubt"}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Input Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/50"
-          onPress={() => setModalVisible(false)}
-        >
-          <View className="flex-1" />
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="px-6 py-6 pb-8 mb-20 bg-white shadow-2xl rounded-t-3xl">
-              {/* Header */}
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-xl font-bold text-gray-900">
-                  What's your doubt?
-                </Text>
-                <Pressable
-                  onPress={() => setModalVisible(false)}
-                  className="p-2"
-                >
-                  <X size={24} color="#6B7280" />
-                </Pressable>
-              </View>
-
-              {/* Input Area */}
-              <View className="flex-row items-end p-3 bg-gray-100 rounded-2xl">
-                <TextInput
-                  value={inputText}
-                  onChangeText={setInputText}
-                  placeholder="Type your doubt here..."
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  className="flex-1 text-base text-gray-900 max-h-32"
-                  style={{ minHeight: 40 }}
-                  autoFocus
-                />
-                <Pressable
-                  onPress={handleSend}
-                  disabled={!inputText.trim() || loading}
-                  className={`ml-3 p-2.5 rounded-full ${
-                    inputText.trim() && !loading ? "bg-blue-600" : "bg-gray-300"
-                  }`}
-                >
-                  <Send size={20} color="white" />
-                </Pressable>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
 
       {/* Auth Modal */}
       <AuthModal visible={authVisible} onClose={() => setAuthVisible(false)} />
