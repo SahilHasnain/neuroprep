@@ -101,3 +101,6 @@ export const PLAN_FEATURES = [
 
 // Razorpay Config
 export const RAZORPAY_KEY_ID = "rzp_test_xxx"; // Replace with your key
+
+// MVP Bypass Flag - Set to true to bypass authentication and subscription features
+export const LAUNCH_V1_BYPASS = true;

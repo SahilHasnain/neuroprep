@@ -148,101 +148,109 @@ export default function NotesScreen() {
         transparent
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View className="flex-1 bg-white rounded-t-3xl">
-          <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-            <View className="flex-row items-center flex-1">
-              <Sparkles size={24} color="#3b82f6" />
-              <Text className="ml-2 text-xl font-bold text-gray-900">
-                Generate AI Notes
-              </Text>
-            </View>
-            <Pressable
-              onPress={() => setIsModalVisible(false)}
-              className="p-2 rounded-full active:bg-gray-100"
-            >
-              <X size={24} color="#6b7280" />
-            </Pressable>
-          </View>
-
-          <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
-            <View className="p-4 mb-4 rounded-xl bg-blue-50">
-              <Text className="text-sm leading-5 text-blue-700">
-                AI will generate comprehensive notes on your selected topic,
-                tailored for NEET/JEE preparation.
-              </Text>
-            </View>
-
-            <Dropdown
-              label="Select Subject"
-              value={generateConfig.subject}
-              options={SUBJECTS}
-              onSelect={(value) =>
-                setGenerateConfig({ ...generateConfig, subject: value })
-              }
-              placeholder="Choose a subject"
-            />
-
-            <InputTopic
-              label="Enter Topic"
-              value={generateConfig.topic}
-              onChangeText={(value) =>
-                setGenerateConfig({ ...generateConfig, topic: value })
-              }
-              placeholder="e.g., Thermodynamics, Cell Division"
-            />
-
-            <Dropdown
-              label="Note Type"
-              value={generateConfig.noteLength}
-              options={NOTE_LENGTHS.map((option) => ({
-                ...option,
-                disabled: isNoteLengthLocked(option.value),
-              }))}
-              onSelect={(value) => {
-                // MVP_BYPASS: Removed upgrade alert, just set the value
-                setGenerateConfig({ ...generateConfig, noteLength: value });
-              }}
-              placeholder="Choose note type"
-            />
-
-            {loading ? (
-              <View className="py-8">
-                <ActivityIndicator size="large" color="#3b82f6" />
-                <Text className="mt-3 text-sm font-semibold text-center text-gray-900">
-                  AI is generating your notes...
-                </Text>
-                <Text className="mt-2 text-xs text-center text-gray-600">
-                  {getMotivationalMessage()}
-                </Text>
-              </View>
-            ) : (
-              <View className="flex-row gap-3 mt-2">
-                <View className="flex-1">
-                  <Button
-                    title="Cancel"
-                    onPress={() => setIsModalVisible(false)}
-                    variant="outline"
-                    fullWidth
-                  />
+        <Pressable
+          className="flex-1 bg-black/50"
+          onPress={() => setIsModalVisible(false)}
+        >
+          <View className="flex-1" />
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white rounded-t-3xl">
+              <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
+                <View className="flex-row items-center flex-1">
+                  <Sparkles size={24} color="#3b82f6" />
+                  <Text className="ml-2 text-xl font-bold text-gray-900">
+                    Generate AI Notes
+                  </Text>
                 </View>
-                <View className="flex-1">
-                  <Button
-                    title="Generate Notes"
-                    onPress={generateNotes}
-                    fullWidth
-                    disabled={!canGenerate}
-                  />
-                </View>
+                <Pressable
+                  onPress={() => setIsModalVisible(false)}
+                  className="p-2 rounded-full active:bg-gray-100"
+                >
+                  <X size={24} color="#6b7280" />
+                </Pressable>
               </View>
-            )}
 
-            {!canGenerate && !loading && (
-              <Text className="mt-2 text-xs text-center text-gray-500">
-                Please select subject and topic to generate notes
-              </Text>
-            )}
-          </ScrollView>
-        </View>
+              <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
+                <View className="p-4 mb-4 rounded-xl bg-blue-50">
+                  <Text className="text-sm leading-5 text-blue-700">
+                    AI will generate comprehensive notes on your selected topic,
+                    tailored for NEET/JEE preparation.
+                  </Text>
+                </View>
+
+                <Dropdown
+                  label="Select Subject"
+                  value={generateConfig.subject}
+                  options={SUBJECTS}
+                  onSelect={(value) =>
+                    setGenerateConfig({ ...generateConfig, subject: value })
+                  }
+                  placeholder="Choose a subject"
+                />
+
+                <InputTopic
+                  label="Enter Topic"
+                  value={generateConfig.topic}
+                  onChangeText={(value) =>
+                    setGenerateConfig({ ...generateConfig, topic: value })
+                  }
+                  placeholder="e.g., Thermodynamics, Cell Division"
+                />
+
+                <Dropdown
+                  label="Note Type"
+                  value={generateConfig.noteLength}
+                  options={NOTE_LENGTHS.map((option) => ({
+                    ...option,
+                    disabled: isNoteLengthLocked(option.value),
+                  }))}
+                  onSelect={(value) => {
+                    // MVP_BYPASS: Removed upgrade alert, just set the value
+                    setGenerateConfig({ ...generateConfig, noteLength: value });
+                  }}
+                  placeholder="Choose note type"
+                />
+
+                {loading ? (
+                  <View className="py-8">
+                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <Text className="mt-3 text-sm font-semibold text-center text-gray-900">
+                      AI is generating your notes...
+                    </Text>
+                    <Text className="mt-2 text-xs text-center text-gray-600">
+                      {getMotivationalMessage()}
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="flex-row gap-3 mt-2">
+                    <View className="flex-1">
+                      <Button
+                        title="Cancel"
+                        onPress={() => setIsModalVisible(false)}
+                        variant="outline"
+                        fullWidth
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Button
+                        title="Generate Notes"
+                        onPress={generateNotes}
+                        fullWidth
+                        disabled={!canGenerate}
+                      />
+                    </View>
+                  </View>
+                )}
+
+                {!canGenerate && !loading && (
+                  <Text className="mt-2 text-xs text-center text-gray-500">
+                    Please select subject and topic to generate notes
+                  </Text>
+                )}
+              </ScrollView>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* View Note Modal - Using new NoteViewer component */}

@@ -19,7 +19,7 @@ import { Send, X } from "lucide-react-native";
 
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
-  const { messages, loading, askDoubt, limitInfo, plan, error } = useDoubts();
+  const { messages, loading, askDoubt, limitInfo, error } = useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,8 +36,8 @@ export default function AskDoubtScreen() {
     await askDoubt(doubtText);
   };
 
-  const isPro = plan === "pro";
-  const showLimit = !isPro && limitInfo;
+  // MVP_BYPASS: Removed plan-related logic
+  const showLimit = limitInfo;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -50,34 +50,28 @@ export default function AskDoubtScreen() {
             </Text>
           </View>
 
-          {/* Login/User Badge Button */}
+          {/* MVP_BYPASS: Login/User Badge Button hidden */}
           {!LAUNCH_V1_BYPASS && (
             <Pressable
               onPress={() => {
                 if (!user) {
                   setAuthVisible(true);
-                } else if (!isPro) {
+                } else {
                   router.push("/subscription");
                 }
               }}
               className={`px-4 py-2 rounded-full ${
-                isPro
-                  ? "bg-blue-100"
-                  : user
-                    ? "bg-amber-100 border-[1px] border-amber-400"
-                    : "bg-gray-100 border-[1px] border-blue-500"
+                user
+                  ? "bg-amber-100 border-[1px] border-amber-400"
+                  : "bg-gray-100 border-[1px] border-blue-500"
               }`}
             >
               <Text
                 className={`text-sm font-semibold ${
-                  isPro
-                    ? "text-blue-700"
-                    : user
-                      ? "text-amber-700"
-                      : "text-blue-600"
+                  user ? "text-amber-700" : "text-blue-600"
                 }`}
               >
-                {isPro ? "Pro" : user ? "Free" : "Login"}
+                {user ? "Free" : "Login"}
               </Text>
             </Pressable>
           )}
@@ -153,7 +147,7 @@ export default function AskDoubtScreen() {
         >
           <View className="flex-1" />
           <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="px-6 py-6 bg-white shadow-2xl rounded-t-3xl">
+            <View className="px-6 py-6 pb-8 mb-20 bg-white shadow-2xl rounded-t-3xl">
               {/* Header */}
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-xl font-bold text-gray-900">
