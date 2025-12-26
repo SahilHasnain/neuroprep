@@ -1,7 +1,7 @@
 /**
  * Appwrite Configuration
- * Environment variables for Appwrite SDK (Auth only)
+ * Constants for Appwrite SDK (Auth only)
  */
 
-export const APPWRITE_ENDPOINT = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;
-export const APPWRITE_PROJECT_ID = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
+export const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1";
+export const APPWRITE_PROJECT_ID = "693e5d70002253bb1cb7";

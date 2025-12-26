@@ -1,8 +1,6 @@
 // MVP_BYPASS: Simplified hook - removed auth checks, treat all as guests, use ComingSoonModal for limits
 import { useState, useEffect } from "react";
 import { doubtsService } from "@/services/api/doubts.service";
-import { loadDoubtsFromStorage } from "@/services/storage/doubts.storage";
-import { Doubt } from "@/lib/models";
 import type { Message } from "@/lib/types";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
 import {
@@ -128,7 +126,7 @@ export const useDoubts = () => {
       let formattedResponse = "";
 
       if (aiData.explanation && Array.isArray(aiData.explanation)) {
-        aiData.explanation.forEach((step: string, idx: number) => {
+        aiData.explanation.forEach((step: string) => {
           formattedResponse += `${step}\n\n`;
         });
       }
