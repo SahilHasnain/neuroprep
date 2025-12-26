@@ -4,10 +4,10 @@ import {
   Pressable,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { clsx } from "clsx";
 import Button from "../ui/Button";
 import { usePlanStore } from "@/store/planStore";
@@ -56,7 +56,8 @@ export default function UpgradeModal({
   feature,
   onUpgrade,
 }: UpgradeModalProps) {
-  const { planType, createSubscription, initiatePayment, loading } = usePlanStore();
+  const { planType, createSubscription, initiatePayment, loading } =
+    usePlanStore();
   const { user } = useAuthStore();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
@@ -103,9 +104,12 @@ export default function UpgradeModal({
       onRequestClose={handleClose}
     >
       <View className="justify-end flex-1 bg-black/60">
-        <ScrollView
+        <KeyboardAwareScrollView
           className="bg-white rounded-t-3xl max-h-5/6"
           showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          extraScrollHeight={20}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Close button */}
           <View className="relative p-6 pb-0">
@@ -129,8 +133,9 @@ export default function UpgradeModal({
                   Daily Limit Reached
                 </Text>
                 <Text className="text-center text-gray-600">
-                  You&apos;ve used all your {getFeatureName(feature).toLowerCase()}{" "}
-                  for today. Upgrade to Pro for unlimited access!
+                  You&apos;ve used all your{" "}
+                  {getFeatureName(feature).toLowerCase()} for today. Upgrade to
+                  Pro for unlimited access!
                 </Text>
               </>
             ) : (
@@ -233,7 +238,7 @@ export default function UpgradeModal({
               </View>
             </View>
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
     </Modal>
   );
