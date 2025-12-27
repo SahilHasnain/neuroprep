@@ -16,3 +16,6 @@ export * from "./helpers";
 
 // Formatters
 export * from "./formatters";
+
+// Doubt history manager
+export * from "./doubtHistoryManager";

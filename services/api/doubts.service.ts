@@ -1,15 +1,36 @@
 import { apiClient } from "./client";
 import { API_ENDPOINTS } from "@/constants";
-import type { AskDoubtRequest, AskDoubtResponse, ApiResponse, Doubt } from "@/lib/types";
+import type {
+  AskDoubtRequest,
+  AskDoubtResponse,
+  ApiResponse,
+  Doubt,
+} from "@/lib/types";
 
 export const doubtsService = {
-  async askDoubt(doubtText: string): Promise<ApiResponse<AskDoubtResponse>> {
-    return apiClient.post<AskDoubtResponse>(API_ENDPOINTS.ASK_DOUBT, {
+  async askDoubt(
+    doubtText: string,
+    historyContext?: Array<{
+      doubtText: string;
+      subject: string;
+      topic: string;
+      aiAnswer?: string;
+    }>
+  ): Promise<ApiResponse<AskDoubtResponse>> {
+    const payload: AskDoubtRequest = {
       doubtText,
-    });
+    };
+
+    if (historyContext && historyContext.length > 0) {
+      payload.historyContext = historyContext;
+    }
+
+    return apiClient.post<AskDoubtResponse>(API_ENDPOINTS.ASK_DOUBT, payload);
   },
 
   async getHistory(limit = 20, offset = 0): Promise<ApiResponse<Doubt[]>> {
-    return apiClient.get<Doubt[]>(`${API_ENDPOINTS.DOUBTS_HISTORY}?limit=${limit}&offset=${offset}`);
+    return apiClient.get<Doubt[]>(
+      `${API_ENDPOINTS.DOUBTS_HISTORY}?limit=${limit}&offset=${offset}`
+    );
   },
 };

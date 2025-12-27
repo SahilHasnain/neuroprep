@@ -22,8 +22,27 @@ export interface ApiResponse<T> {
 }
 
 // Doubts API
+export interface DoubtHistoryEntry {
+  id: string;
+  doubtText: string;
+  subject: string;
+  topic: string;
+  aiAnswer: {
+    explanation: string[];
+    intuition: string;
+    revisionTip: string;
+  };
+  timestamp: string;
+}
+
 export interface AskDoubtRequest {
   doubtText: string;
+  historyContext?: Array<{
+    doubtText: string;
+    subject: string;
+    topic: string;
+    aiAnswer?: string; // JSON stringified
+  }>;
 }
 
 export interface AskDoubtResponse {

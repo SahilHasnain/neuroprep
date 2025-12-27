@@ -1,7 +1,7 @@
 // MVP_BYPASS: Simplified hook - removed auth checks, treat all as guests, use ComingSoonModal for limits
 import { useState, useEffect } from "react";
 import { doubtsService } from "@/services/api/doubts.service";
-import type { Message } from "@/lib/types";
+import type { Message, DoubtHistoryEntry } from "@/lib/types";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
 import {
   checkGuestLimit,
@@ -11,6 +11,7 @@ import {
   getGuestUsage,
 } from "@/utils/guestUsageTracker";
 import { usePlanStore } from "@/store/planStore";
+import { DoubtHistoryManager } from "@/utils/doubtHistoryManager";
 
 export const useDoubts = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -30,11 +31,26 @@ export const useDoubts = () => {
   const [error, setError] = useState<ApiError | null>(null);
   // MVP_BYPASS: Added state for coming soon modal
   const [showComingSoon, setShowComingSoon] = useState(false);
+  // State for guest history tracking
+  const [guestHistory, setGuestHistory] = useState<DoubtHistoryEntry[]>([]);
 
   useEffect(() => {
     // MVP_BYPASS: Always load as guest, no auth checks
     loadGuestUsage();
+    // Load guest history on mount
+    loadGuestHistory();
   }, []);
+
+  const loadGuestHistory = async () => {
+    try {
+      const history = await DoubtHistoryManager.getGuestHistory();
+      setGuestHistory(history);
+    } catch (error) {
+      console.error("Error loading guest history:", error);
+      // Graceful degradation - continue without history
+      setGuestHistory([]);
+    }
+  };
 
   const loadGuestUsage = async () => {
     const usage = await getGuestUsage();
@@ -89,7 +105,25 @@ export const useDoubts = () => {
     setLoading(true);
 
     try {
-      const response = await doubtsService.askDoubt(doubtText);
+      // Retrieve guest history before API call
+      let historyContext;
+      try {
+        const currentHistory = await DoubtHistoryManager.getGuestHistory();
+        if (currentHistory.length > 0) {
+          historyContext =
+            DoubtHistoryManager.formatHistoryForAPI(currentHistory);
+        }
+      } catch (historyError) {
+        console.error(
+          "Error retrieving guest history for API call:",
+          historyError
+        );
+        // Graceful degradation - continue without history
+        historyContext = undefined;
+      }
+
+      // Include guest history in API request
+      const response = await doubtsService.askDoubt(doubtText, historyContext);
 
       if (!response.success) {
         const apiError = parseApiError(response);
@@ -137,6 +171,32 @@ export const useDoubts = () => {
 
       if (aiData.revisionTip) {
         formattedResponse += `**📝 Revision Tip:**\n${aiData.revisionTip}`;
+      }
+
+      // Store AI response in AsyncStorage for guest users
+      try {
+        const newHistoryEntry: DoubtHistoryEntry = {
+          id: Date.now().toString(),
+          doubtText: doubtText,
+          subject: "General", // Default subject - could be enhanced later
+          topic: "General", // Default topic - could be enhanced later
+          aiAnswer: {
+            explanation: aiData.explanation || [],
+            intuition: aiData.intuition || "",
+            revisionTip: aiData.revisionTip || "",
+          },
+          timestamp: new Date().toISOString(),
+        };
+
+        await DoubtHistoryManager.addGuestDoubt(newHistoryEntry);
+
+        // Update local state with new history
+        const updatedHistory = await DoubtHistoryManager.getGuestHistory();
+        setGuestHistory(updatedHistory);
+      } catch (storageError) {
+        console.error("Error storing doubt in AsyncStorage:", storageError);
+        // Graceful degradation - continue even if storage fails
+        // The doubt was answered successfully, storage is secondary
       }
 
       setMessages((prev) => {
