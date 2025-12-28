@@ -1,7 +1,7 @@
 // MVP_BYPASS: Simplified hook - removed auth checks, treat all as guests, use ComingSoonModal for limits
 import { useState, useEffect } from "react";
 import { doubtsService } from "@/services/api/doubts.service";
-import type { Message, DoubtHistoryEntry } from "@/lib/types";
+import type { Message, DoubtHistoryEntry, QuestionContext } from "@/lib/types";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
 import {
   checkGuestLimit,
@@ -33,6 +33,10 @@ export const useDoubts = () => {
   const [showComingSoon, setShowComingSoon] = useState(false);
   // State for guest history tracking
   const [guestHistory, setGuestHistory] = useState<DoubtHistoryEntry[]>([]);
+  // State for current doubt context (for generating questions)
+  const [currentDoubtContext, setCurrentDoubtContext] = useState<
+    import("@/lib/types").DoubtContext | null
+  >(null);
 
   useEffect(() => {
     // MVP_BYPASS: Always load as guest, no auth checks
@@ -62,7 +66,10 @@ export const useDoubts = () => {
     });
   };
 
-  const askDoubt = async (doubtText: string) => {
+  const askDoubt = async (
+    doubtText: string,
+    questionContext?: QuestionContext
+  ) => {
     // MVP_BYPASS: Always check guest limit, no auth user checks
     const canUse = await checkGuestLimit("doubts");
     if (!canUse) {
@@ -123,7 +130,11 @@ export const useDoubts = () => {
       }
 
       // Include guest history in API request
-      const response = await doubtsService.askDoubt(doubtText, historyContext);
+      const response = await doubtsService.askDoubt(
+        doubtText,
+        historyContext,
+        questionContext
+      );
 
       if (!response.success) {
         const apiError = parseApiError(response);
@@ -173,6 +184,17 @@ export const useDoubts = () => {
         formattedResponse += `**📝 Revision Tip:**\n${aiData.revisionTip}`;
       }
 
+      // Extract doubt context for generating questions
+      // Use default values for now - could be enhanced with AI extraction later
+      const doubtContext: import("@/lib/types").DoubtContext = {
+        doubtId: Date.now().toString(),
+        doubtText: doubtText,
+        subject: "General", // Default subject - could be enhanced with AI extraction
+        topic: "General", // Default topic - could be enhanced with AI extraction
+        difficulty: "medium", // Default difficulty
+      };
+      setCurrentDoubtContext(doubtContext);
+
       // Store AI response in AsyncStorage for guest users
       try {
         const newHistoryEntry: DoubtHistoryEntry = {
@@ -186,6 +208,14 @@ export const useDoubts = () => {
             revisionTip: aiData.revisionTip || "",
           },
           timestamp: new Date().toISOString(),
+          // Store question reference if provided
+          questionContext: questionContext
+            ? {
+                questionId: questionContext.questionId,
+                questionText: questionContext.questionText,
+                correctAnswer: questionContext.correctAnswer,
+              }
+            : undefined,
         };
 
         await DoubtHistoryManager.addGuestDoubt(newHistoryEntry);
@@ -248,5 +278,6 @@ export const useDoubts = () => {
     error,
     showComingSoon,
     setShowComingSoon,
+    currentDoubtContext,
   };
 };

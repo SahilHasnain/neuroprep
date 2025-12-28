@@ -1,10 +1,11 @@
 // MVP_BYPASS: Removed userPlan, error, and upgrade prompts
 import { Modal, View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { X } from "lucide-react-native";
+import { X, Info } from "lucide-react-native";
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
+import type { DoubtContext } from "@/lib/types";
 
 // MVP_BYPASS: Removed userPlan, error, and upgrade prompts
 interface GenerateQuestionsModalProps {
@@ -23,6 +24,7 @@ interface GenerateQuestionsModalProps {
   canGenerate: boolean;
   isDifficultyLocked: (diff: string) => boolean;
   isQuestionCountLocked: (count: string) => boolean;
+  doubtContext?: DoubtContext;
 }
 
 export default function GenerateQuestionsModal({
@@ -41,6 +43,7 @@ export default function GenerateQuestionsModal({
   canGenerate,
   isDifficultyLocked,
   isQuestionCountLocked,
+  doubtContext,
 }: GenerateQuestionsModalProps) {
   const difficultyOptions = DIFFICULTY_LEVELS.map((d) => ({
     ...d,
@@ -51,6 +54,8 @@ export default function GenerateQuestionsModal({
     ...q,
     locked: isQuestionCountLocked(q.value),
   }));
+
+  const isPreFilled = Boolean(doubtContext);
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -70,6 +75,15 @@ export default function GenerateQuestionsModal({
           </View>
 
           <ScrollView className="px-6 py-6" style={{ maxHeight: 500 }}>
+            {isPreFilled && (
+              <View className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg flex-row items-center">
+                <Info size={16} color="#2563eb" />
+                <Text className="ml-2 text-sm text-blue-700 flex-1">
+                  Pre-filled from your doubt
+                </Text>
+              </View>
+            )}
+
             <Dropdown
               label="Select Subject"
               value={subject}

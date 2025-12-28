@@ -33,6 +33,11 @@ export interface DoubtHistoryEntry {
     revisionTip: string;
   };
   timestamp: string;
+  questionContext?: {
+    questionId: string;
+    questionText: string;
+    correctAnswer: string;
+  };
 }
 
 export interface AskDoubtRequest {
@@ -43,6 +48,16 @@ export interface AskDoubtRequest {
     topic: string;
     aiAnswer?: string; // JSON stringified
   }>;
+  questionContext?: {
+    questionId: string;
+    questionText: string;
+    options: string[];
+    correctAnswer: string;
+    explanation?: string;
+    subject: string;
+    topic: string;
+    difficulty: string;
+  };
 }
 
 export interface AskDoubtResponse {

@@ -2,11 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { generateUniqueId } from "@/utils/helpers";
 import { questionsService } from "@/services/api/questions.service";
 import { useAuthStore } from "@/store/authStore";
-import type { Question, StoredQuestionSet } from "@/lib/types";
+import type { Question, StoredQuestionSet, DoubtContext } from "@/lib/types";
 
 const STORAGE_KEY = "@neuroprep_questions";
 
-export const loadQuestionsFromStorage = async (): Promise<StoredQuestionSet[]> => {
+export const loadQuestionsFromStorage = async (): Promise<
+  StoredQuestionSet[]
+> => {
   const { user } = useAuthStore.getState();
 
   if (user) {
@@ -39,6 +41,7 @@ export const saveQuestionsToStorage = async (
     topic: string;
     difficulty: string;
     questionCount: number;
+    doubtContext?: DoubtContext;
   }
 ): Promise<void> => {
   const { user } = useAuthStore.getState();
@@ -66,6 +69,13 @@ export const saveQuestionsToStorage = async (
       questionCount: metadata.questionCount,
       questions: newQuestions,
       createdAt: new Date().toISOString(),
+      // Store doubt reference if provided
+      doubtContext: metadata.doubtContext
+        ? {
+            doubtId: metadata.doubtContext.doubtId,
+            doubtText: metadata.doubtContext.doubtText,
+          }
+        : undefined,
     };
 
     const updatedSets = [newSet, ...existingSets].slice(0, 10);

@@ -1,18 +1,26 @@
 import clsx from "clsx";
-import { Text, View } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import MathMarkdown from "@/components/shared/MathMarkdown";
+import type { DoubtContext } from "@/lib/types";
 
 interface ChatBubbleProps {
   message: string;
   isUser: boolean;
   timeStamp?: string;
+  doubtContext?: DoubtContext;
+  onGenerateQuestions?: (context: DoubtContext) => void;
 }
 
 export default function ChatBubble({
   message,
   isUser,
   timeStamp,
+  doubtContext,
+  onGenerateQuestions,
 }: ChatBubbleProps) {
+  const showGenerateQuestionsButton =
+    !isUser && doubtContext && onGenerateQuestions;
+
   return (
     <View className={clsx("mb-4", isUser ? "items-end" : "items-start")}>
       <View
@@ -58,6 +66,21 @@ export default function ChatBubble({
           >
             {message}
           </MathMarkdown>
+        )}
+
+        {showGenerateQuestionsButton && (
+          <TouchableOpacity
+            onPress={() => onGenerateQuestions(doubtContext)}
+            className="mt-3 pt-3 border-t border-gray-200"
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center justify-center py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Text className="text-blue-600 font-medium text-sm mr-1">📝</Text>
+              <Text className="text-blue-600 font-medium text-sm">
+                Generate Questions on this topic
+              </Text>
+            </View>
+          </TouchableOpacity>
         )}
       </View>
 

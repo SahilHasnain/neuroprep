@@ -7,24 +7,73 @@ import { LAUNCH_V1_BYPASS } from "@/constants";
 import { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Send } from "lucide-react-native";
+import type { QuestionContext } from "@/lib/types";
 
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
-  const { messages, loading, askDoubt, limitInfo, error } = useDoubts();
+  const { messages, loading, askDoubt, limitInfo, error, currentDoubtContext } =
+    useDoubts();
   const [inputText, setInputText] = useState("");
   const [authVisible, setAuthVisible] = useState(false);
+  const [questionContext, setQuestionContext] =
+    useState<QuestionContext | null>(null);
+
+  // Get route params
+  const params = useLocalSearchParams();
 
   useEffect(() => {
     checkSession();
   }, [checkSession]);
 
+  // Handle question context from navigation params
+  useEffect(() => {
+    if (params.questionContext) {
+      try {
+        const context = JSON.parse(
+          params.questionContext as string
+        ) as QuestionContext;
+        setQuestionContext(context);
+
+        // Format question context into natural doubt query
+        const formattedDoubt = `I have a doubt about this question:
+
+Question: ${context.questionText}
+
+Options:
+${context.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join("\n")}
+
+Correct Answer: ${context.correctAnswer}
+
+`;
+        setInputText(formattedDoubt);
+      } catch (err) {
+        console.error("Error parsing question context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.questionContext]);
+
   const handleSend = async () => {
     if (!inputText.trim() || loading) return;
     const doubtText = inputText.trim();
     setInputText("");
-    await askDoubt(doubtText);
+    await askDoubt(doubtText, questionContext || undefined);
+    // Clear question context after sending
+    setQuestionContext(null);
+  };
+
+  const handleGenerateQuestions = (
+    context: import("@/lib/types").DoubtContext
+  ) => {
+    // Navigate to generate-questions tab with doubt context
+    router.push({
+      pathname: "/(tabs)/generate-questions",
+      params: {
+        doubtContext: JSON.stringify(context),
+      },
+    });
   };
 
   // MVP_BYPASS: Removed plan-related logic
@@ -129,12 +178,18 @@ export default function AskDoubtScreen() {
             <Text className="text-base text-gray-500">Thinking...</Text>
           </View>
         )}
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <ChatBubble
             key={message.id}
             message={message.text}
             isUser={message.isUser}
             timeStamp={message.timeStamp}
+            doubtContext={
+              !message.isUser && index === messages.length - 1
+                ? currentDoubtContext || undefined
+                : undefined
+            }
+            onGenerateQuestions={handleGenerateQuestions}
           />
         ))}
       </ScrollView>

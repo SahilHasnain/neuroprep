@@ -6,7 +6,7 @@ import {
   saveQuestionsToStorage,
 } from "@/services/storage/questions.storage";
 import { Question } from "@/lib/models";
-import type { Question as QuestionType } from "@/lib/types";
+import type { Question as QuestionType, DoubtContext } from "@/lib/types";
 import type { PlanLimits } from "@/types/plan";
 import { parseApiError, type ApiError } from "@/utils/errorHandler";
 import {
@@ -34,6 +34,9 @@ export const useQuestions = () => {
   );
   // MVP_BYPASS: Added state for coming soon modal
   const [showComingSoon, setShowComingSoon] = useState(false);
+  // State for doubt context (when generating from doubt)
+  const [currentDoubtContext, setCurrentDoubtContext] =
+    useState<DoubtContext | null>(null);
   const { limits } = usePlanStore();
   const loadFromParams = (data: {
     questions: QuestionType[];
@@ -41,6 +44,7 @@ export const useQuestions = () => {
     topic: string;
     difficulty: string;
     questionCount: string;
+    doubtContext?: DoubtContext;
   }) => {
     setQuestions(data.questions);
     setSubject(data.subject);
@@ -48,6 +52,9 @@ export const useQuestions = () => {
     setDifficulty(data.difficulty);
     setQuestionCount(data.questionCount);
     setSelectedAnswers({});
+    if (data.doubtContext) {
+      setCurrentDoubtContext(data.doubtContext);
+    }
   };
 
   const generateQuestions = async () => {
@@ -121,6 +128,7 @@ export const useQuestions = () => {
         topic,
         difficulty,
         questionCount: parseInt(questionCount, 10),
+        doubtContext: currentDoubtContext || undefined,
       });
     } catch (err) {
       console.error("Error generating questions:", err);
@@ -153,6 +161,7 @@ export const useQuestions = () => {
     setTopic("");
     setDifficulty("");
     setQuestionCount("");
+    setCurrentDoubtContext(null);
   };
 
   const canGenerate = subject && topic && difficulty && questionCount;
@@ -191,5 +200,6 @@ export const useQuestions = () => {
     loadFromParams,
     showComingSoon,
     setShowComingSoon,
+    setCurrentDoubtContext,
   };
 };

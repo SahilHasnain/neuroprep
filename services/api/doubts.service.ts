@@ -5,6 +5,7 @@ import type {
   AskDoubtResponse,
   ApiResponse,
   Doubt,
+  QuestionContext,
 } from "@/lib/types";
 
 export const doubtsService = {
@@ -15,7 +16,8 @@ export const doubtsService = {
       subject: string;
       topic: string;
       aiAnswer?: string;
-    }>
+    }>,
+    questionContext?: QuestionContext
   ): Promise<ApiResponse<AskDoubtResponse>> {
     const payload: AskDoubtRequest = {
       doubtText,
@@ -23,6 +25,10 @@ export const doubtsService = {
 
     if (historyContext && historyContext.length > 0) {
       payload.historyContext = historyContext;
+    }
+
+    if (questionContext) {
+      payload.questionContext = questionContext;
     }
 
     return apiClient.post<AskDoubtResponse>(API_ENDPOINTS.ASK_DOUBT, payload);

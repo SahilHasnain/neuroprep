@@ -16,7 +16,8 @@ import {
   loadQuestionsFromStorage,
   deleteQuestionFromStorage,
 } from "@/services/storage/questions.storage";
-import type { StoredQuestionSet } from "@/lib/types";
+import type { StoredQuestionSet, DoubtContext } from "@/lib/types";
+import { useLocalSearchParams } from "expo-router";
 
 export default function GenerateQuestionsScreen() {
   const [questionSets, setQuestionSets] = useState<StoredQuestionSet[]>([]);
@@ -24,6 +25,10 @@ export default function GenerateQuestionsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
+  const [doubtContext, setDoubtContext] = useState<DoubtContext | null>(null);
+
+  // Get route params
+  const params = useLocalSearchParams();
 
   const {
     subject,
@@ -47,11 +52,37 @@ export default function GenerateQuestionsScreen() {
     loadFromParams,
     showComingSoon,
     setShowComingSoon,
+    setCurrentDoubtContext,
   } = useQuestions();
 
   useEffect(() => {
     loadSets();
   }, []);
+
+  // Handle doubt context from navigation params
+  useEffect(() => {
+    if (params.doubtContext) {
+      try {
+        const context = JSON.parse(
+          params.doubtContext as string
+        ) as DoubtContext;
+        setDoubtContext(context);
+
+        // Auto-fill subject and topic from doubt context
+        setSubject(context.subject);
+        setTopic(context.topic);
+
+        // Set doubt context in the hook for storage
+        setCurrentDoubtContext(context);
+
+        // Open modal automatically
+        setModalVisible(true);
+      } catch (err) {
+        console.error("Error parsing doubt context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.doubtContext]);
 
   const loadSets = async () => {
     setLoadingSets(true);
@@ -63,6 +94,8 @@ export default function GenerateQuestionsScreen() {
   const handleGenerate = async () => {
     await generateQuestions();
     setModalVisible(false);
+    // Clear doubt context after generating
+    setDoubtContext(null);
     await loadSets();
   };
 
@@ -115,6 +148,7 @@ export default function GenerateQuestionsScreen() {
         canGenerate={Boolean(canGenerate)}
         isDifficultyLocked={isDifficultyLocked}
         isQuestionCountLocked={isQuestionCountLocked}
+        doubtContext={doubtContext || undefined}
       />
 
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}
@@ -199,6 +233,9 @@ export default function GenerateQuestionsScreen() {
             selectedAnswers={selectedAnswers}
             onAnswerSelect={selectAnswer}
             onReset={handleReset}
+            subject={subject}
+            topic={topic}
+            difficulty={difficulty}
           />
         </View>
       )}

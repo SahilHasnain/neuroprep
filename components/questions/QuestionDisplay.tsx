@@ -1,13 +1,18 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
+import { HelpCircle } from "lucide-react-native";
+import { router } from "expo-router";
 import Button from "@/components/ui/Button";
 import QuestionCard from "@/components/ui/QuestionCard";
-import type { Question } from "@/lib/types";
+import type { Question, QuestionContext } from "@/lib/types";
 
 interface QuestionDisplayProps {
   questions: Question[];
   selectedAnswers: Record<string, string>;
   onAnswerSelect: (questionId: string, optionId: string) => void;
   onReset: () => void;
+  subject?: string;
+  topic?: string;
+  difficulty?: string;
 }
 
 export default function QuestionDisplay({
@@ -15,7 +20,31 @@ export default function QuestionDisplay({
   selectedAnswers,
   onAnswerSelect,
   onReset,
+  subject = "",
+  topic = "",
+  difficulty = "",
 }: QuestionDisplayProps) {
+  const handleAskDoubt = (question: Question) => {
+    const context: QuestionContext = {
+      questionId: question.id,
+      questionText: question.question,
+      options: question.options.map((opt) => opt.text),
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation,
+      subject,
+      topic,
+      difficulty,
+    };
+
+    // Navigate to ask-doubt screen with question context
+    router.push({
+      pathname: "/(tabs)/ask-doubt",
+      params: {
+        questionContext: JSON.stringify(context),
+      },
+    });
+  };
+
   return (
     <ScrollView className="flex-1">
       <View className="flex-row items-center justify-between mb-4">
@@ -42,6 +71,17 @@ export default function QuestionDisplay({
             selectedAnswer={selectedAnswers[question.id]}
             onAnswerSelect={(optionId) => onAnswerSelect(question.id, optionId)}
           />
+
+          {/* Ask Doubt Button */}
+          <Pressable
+            onPress={() => handleAskDoubt(question)}
+            className="flex-row items-center justify-center px-4 py-3 mt-2 mb-4 rounded-xl bg-blue-600 active:bg-blue-700"
+          >
+            <HelpCircle size={20} color="white" />
+            <Text className="ml-2 text-base font-semibold text-white">
+              Ask Doubt about this question
+            </Text>
+          </Pressable>
         </View>
       ))}
 

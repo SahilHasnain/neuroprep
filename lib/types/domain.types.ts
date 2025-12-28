@@ -39,6 +39,11 @@ export interface StoredQuestionSet {
   questionCount: number;
   questions: Question[];
   createdAt?: string;
+  // Optional doubt reference
+  doubtContext?: {
+    doubtId: string;
+    doubtText: string;
+  };
 }
 
 // Note Domain
@@ -57,4 +62,37 @@ export interface StoredNoteSet {
   topic: string;
   noteLength: string;
   note: Note;
+}
+
+// Context Bridge Types for Doubts-Questions Integration
+
+// Question context passed from question generator to doubt system
+export interface QuestionContext {
+  questionId: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
+  explanation?: string;
+  subject: string;
+  topic: string;
+  difficulty: string;
+}
+
+// Doubt context passed from doubt system to question generator
+export interface DoubtContext {
+  doubtId: string;
+  doubtText: string;
+  subject: string;
+  topic: string;
+  difficulty?: string;
+}
+
+// Navigation params for ask-doubt screen
+export interface AskDoubtScreenParams {
+  questionContext?: QuestionContext;
+}
+
+// Navigation params for generate-questions modal
+export interface GenerateQuestionsParams {
+  doubtContext?: DoubtContext;
 }
