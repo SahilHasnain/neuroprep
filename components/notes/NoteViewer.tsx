@@ -1,11 +1,12 @@
 import { View, Text, ScrollView, Pressable, Modal } from "react-native";
-import { X } from "lucide-react-native";
+import { X, FileQuestion, MessageCircleQuestion } from "lucide-react-native";
 import { SUBJECTS } from "@/constants";
 import QuickSummary from "./QuickSummary";
 import NoteSection from "./NoteSection";
 import FormulaCard from "./FormulaCard";
 import TipCard from "./TipCard";
 import MathMarkdown from "@/components/shared/MathMarkdown";
+import type { NoteContext } from "@/lib/types/domain.types";
 
 interface NoteViewerProps {
   visible: boolean;
@@ -17,6 +18,8 @@ interface NoteViewerProps {
     date: string;
   } | null;
   onClose: () => void;
+  onGenerateQuestions?: (context: NoteContext) => void;
+  onAskDoubt?: (context: NoteContext) => void;
 }
 
 interface ParsedNote {
@@ -37,8 +40,36 @@ export default function NoteViewer({
   visible,
   note,
   onClose,
+  onGenerateQuestions,
+  onAskDoubt,
 }: NoteViewerProps) {
   if (!note) return null;
+
+  const handleGenerateQuestions = () => {
+    if (onGenerateQuestions && note) {
+      const context: NoteContext = {
+        noteId: note.id,
+        noteTitle: note.title,
+        subject: note.subject,
+        topic: note.title, // Using title as topic
+        noteLength: "medium", // Default value
+      };
+      onGenerateQuestions(context);
+    }
+  };
+
+  const handleAskDoubt = () => {
+    if (onAskDoubt && note) {
+      const context: NoteContext = {
+        noteId: note.id,
+        noteTitle: note.title,
+        subject: note.subject,
+        topic: note.title, // Using title as topic
+        noteLength: "medium", // Default value
+      };
+      onAskDoubt(context);
+    }
+  };
 
   // Subject color mapping
   const subjectColors: Record<string, { bg: string; text: string }> = {
@@ -311,6 +342,32 @@ export default function NoteViewer({
               </View>
             )}
           </ScrollView>
+
+          {/* Action Buttons Section */}
+          {!parseError && (
+            <View className="px-6 py-4 bg-white border-t-2 border-gray-100">
+              <View className="flex-row gap-3">
+                <Pressable
+                  onPress={handleGenerateQuestions}
+                  className="flex-1 flex-row items-center justify-center px-4 py-3 bg-blue-600 rounded-xl active:bg-blue-700"
+                >
+                  <FileQuestion size={20} color="#fff" />
+                  <Text className="ml-2 font-semibold text-white">
+                    Generate Questions
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleAskDoubt}
+                  className="flex-1 flex-row items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-xl bg-white active:bg-blue-50"
+                >
+                  <MessageCircleQuestion size={20} color="#2563eb" />
+                  <Text className="ml-2 font-semibold text-blue-600">
+                    Ask Doubt
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </Modal>

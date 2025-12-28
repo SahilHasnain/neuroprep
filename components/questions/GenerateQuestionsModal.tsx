@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
-import type { DoubtContext } from "@/lib/types";
+import type { DoubtContext, NoteContext } from "@/lib/types";
 
 // MVP_BYPASS: Removed userPlan, error, and upgrade prompts
 interface GenerateQuestionsModalProps {
@@ -25,6 +25,7 @@ interface GenerateQuestionsModalProps {
   isDifficultyLocked: (diff: string) => boolean;
   isQuestionCountLocked: (count: string) => boolean;
   doubtContext?: DoubtContext;
+  noteContext?: NoteContext;
 }
 
 export default function GenerateQuestionsModal({
@@ -44,6 +45,7 @@ export default function GenerateQuestionsModal({
   isDifficultyLocked,
   isQuestionCountLocked,
   doubtContext,
+  noteContext,
 }: GenerateQuestionsModalProps) {
   const difficultyOptions = DIFFICULTY_LEVELS.map((d) => ({
     ...d,
@@ -55,7 +57,7 @@ export default function GenerateQuestionsModal({
     locked: isQuestionCountLocked(q.value),
   }));
 
-  const isPreFilled = Boolean(doubtContext);
+  const isPreFilled = Boolean(doubtContext || noteContext);
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -79,7 +81,9 @@ export default function GenerateQuestionsModal({
               <View className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg flex-row items-center">
                 <Info size={16} color="#2563eb" />
                 <Text className="ml-2 text-sm text-blue-700 flex-1">
-                  Pre-filled from your doubt
+                  {doubtContext
+                    ? "Pre-filled from your doubt"
+                    : `From Notes: ${noteContext?.noteTitle}`}
                 </Text>
               </View>
             )}

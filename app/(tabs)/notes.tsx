@@ -1,4 +1,5 @@
 // MVP_BYPASS: Removed auth and upgrade prompts, using ComingSoonModal for limits
+import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
@@ -18,6 +19,17 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router, useLocalSearchParams } from "expo-router";
+import type {
+  NoteContext,
+  QuestionToNoteContext,
+  DoubtToNoteContext,
+} from "@/lib/types/domain.types";
+import { Info } from "lucide-react-native";
+import {
+  validateQuestionToNoteContext,
+  validateDoubtToNoteContext,
+} from "@/utils/contextValidation";
 
 // Motivational messages for loading state
 const motivationalMessages = [
@@ -62,6 +74,110 @@ export default function NotesScreen() {
     showComingSoon,
     setShowComingSoon,
   } = useNotes();
+
+  const [questionContext, setQuestionContext] =
+    useState<QuestionToNoteContext | null>(null);
+  const [doubtContext, setDoubtContext] = useState<DoubtToNoteContext | null>(
+    null
+  );
+
+  // Get route params
+  const params = useLocalSearchParams();
+
+  const handleGenerateNotes = async () => {
+    await generateNotes();
+    // Clear contexts after generating
+    setQuestionContext(null);
+    setDoubtContext(null);
+  };
+
+  const handleGenerateQuestions = (context: NoteContext) => {
+    // Close the note viewer
+    setIsViewModalVisible(false);
+
+    // Navigate to generate-questions tab with note context
+    router.push({
+      pathname: "/(tabs)/generate-questions",
+      params: {
+        noteContext: JSON.stringify(context),
+      },
+    });
+  };
+
+  const handleAskDoubt = (context: NoteContext) => {
+    // Close the note viewer
+    setIsViewModalVisible(false);
+
+    // Navigate to ask-doubt tab with note context
+    router.push({
+      pathname: "/(tabs)/ask-doubt",
+      params: {
+        noteContext: JSON.stringify(context),
+      },
+    });
+  };
+
+  // Handle question context from navigation params
+  useEffect(() => {
+    if (params.questionContext) {
+      try {
+        const parsedContext = JSON.parse(params.questionContext as string);
+
+        // Validate context before using it
+        if (validateQuestionToNoteContext(parsedContext)) {
+          setQuestionContext(parsedContext);
+
+          // Auto-fill subject and topic from question context
+          setGenerateConfig({
+            subject: parsedContext.subject,
+            topic: parsedContext.topic,
+            noteLength: "medium",
+          });
+
+          // Open modal automatically
+          setIsModalVisible(true);
+        } else {
+          console.error(
+            "Invalid question context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing question context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.questionContext]);
+
+  // Handle doubt context from navigation params
+  useEffect(() => {
+    if (params.doubtContext) {
+      try {
+        const parsedContext = JSON.parse(params.doubtContext as string);
+
+        // Validate context before using it
+        if (validateDoubtToNoteContext(parsedContext)) {
+          setDoubtContext(parsedContext);
+
+          // Auto-fill subject and topic from doubt context
+          setGenerateConfig({
+            subject: parsedContext.subject,
+            topic: parsedContext.topic,
+            noteLength: "medium",
+          });
+
+          // Open modal automatically
+          setIsModalVisible(true);
+        } else {
+          console.error(
+            "Invalid doubt context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing doubt context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.doubtContext]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -166,6 +282,19 @@ export default function NotesScreen() {
             </View>
 
             <ScrollView className="flex-1 px-6 py-4">
+              {/* Context Indicator */}
+              {(questionContext || doubtContext) && (
+                <View className="p-3 mb-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <View className="flex-row items-center">
+                    <Info size={16} color="#3b82f6" />
+                    <Text className="ml-2 text-sm text-blue-700">
+                      From {questionContext ? "Questions" : "Doubts"}:{" "}
+                      {questionContext?.topic || doubtContext?.topic}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
               <View className="p-4 mb-4 rounded-xl bg-blue-50">
                 <Text className="text-sm leading-5 text-blue-700">
                   AI will generate comprehensive notes on your selected topic,
@@ -229,7 +358,7 @@ export default function NotesScreen() {
                   <View className="flex-1">
                     <Button
                       title="Generate Notes"
-                      onPress={generateNotes}
+                      onPress={handleGenerateNotes}
                       fullWidth
                       disabled={!canGenerate}
                     />
@@ -252,6 +381,8 @@ export default function NotesScreen() {
         visible={isViewModalVisible}
         note={selectedNote}
         onClose={() => setIsViewModalVisible(false)}
+        onGenerateQuestions={handleGenerateQuestions}
+        onAskDoubt={handleAskDoubt}
       />
 
       {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}

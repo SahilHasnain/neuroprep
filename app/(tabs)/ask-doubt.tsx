@@ -8,8 +8,12 @@ import { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
-import { Send } from "lucide-react-native";
-import type { QuestionContext } from "@/lib/types";
+import { Send, Info } from "lucide-react-native";
+import type { QuestionContext, NoteContext } from "@/lib/types";
+import {
+  validateQuestionContext,
+  validateNoteContext,
+} from "@/utils/contextValidation";
 
 export default function AskDoubtScreen() {
   const { user, checkSession } = useAuthStore();
@@ -19,6 +23,7 @@ export default function AskDoubtScreen() {
   const [authVisible, setAuthVisible] = useState(false);
   const [questionContext, setQuestionContext] =
     useState<QuestionContext | null>(null);
+  const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
 
   // Get route params
   const params = useLocalSearchParams();
@@ -31,23 +36,29 @@ export default function AskDoubtScreen() {
   useEffect(() => {
     if (params.questionContext) {
       try {
-        const context = JSON.parse(
-          params.questionContext as string
-        ) as QuestionContext;
-        setQuestionContext(context);
+        const parsedContext = JSON.parse(params.questionContext as string);
 
-        // Format question context into natural doubt query
-        const formattedDoubt = `I have a doubt about this question:
+        // Validate context before using it
+        if (validateQuestionContext(parsedContext)) {
+          setQuestionContext(parsedContext);
 
-Question: ${context.questionText}
+          // Format question context into natural doubt query
+          const formattedDoubt = `I have a doubt about this question:
+
+Question: ${parsedContext.questionText}
 
 Options:
-${context.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join("\n")}
+${parsedContext.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join("\n")}
 
-Correct Answer: ${context.correctAnswer}
+Correct Answer: ${parsedContext.correctAnswer}
 
 `;
-        setInputText(formattedDoubt);
+          setInputText(formattedDoubt);
+        } else {
+          console.error(
+            "Invalid question context received, continuing without context"
+          );
+        }
       } catch (err) {
         console.error("Error parsing question context:", err);
         // Graceful degradation - continue without context
@@ -55,13 +66,40 @@ Correct Answer: ${context.correctAnswer}
     }
   }, [params.questionContext]);
 
+  // Handle note context from navigation params
+  useEffect(() => {
+    if (params.noteContext) {
+      try {
+        const parsedContext = JSON.parse(params.noteContext as string);
+
+        // Validate context before using it
+        if (validateNoteContext(parsedContext)) {
+          setNoteContext(parsedContext);
+
+          // Pre-fill input with note reference
+          setInputText(
+            `I have a doubt about the note "${parsedContext.noteTitle}":\n\n`
+          );
+        } else {
+          console.error(
+            "Invalid note context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing note context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.noteContext]);
+
   const handleSend = async () => {
     if (!inputText.trim() || loading) return;
     const doubtText = inputText.trim();
     setInputText("");
     await askDoubt(doubtText, questionContext || undefined);
-    // Clear question context after sending
+    // Clear contexts after sending
     setQuestionContext(null);
+    setNoteContext(null);
   };
 
   const handleGenerateQuestions = (
@@ -70,6 +108,18 @@ Correct Answer: ${context.correctAnswer}
     // Navigate to generate-questions tab with doubt context
     router.push({
       pathname: "/(tabs)/generate-questions",
+      params: {
+        doubtContext: JSON.stringify(context),
+      },
+    });
+  };
+
+  const handleGenerateNotes = (
+    context: import("@/lib/types").DoubtToNoteContext
+  ) => {
+    // Navigate to notes tab with doubt context
+    router.push({
+      pathname: "/(tabs)/notes",
       params: {
         doubtContext: JSON.stringify(context),
       },
@@ -116,6 +166,18 @@ Correct Answer: ${context.correctAnswer}
             </Pressable>
           )}
         </View>
+
+        {/* Note Context Indicator */}
+        {noteContext && (
+          <View className="p-3 mb-3 rounded-lg bg-blue-50 border border-blue-200">
+            <View className="flex-row items-center">
+              <Info size={16} color="#3b82f6" />
+              <Text className="ml-2 text-sm text-blue-700">
+                Related to note: {noteContext.noteTitle}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Input Area */}
         <View className="flex-row items-end p-3 mb-3 bg-gray-100 rounded-2xl">
@@ -190,6 +252,7 @@ Correct Answer: ${context.correctAnswer}
                 : undefined
             }
             onGenerateQuestions={handleGenerateQuestions}
+            onGenerateNotes={handleGenerateNotes}
           />
         ))}
       </ScrollView>

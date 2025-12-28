@@ -16,8 +16,12 @@ import {
   loadQuestionsFromStorage,
   deleteQuestionFromStorage,
 } from "@/services/storage/questions.storage";
-import type { StoredQuestionSet, DoubtContext } from "@/lib/types";
+import type { StoredQuestionSet, DoubtContext, NoteContext } from "@/lib/types";
 import { useLocalSearchParams } from "expo-router";
+import {
+  validateDoubtContext,
+  validateNoteContext,
+} from "@/utils/contextValidation";
 
 export default function GenerateQuestionsScreen() {
   const [questionSets, setQuestionSets] = useState<StoredQuestionSet[]>([]);
@@ -26,6 +30,7 @@ export default function GenerateQuestionsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
   const [doubtContext, setDoubtContext] = useState<DoubtContext | null>(null);
+  const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
 
   // Get route params
   const params = useLocalSearchParams();
@@ -63,26 +68,60 @@ export default function GenerateQuestionsScreen() {
   useEffect(() => {
     if (params.doubtContext) {
       try {
-        const context = JSON.parse(
-          params.doubtContext as string
-        ) as DoubtContext;
-        setDoubtContext(context);
+        const parsedContext = JSON.parse(params.doubtContext as string);
 
-        // Auto-fill subject and topic from doubt context
-        setSubject(context.subject);
-        setTopic(context.topic);
+        // Validate context before using it
+        if (validateDoubtContext(parsedContext)) {
+          setDoubtContext(parsedContext);
 
-        // Set doubt context in the hook for storage
-        setCurrentDoubtContext(context);
+          // Auto-fill subject and topic from doubt context
+          setSubject(parsedContext.subject);
+          setTopic(parsedContext.topic);
 
-        // Open modal automatically
-        setModalVisible(true);
+          // Set doubt context in the hook for storage
+          setCurrentDoubtContext(parsedContext);
+
+          // Open modal automatically
+          setModalVisible(true);
+        } else {
+          console.error(
+            "Invalid doubt context received, continuing without context"
+          );
+        }
       } catch (err) {
         console.error("Error parsing doubt context:", err);
         // Graceful degradation - continue without context
       }
     }
   }, [params.doubtContext]);
+
+  // Handle note context from navigation params
+  useEffect(() => {
+    if (params.noteContext) {
+      try {
+        const parsedContext = JSON.parse(params.noteContext as string);
+
+        // Validate context before using it
+        if (validateNoteContext(parsedContext)) {
+          setNoteContext(parsedContext);
+
+          // Auto-fill subject and topic from note context
+          setSubject(parsedContext.subject);
+          setTopic(parsedContext.topic);
+
+          // Open modal automatically
+          setModalVisible(true);
+        } else {
+          console.error(
+            "Invalid note context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing note context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.noteContext]);
 
   const loadSets = async () => {
     setLoadingSets(true);
@@ -94,8 +133,9 @@ export default function GenerateQuestionsScreen() {
   const handleGenerate = async () => {
     await generateQuestions();
     setModalVisible(false);
-    // Clear doubt context after generating
+    // Clear contexts after generating
     setDoubtContext(null);
+    setNoteContext(null);
     await loadSets();
   };
 
@@ -149,6 +189,7 @@ export default function GenerateQuestionsScreen() {
         isDifficultyLocked={isDifficultyLocked}
         isQuestionCountLocked={isQuestionCountLocked}
         doubtContext={doubtContext || undefined}
+        noteContext={noteContext || undefined}
       />
 
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}

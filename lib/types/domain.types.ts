@@ -62,6 +62,12 @@ export interface StoredNoteSet {
   topic: string;
   noteLength: string;
   note: Note;
+  // Optional source context
+  sourceContext?: {
+    type: "question" | "doubt";
+    id: string;
+    text?: string;
+  };
 }
 
 // Context Bridge Types for Doubts-Questions Integration
@@ -95,4 +101,31 @@ export interface AskDoubtScreenParams {
 // Navigation params for generate-questions modal
 export interface GenerateQuestionsParams {
   doubtContext?: DoubtContext;
+}
+
+// Context Bridge Types for Notes Integration
+
+// Note context passed from notes to questions/doubts
+export interface NoteContext {
+  noteId: string;
+  noteTitle: string;
+  subject: string;
+  topic: string;
+  noteLength: string;
+}
+
+// Question context passed to notes (for generating notes from questions)
+export interface QuestionToNoteContext {
+  questionSetId?: string;
+  subject: string;
+  topic: string;
+  difficulty: string;
+}
+
+// Doubt context passed to notes (for generating notes from doubts)
+export interface DoubtToNoteContext {
+  doubtId: string;
+  doubtText: string;
+  subject: string;
+  topic: string;
 }

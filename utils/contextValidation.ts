@@ -1,4 +1,10 @@
-import type { QuestionContext, DoubtContext } from "@/lib/types";
+import type {
+  QuestionContext,
+  DoubtContext,
+  NoteContext,
+  QuestionToNoteContext,
+  DoubtToNoteContext,
+} from "@/lib/types";
 
 /**
  * Validate question context before navigation
@@ -30,4 +36,108 @@ export function validateDoubtContext(context: any): context is DoubtContext {
     typeof context.subject === "string" &&
     typeof context.topic === "string"
   );
+}
+
+/**
+ * Validate note context before navigation from notes to questions/doubts
+ */
+export function validateNoteContext(context: any): context is NoteContext {
+  try {
+    if (!context || typeof context !== "object") {
+      console.error("Note context validation failed: Invalid context object");
+      return false;
+    }
+
+    const required = ["noteId", "noteTitle", "subject", "topic", "noteLength"];
+    for (const field of required) {
+      if (!context[field] || typeof context[field] !== "string") {
+        console.error(
+          `Note context validation failed: Missing or invalid field '${field}'`
+        );
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Note context validation failed:", error);
+    return false;
+  }
+}
+
+/**
+ * Validate question-to-note context before navigation from questions to notes
+ */
+export function validateQuestionToNoteContext(
+  context: any
+): context is QuestionToNoteContext {
+  try {
+    if (!context || typeof context !== "object") {
+      console.error(
+        "Question-to-note context validation failed: Invalid context object"
+      );
+      return false;
+    }
+
+    if (
+      !context.subject ||
+      typeof context.subject !== "string" ||
+      !context.topic ||
+      typeof context.topic !== "string" ||
+      !context.difficulty ||
+      typeof context.difficulty !== "string"
+    ) {
+      console.error(
+        "Question-to-note context validation failed: Missing required fields (subject, topic, difficulty)"
+      );
+      return false;
+    }
+
+    // questionSetId is optional
+    if (
+      context.questionSetId !== undefined &&
+      typeof context.questionSetId !== "string"
+    ) {
+      console.error(
+        "Question-to-note context validation failed: Invalid questionSetId type"
+      );
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Question-to-note context validation failed:", error);
+    return false;
+  }
+}
+
+/**
+ * Validate doubt-to-note context before navigation from doubts to notes
+ */
+export function validateDoubtToNoteContext(
+  context: any
+): context is DoubtToNoteContext {
+  try {
+    if (!context || typeof context !== "object") {
+      console.error(
+        "Doubt-to-note context validation failed: Invalid context object"
+      );
+      return false;
+    }
+
+    const required = ["doubtId", "doubtText", "subject", "topic"];
+    for (const field of required) {
+      if (!context[field] || typeof context[field] !== "string") {
+        console.error(
+          `Doubt-to-note context validation failed: Missing or invalid field '${field}'`
+        );
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Doubt-to-note context validation failed:", error);
+    return false;
+  }
 }

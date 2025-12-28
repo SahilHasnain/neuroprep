@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Text, View, TouchableOpacity } from "react-native";
 import MathMarkdown from "@/components/shared/MathMarkdown";
-import type { DoubtContext } from "@/lib/types";
+import type { DoubtContext, DoubtToNoteContext } from "@/lib/types";
 
 interface ChatBubbleProps {
   message: string;
@@ -9,6 +9,7 @@ interface ChatBubbleProps {
   timeStamp?: string;
   doubtContext?: DoubtContext;
   onGenerateQuestions?: (context: DoubtContext) => void;
+  onGenerateNotes?: (context: DoubtToNoteContext) => void;
 }
 
 export default function ChatBubble({
@@ -17,9 +18,23 @@ export default function ChatBubble({
   timeStamp,
   doubtContext,
   onGenerateQuestions,
+  onGenerateNotes,
 }: ChatBubbleProps) {
   const showGenerateQuestionsButton =
     !isUser && doubtContext && onGenerateQuestions;
+  const showGenerateNotesButton = !isUser && doubtContext && onGenerateNotes;
+
+  const handleGenerateNotes = () => {
+    if (doubtContext && onGenerateNotes) {
+      const noteContext: DoubtToNoteContext = {
+        doubtId: doubtContext.doubtId,
+        doubtText: doubtContext.doubtText,
+        subject: doubtContext.subject,
+        topic: doubtContext.topic,
+      };
+      onGenerateNotes(noteContext);
+    }
+  };
 
   return (
     <View className={clsx("mb-4", isUser ? "items-end" : "items-start")}>
@@ -78,6 +93,23 @@ export default function ChatBubble({
               <Text className="text-blue-600 font-medium text-sm mr-1">📝</Text>
               <Text className="text-blue-600 font-medium text-sm">
                 Generate Questions on this topic
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {showGenerateNotesButton && (
+          <TouchableOpacity
+            onPress={handleGenerateNotes}
+            className="mt-2"
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center justify-center py-2 px-3 bg-green-50 rounded-lg border border-green-200">
+              <Text className="text-green-600 font-medium text-sm mr-1">
+                📚
+              </Text>
+              <Text className="text-green-600 font-medium text-sm">
+                Generate Notes on this topic
               </Text>
             </View>
           </TouchableOpacity>

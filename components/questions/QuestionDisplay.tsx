@@ -1,9 +1,13 @@
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { HelpCircle } from "lucide-react-native";
+import { HelpCircle, BookOpen } from "lucide-react-native";
 import { router } from "expo-router";
 import Button from "@/components/ui/Button";
 import QuestionCard from "@/components/ui/QuestionCard";
-import type { Question, QuestionContext } from "@/lib/types";
+import type {
+  Question,
+  QuestionContext,
+  QuestionToNoteContext,
+} from "@/lib/types";
 
 interface QuestionDisplayProps {
   questions: Question[];
@@ -45,6 +49,22 @@ export default function QuestionDisplay({
     });
   };
 
+  const handleGenerateNotes = () => {
+    const context: QuestionToNoteContext = {
+      subject,
+      topic,
+      difficulty,
+    };
+
+    // Navigate to notes screen with question context
+    router.push({
+      pathname: "/(tabs)/notes",
+      params: {
+        questionContext: JSON.stringify(context),
+      },
+    });
+  };
+
   return (
     <ScrollView className="flex-1">
       <View className="flex-row items-center justify-between mb-4">
@@ -56,7 +76,15 @@ export default function QuestionDisplay({
             {questions.length} questions
           </Text>
         </View>
-        <Button title="Back" onPress={onReset} variant="outline" />
+        <View className="flex-row gap-2">
+          <Button
+            title="Generate Notes"
+            onPress={handleGenerateNotes}
+            variant="outline"
+            icon={<BookOpen size={16} color="#3b82f6" />}
+          />
+          <Button title="Back" onPress={onReset} variant="outline" />
+        </View>
       </View>
 
       {questions.map((question, index) => (
