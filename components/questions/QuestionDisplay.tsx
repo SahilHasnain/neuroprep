@@ -10,6 +10,7 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import QuestionCard from "@/components/ui/QuestionCard";
 import AskDoubtModal from "@/components/modals/AskDoubtModal";
+import ScoreCard from "@/components/questions/ScoreCard";
 import type {
   Question,
   QuestionContext,
@@ -40,10 +41,25 @@ export default function QuestionDisplay({
   const [doubtModalVisible, setDoubtModalVisible] = useState(false);
   const [selectedQuestionContext, setSelectedQuestionContext] =
     useState<QuestionContext | null>(null);
+  const [showScore, setShowScore] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const answeredCount = Object.keys(selectedAnswers).length;
   const progressPercentage = (answeredCount / questions.length) * 100;
+
+  // Calculate score
+
+  // Calculate score
+  const calculateScore = () => {
+    let correctCount = 0;
+    questions.forEach((question) => {
+      const selectedAnswer = selectedAnswers[question.id];
+      if (selectedAnswer === question.correctAnswer) {
+        correctCount++;
+      }
+    });
+    return correctCount;
+  };
 
   const handleAskDoubt = (question: Question) => {
     const context: QuestionContext = {
@@ -91,6 +107,24 @@ export default function QuestionDisplay({
     setCurrentQuestionIndex(index);
     setShowAllQuestions(false);
   };
+
+  const handleRetry = () => {
+    setShowScore(false);
+    setCurrentQuestionIndex(0);
+    onReset();
+  };
+
+  // Show score card when all questions are answered
+  if (showScore) {
+    return (
+      <ScoreCard
+        score={calculateScore()}
+        totalQuestions={questions.length}
+        onRetry={handleRetry}
+        onExit={onReset}
+      />
+    );
+  }
 
   // Single question view (default)
   if (!showAllQuestions) {
@@ -190,33 +224,44 @@ export default function QuestionDisplay({
               </Text>
             </Pressable>
 
-            <Pressable
-              onPress={handleNext}
-              disabled={currentQuestionIndex === questions.length - 1}
-              className={`flex-row items-center justify-center px-4 py-3 rounded-xl flex-1 ${
-                currentQuestionIndex === questions.length - 1
-                  ? "bg-gray-100"
-                  : "bg-blue-600 active:bg-blue-700"
-              }`}
-            >
-              <Text
-                className={`mr-1 text-sm font-semibold ${
+            {/* Show Finish button on last question if answered, otherwise Next */}
+            {currentQuestionIndex === questions.length - 1 &&
+            selectedAnswers[currentQuestion.id] ? (
+              <Pressable
+                onPress={() => setShowScore(true)}
+                className="flex-row items-center justify-center px-4 py-3 rounded-xl flex-1 bg-green-600 active:bg-green-700"
+              >
+                <Text className="text-sm font-semibold text-white">Finish</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleNext}
+                disabled={currentQuestionIndex === questions.length - 1}
+                className={`flex-row items-center justify-center px-4 py-3 rounded-xl flex-1 ${
                   currentQuestionIndex === questions.length - 1
-                    ? "text-gray-400"
-                    : "text-white"
+                    ? "bg-gray-100"
+                    : "bg-blue-600 active:bg-blue-700"
                 }`}
               >
-                Next
-              </Text>
-              <ChevronRight
-                size={20}
-                color={
-                  currentQuestionIndex === questions.length - 1
-                    ? "#d1d5db"
-                    : "#ffffff"
-                }
-              />
-            </Pressable>
+                <Text
+                  className={`mr-1 text-sm font-semibold ${
+                    currentQuestionIndex === questions.length - 1
+                      ? "text-gray-400"
+                      : "text-white"
+                  }`}
+                >
+                  Next
+                </Text>
+                <ChevronRight
+                  size={20}
+                  color={
+                    currentQuestionIndex === questions.length - 1
+                      ? "#d1d5db"
+                      : "#ffffff"
+                  }
+                />
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -250,13 +295,35 @@ export default function QuestionDisplay({
       </View>
 
       {/* Progress Summary */}
-      <View className="p-4 mb-4 rounded-xl bg-blue-50 border-[1px] border-blue-200">
-        <Text className="text-sm font-medium text-blue-900">
-          Progress: {answeredCount}/{questions.length} completed
+      <View
+        className={`p-4 mb-4 rounded-xl border-[1px] ${
+          answeredCount === questions.length
+            ? "bg-green-50 border-green-200"
+            : "bg-blue-50 border-blue-200"
+        }`}
+      >
+        <Text
+          className={`text-sm font-medium ${
+            answeredCount === questions.length
+              ? "text-green-900"
+              : "text-blue-900"
+          }`}
+        >
+          {answeredCount === questions.length
+            ? "🎉 All questions completed!"
+            : `Progress: ${answeredCount}/${questions.length} completed`}
         </Text>
-        <View className="h-2 mt-2 overflow-hidden rounded-full bg-blue-200">
+        <View
+          className={`h-2 mt-2 overflow-hidden rounded-full ${
+            answeredCount === questions.length ? "bg-green-200" : "bg-blue-200"
+          }`}
+        >
           <View
-            className="h-full rounded-full bg-blue-600"
+            className={`h-full rounded-full ${
+              answeredCount === questions.length
+                ? "bg-green-600"
+                : "bg-blue-600"
+            }`}
             style={{ width: `${progressPercentage}%` }}
           />
         </View>
@@ -297,6 +364,14 @@ export default function QuestionDisplay({
       </View>
 
       <View className="flex-row gap-2 pb-6">
+        {answeredCount === questions.length && (
+          <Button
+            title="View Score"
+            onPress={() => setShowScore(true)}
+            variant="primary"
+            fullWidth
+          />
+        )}
         <Button
           title="Generate Notes"
           onPress={handleGenerateNotes}

@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { CheckCircle2, Circle } from "lucide-react-native";
-import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import MathMarkdown from "@/components/shared/MathMarkdown";
 import Button from "./Button";
@@ -28,17 +27,13 @@ export default function QuestionCard({
   onAnswerSelect,
   selectedAnswer,
 }: QuestionCardProps) {
-  const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
+  // Determine if answer is revealed based on whether an answer has been selected
+  const isAnswerRevealed = !!selectedAnswer || showAnswer;
 
   const handleOptionPress = (optionId: string) => {
     if (onAnswerSelect && !isAnswerRevealed) {
       onAnswerSelect(optionId);
-      setIsAnswerRevealed(true);
     }
-  };
-
-  const handleRevealAnswer = () => {
-    setIsAnswerRevealed(true);
   };
 
   return (
@@ -140,8 +135,6 @@ export default function QuestionCard({
           );
         })}
       </View>
-
-
     </View>
   );
 }

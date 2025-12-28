@@ -104,19 +104,6 @@ export default function NotesScreen() {
     });
   };
 
-  const handleAskDoubt = (context: NoteContext) => {
-    // Close the note viewer
-    setIsViewModalVisible(false);
-
-    // Navigate to ask-doubt tab with note context
-    router.push({
-      pathname: "/(tabs)/ask-doubt",
-      params: {
-        noteContext: JSON.stringify(context),
-      },
-    });
-  };
-
   // Handle question context from navigation params
   useEffect(() => {
     if (params.questionContext) {
@@ -382,7 +369,6 @@ export default function NotesScreen() {
         note={selectedNote}
         onClose={() => setIsViewModalVisible(false)}
         onGenerateQuestions={handleGenerateQuestions}
-        onAskDoubt={handleAskDoubt}
       />
 
       {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}

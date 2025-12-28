@@ -1,11 +1,14 @@
 import { View, Text, ScrollView, Pressable, Modal } from "react-native";
 import { X, FileQuestion, MessageCircleQuestion } from "lucide-react-native";
+import { useState } from "react";
+import { router } from "expo-router";
 import { SUBJECTS } from "@/constants";
 import QuickSummary from "./QuickSummary";
 import NoteSection from "./NoteSection";
 import FormulaCard from "./FormulaCard";
 import TipCard from "./TipCard";
 import MathMarkdown from "@/components/shared/MathMarkdown";
+import AskDoubtModal from "@/components/modals/AskDoubtModal";
 import type { NoteContext } from "@/lib/types/domain.types";
 
 interface NoteViewerProps {
@@ -19,7 +22,6 @@ interface NoteViewerProps {
   } | null;
   onClose: () => void;
   onGenerateQuestions?: (context: NoteContext) => void;
-  onAskDoubt?: (context: NoteContext) => void;
 }
 
 interface ParsedNote {
@@ -41,8 +43,10 @@ export default function NoteViewer({
   note,
   onClose,
   onGenerateQuestions,
-  onAskDoubt,
 }: NoteViewerProps) {
+  const [doubtModalVisible, setDoubtModalVisible] = useState(false);
+  const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
+
   if (!note) return null;
 
   const handleGenerateQuestions = () => {
@@ -59,7 +63,7 @@ export default function NoteViewer({
   };
 
   const handleAskDoubt = () => {
-    if (onAskDoubt && note) {
+    if (note) {
       const context: NoteContext = {
         noteId: note.id,
         noteTitle: note.title,
@@ -67,7 +71,8 @@ export default function NoteViewer({
         topic: note.title, // Using title as topic
         noteLength: "medium", // Default value
       };
-      onAskDoubt(context);
+      setNoteContext(context);
+      setDoubtModalVisible(true);
     }
   };
 
@@ -369,6 +374,15 @@ export default function NoteViewer({
             </View>
           )}
         </View>
+
+        {/* Ask Doubt Modal */}
+        {noteContext && (
+          <AskDoubtModal
+            visible={doubtModalVisible}
+            onClose={() => setDoubtModalVisible(false)}
+            noteContext={noteContext}
+          />
+        )}
       </View>
     </Modal>
   );

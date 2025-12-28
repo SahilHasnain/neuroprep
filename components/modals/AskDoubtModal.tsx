@@ -10,27 +10,30 @@ import { X, Send, HelpCircle } from "lucide-react-native";
 import { useState, useEffect } from "react";
 import { useDoubts } from "@/hooks/useDoubts";
 import ChatBubble from "@/components/shared/ChatBubble";
-import type { QuestionContext } from "@/lib/types";
+import type { QuestionContext, NoteContext } from "@/lib/types";
 import { router } from "expo-router";
 
 interface AskDoubtModalProps {
   visible: boolean;
   onClose: () => void;
-  questionContext: QuestionContext;
+  questionContext?: QuestionContext;
+  noteContext?: NoteContext;
 }
 
 export default function AskDoubtModal({
   visible,
   onClose,
   questionContext,
+  noteContext,
 }: AskDoubtModalProps) {
   const { messages, loading, askDoubt, currentDoubtContext } = useDoubts();
   const [inputText, setInputText] = useState("");
 
-  // Pre-fill input with question context when modal opens
+  // Pre-fill input with context when modal opens
   useEffect(() => {
-    if (visible && questionContext) {
-      const formattedDoubt = `I have a doubt about this question:
+    if (visible) {
+      if (questionContext) {
+        const formattedDoubt = `I have a doubt about this question:
 
 Question: ${questionContext.questionText}
 
@@ -40,9 +43,14 @@ ${questionContext.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) $
 Correct Answer: ${questionContext.correctAnswer}
 
 `;
-      setInputText(formattedDoubt);
+        setInputText(formattedDoubt);
+      } else if (noteContext) {
+        setInputText(
+          `I have a doubt about the note "${noteContext.noteTitle}":\n\n`
+        );
+      }
     }
-  }, [visible, questionContext]);
+  }, [visible, questionContext, noteContext]);
 
   const handleSend = async () => {
     if (!inputText.trim() || loading) return;
@@ -94,7 +102,8 @@ Correct Answer: ${questionContext.correctAnswer}
                     Ask Doubt
                   </Text>
                   <Text className="text-sm text-gray-600">
-                    Get instant help with this question
+                    Get instant help with this{" "}
+                    {questionContext ? "question" : "note"}
                   </Text>
                 </View>
               </View>
