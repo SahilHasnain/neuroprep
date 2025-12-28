@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import QuestionCard from "@/components/ui/QuestionCard";
+import AskDoubtModal from "@/components/modals/AskDoubtModal";
 import type {
   Question,
   QuestionContext,
@@ -36,6 +37,9 @@ export default function QuestionDisplay({
 }: QuestionDisplayProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showAllQuestions, setShowAllQuestions] = useState(false);
+  const [doubtModalVisible, setDoubtModalVisible] = useState(false);
+  const [selectedQuestionContext, setSelectedQuestionContext] =
+    useState<QuestionContext | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
   const answeredCount = Object.keys(selectedAnswers).length;
@@ -47,18 +51,13 @@ export default function QuestionDisplay({
       questionText: question.question,
       options: question.options.map((opt) => opt.text),
       correctAnswer: question.correctAnswer,
-      explanation: question.explanation,
       subject,
       topic,
       difficulty,
     };
 
-    router.push({
-      pathname: "/(tabs)/ask-doubt",
-      params: {
-        questionContext: JSON.stringify(context),
-      },
-    });
+    setSelectedQuestionContext(context);
+    setDoubtModalVisible(true);
   };
 
   const handleGenerateNotes = () => {
@@ -220,6 +219,15 @@ export default function QuestionDisplay({
             </Pressable>
           </View>
         </View>
+
+        {/* Ask Doubt Modal */}
+        {selectedQuestionContext && (
+          <AskDoubtModal
+            visible={doubtModalVisible}
+            onClose={() => setDoubtModalVisible(false)}
+            questionContext={selectedQuestionContext}
+          />
+        )}
       </View>
     );
   }
@@ -298,6 +306,15 @@ export default function QuestionDisplay({
         />
         <Button title="Exit" onPress={onReset} variant="outline" fullWidth />
       </View>
+
+      {/* Ask Doubt Modal */}
+      {selectedQuestionContext && (
+        <AskDoubtModal
+          visible={doubtModalVisible}
+          onClose={() => setDoubtModalVisible(false)}
+          questionContext={selectedQuestionContext}
+        />
+      )}
     </ScrollView>
   );
 }
