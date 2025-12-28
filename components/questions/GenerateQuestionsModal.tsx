@@ -1,5 +1,14 @@
 // MVP_BYPASS: Removed userPlan, error, and upgrade prompts
-import { Modal, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import {
+  Modal,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Keyboard,
+  Platform,
+} from "react-native";
+import { useState, useEffect } from "react";
 import { X, Info } from "lucide-react-native";
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
@@ -47,6 +56,28 @@ export default function GenerateQuestionsModal({
   doubtContext,
   noteContext,
 }: GenerateQuestionsModalProps) {
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   const difficultyOptions = DIFFICULTY_LEVELS.map((d) => ({
     ...d,
     locked: isDifficultyLocked(d.value),
@@ -58,6 +89,9 @@ export default function GenerateQuestionsModal({
   }));
 
   const isPreFilled = Boolean(doubtContext || noteContext);
+
+  // Calculate dynamic max height: leave space for keyboard + some padding
+  const maxScrollHeight = keyboardHeight > 0 ? 300 : 500;
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -76,7 +110,10 @@ export default function GenerateQuestionsModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="px-6 py-6" style={{ maxHeight: 500 }}>
+          <ScrollView
+            className="px-6 py-6"
+            style={{ maxHeight: maxScrollHeight }}
+          >
             {isPreFilled && (
               <View className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg flex-row items-center">
                 <Info size={16} color="#2563eb" />
