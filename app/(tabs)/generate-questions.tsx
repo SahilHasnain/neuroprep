@@ -121,7 +121,7 @@ export default function GenerateQuestionsScreen() {
         // Graceful degradation - continue without context
       }
     }
-  }, [params.noteContext]);
+  }, [params.noteContext, setSubject, setTopic]);
 
   const loadSets = async () => {
     setLoadingSets(true);
@@ -281,14 +281,17 @@ export default function GenerateQuestionsScreen() {
         </View>
       )}
 
-      <View className="px-6 py-4 bg-white border-t border-gray-200">
-        <Button
-          title="Generate New Questions"
-          onPress={() => setModalVisible(true)}
-          fullWidth
-          icon={<Plus size={20} color="#fff" />}
-        />
-      </View>
+      {/* Only show Generate button when not in practice mode */}
+      {questions.length === 0 && (
+        <View className="px-6 py-4 bg-white border-t border-gray-200">
+          <Button
+            title="Generate New Questions"
+            onPress={() => setModalVisible(true)}
+            fullWidth
+            icon={<Plus size={20} color="#fff" />}
+          />
+        </View>
+      )}
 
       {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}
       <ComingSoonModal
