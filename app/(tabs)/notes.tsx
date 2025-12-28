@@ -244,50 +244,45 @@ export default function NotesScreen() {
         </View>
       </ScrollView>
 
-      {/* Generate AI Notes Modal */}
+      {/* Generate AI Notes Modal - Bottom Sheet */}
       <Modal
         visible={isModalVisible}
         animationType="slide"
         transparent
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <Pressable onPress={(e) => e.stopPropagation()} className="flex-1">
-          <View className="flex-1 bg-white">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-              <View className="flex-row items-center flex-1">
-                <Sparkles size={24} color="#3b82f6" />
-                <Text className="ml-2 text-xl font-bold text-gray-900">
-                  Generate AI Notes
-                </Text>
-              </View>
+        <View
+          className="flex-1 bg-black/50"
+          onTouchEnd={() => setIsModalVisible(false)}
+        >
+          <View className="flex-1" />
+          <View
+            className="bg-white rounded-t-3xl"
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200 flex-row items-center justify-between">
+              <Text className="text-xl font-bold text-gray-900">
+                Generate AI Notes
+              </Text>
               <Pressable
                 onPress={() => setIsModalVisible(false)}
-                className="p-2 rounded-full active:bg-gray-100"
+                className="p-2"
               >
-                <X size={24} color="#6b7280" />
+                <X size={24} color="#000" />
               </Pressable>
             </View>
 
-            <ScrollView className="flex-1 px-6 py-4">
+            <ScrollView className="px-6 py-6" style={{ maxHeight: 500 }}>
               {/* Context Indicator */}
               {(questionContext || doubtContext) && (
-                <View className="p-3 mb-4 rounded-lg bg-blue-50 border border-blue-200">
-                  <View className="flex-row items-center">
-                    <Info size={16} color="#3b82f6" />
-                    <Text className="ml-2 text-sm text-blue-700">
-                      From {questionContext ? "Questions" : "Doubts"}:{" "}
-                      {questionContext?.topic || doubtContext?.topic}
-                    </Text>
-                  </View>
+                <View className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg flex-row items-center">
+                  <Info size={16} color="#2563eb" />
+                  <Text className="ml-2 text-sm text-blue-700 flex-1">
+                    From {questionContext ? "Questions" : "Doubts"}:{" "}
+                    {questionContext?.topic || doubtContext?.topic}
+                  </Text>
                 </View>
               )}
-
-              <View className="p-4 mb-4 rounded-xl bg-blue-50">
-                <Text className="text-sm leading-5 text-blue-700">
-                  AI will generate comprehensive notes on your selected topic,
-                  tailored for NEET/JEE preparation.
-                </Text>
-              </View>
 
               <Dropdown
                 label="Select Subject"
@@ -333,34 +328,24 @@ export default function NotesScreen() {
                   </Text>
                 </View>
               ) : (
-                <View className="flex-row gap-3 mt-2">
-                  <View className="flex-1">
-                    <Button
-                      title="Cancel"
-                      onPress={() => setIsModalVisible(false)}
-                      variant="outline"
-                      fullWidth
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Button
-                      title="Generate Notes"
-                      onPress={handleGenerateNotes}
-                      fullWidth
-                      disabled={!canGenerate}
-                    />
-                  </View>
+                <View className="mt-6">
+                  <Button
+                    title="Generate Notes"
+                    onPress={handleGenerateNotes}
+                    loading={loading}
+                    fullWidth
+                  />
                 </View>
               )}
 
               {!canGenerate && !loading && (
-                <Text className="mt-2 text-xs text-center text-gray-500">
+                <Text className="mt-3 text-sm text-center text-gray-500">
                   Please select subject and topic to generate notes
                 </Text>
               )}
             </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* View Note Modal - Using new NoteViewer component */}
