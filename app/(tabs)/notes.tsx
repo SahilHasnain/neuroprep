@@ -17,8 +17,6 @@ import {
   Text,
   View,
   ActivityIndicator,
-  Keyboard,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
@@ -82,31 +80,9 @@ export default function NotesScreen() {
   const [doubtContext, setDoubtContext] = useState<DoubtToNoteContext | null>(
     null
   );
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Get route params
   const params = useLocalSearchParams();
-
-  // Keyboard listeners
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-      }
-    );
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => {
-        setKeyboardHeight(0);
-      }
-    );
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
 
   const handleGenerateNotes = async () => {
     await generateNotes();
@@ -297,8 +273,11 @@ export default function NotesScreen() {
             </View>
 
             <ScrollView
-              className="px-6 py-6"
-              style={{ maxHeight: keyboardHeight > 0 ? 300 : 500 }}
+              className="px-6 pt-6"
+              style={{ maxHeight: 500 }}
+              contentContainerStyle={{ paddingBottom: 400 }}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
             >
               {/* Context Indicator */}
               {(questionContext || doubtContext) && (
