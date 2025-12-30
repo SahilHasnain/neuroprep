@@ -17,13 +17,13 @@ export default function TextArea({
 }: TextAreaProps) {
   return (
     <View className="mb-4">
-      <Text className="mb-2 text-sm font-semibold text-gray-700">{label}</Text>
+      <Text className="mb-2 text-sm font-semibold text-gray-300">{label}</Text>
       <TextInput
-        className="px-4 py-3 text-base text-gray-900 bg-white border border-gray-300 rounded-xl"
+        className="px-4 py-3 text-base text-text-secondary bg-dark-surface-100 border border-dark-surface-300 rounded-xl"
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor="#6b7280"
         multiline
         numberOfLines={numberOfLines}
         textAlignVertical="top"

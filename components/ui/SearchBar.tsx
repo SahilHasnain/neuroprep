@@ -13,14 +13,14 @@ export default function SearchBar({
   placeholder = "Search...",
 }: SearchBarProps) {
   return (
-    <View className="flex-row items-center px-4 py-3 mb-4 bg-white border border-gray-300 rounded-xl">
-      <Search size={20} color="#9ca3af" />
+    <View className="flex-row items-center px-4 py-3 mb-4 bg-dark-surface-100 border border-dark-surface-300 rounded-xl">
+      <Search size={20} color="#6b7280" />
       <TextInput
-        className="flex-1 ml-2 text-base text-gray-900"
+        className="flex-1 ml-2 text-base text-text-secondary"
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor="#6b7280"
       />
     </View>
   );

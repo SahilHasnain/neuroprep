@@ -1,6 +1,7 @@
 // MVP_BYPASS: Removed userPlan, error, and upgrade prompts
 import { Modal, View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { X, Info } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
@@ -61,32 +62,37 @@ export default function GenerateQuestionsModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-black/50" onTouchEnd={onClose}>
+      <View className="flex-1 bg-black/85" onTouchEnd={onClose}>
         <View className="flex-1" />
         <View
-          className="bg-white rounded-t-3xl"
+          className="bg-[#121212] rounded-t-3xl"
           onTouchEnd={(e) => e.stopPropagation()}
         >
-          <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200 flex-row items-center justify-between">
-            <Text className="text-xl font-bold text-gray-900">
+          <LinearGradient
+            colors={["#2563eb", "#9333ea"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="px-6 py-4 border-b-[1px] border-gray-700 flex-row items-center justify-between rounded-t-3xl"
+          >
+            <Text className="text-xl font-bold text-white">
               Generate Questions
             </Text>
             <TouchableOpacity onPress={onClose} className="p-2">
-              <X size={24} color="#000" />
+              <X size={24} color="#fff" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
           <ScrollView
-            className="px-6 pt-6"
+            className="px-6 pt-6 bg-[#121212]"
             style={{ maxHeight: 500 }}
             contentContainerStyle={{ paddingBottom: 400 }}
             showsVerticalScrollIndicator={true}
             keyboardShouldPersistTaps="handled"
           >
             {isPreFilled && (
-              <View className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg flex-row items-center">
-                <Info size={16} color="#2563eb" />
-                <Text className="ml-2 text-sm text-blue-700 flex-1">
+              <View className="mb-4 px-3 py-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg flex-row items-center">
+                <Info size={16} color="#60a5fa" />
+                <Text className="ml-2 text-sm text-blue-300 flex-1">
                   {doubtContext
                     ? "Pre-filled from your doubt"
                     : `From Notes: ${noteContext?.noteTitle}`}
@@ -136,7 +142,7 @@ export default function GenerateQuestionsModal({
 
             {/* MVP_BYPASS: Removed error display and free plan info */}
             {!canGenerate && (
-              <Text className="mt-3 text-sm text-center text-gray-500">
+              <Text className="mt-3 text-sm text-center text-gray-400">
                 Please fill all fields to generate questions
               </Text>
             )}

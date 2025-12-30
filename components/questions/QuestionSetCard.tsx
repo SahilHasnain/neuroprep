@@ -39,13 +39,13 @@ export default function QuestionSetCard({
   return (
     <Pressable
       onPress={onPress}
-      className="mb-3 overflow-hidden bg-white border border-gray-200 rounded-2xl active:opacity-70"
+      className="mb-3 overflow-hidden bg-[#1e1e1e] border border-gray-700 rounded-2xl active:opacity-70"
     >
       <View className="p-4">
         <View className="flex-row items-start justify-between mb-2">
           <View className="flex-1 mr-3">
             <Text
-              className="mb-1 text-lg font-bold text-gray-900"
+              className="mb-1 text-lg font-bold text-gray-100"
               numberOfLines={1}
             >
               {set.label}
@@ -61,21 +61,21 @@ export default function QuestionSetCard({
               e.stopPropagation();
               handleDelete();
             }}
-            className="p-2 rounded-full active:bg-red-50"
+            className="p-2 rounded-full active:bg-red-500/10"
           >
             <Trash2 size={20} color="#ef4444" />
           </Pressable>
         </View>
 
         <Text
-          className="mb-3 text-sm leading-5 text-gray-600"
+          className="mb-3 text-sm leading-5 text-gray-400"
           numberOfLines={2}
         >
           {set.topic} • {set.difficulty} • {set.questionCount} questions
         </Text>
 
-        <View className="flex-row items-center pt-2 border-t border-gray-100">
-          <Calendar size={14} color="#9ca3af" />
+        <View className="flex-row items-center pt-2 border-t border-gray-700">
+          <Calendar size={14} color="#6b7280" />
           <Text className="ml-1.5 text-xs text-gray-500">
             {set.createdAt
               ? new Date(set.createdAt).toLocaleDateString("en-IN", {

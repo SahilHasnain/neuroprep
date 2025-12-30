@@ -31,8 +31,8 @@ export default function PlanCard({
       className={clsx(
         "rounded-2xl p-6 mb-4",
         isPro
-          ? "bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-400"
-          : "bg-white border-2 border-gray-200"
+          ? "bg-gradient-to-br from-accent-orange/20 to-accent-orange/10 border-2 border-accent-orange"
+          : "bg-dark-surface-100 border-2 border-dark-surface-300"
       )}
     >
       {/* Header */}
@@ -41,7 +41,7 @@ export default function PlanCard({
           <Text
             className={clsx(
               "text-2xl font-bold",
-              isPro ? "text-amber-700" : "text-gray-900"
+              isPro ? "text-accent-orange-light" : "text-text-primary"
             )}
           >
             {isPro ? "Pro Plan" : "Free Plan"}
@@ -54,7 +54,7 @@ export default function PlanCard({
           <Text
             className={clsx(
               "text-4xl font-bold",
-              isPro ? "text-amber-600" : "text-gray-700"
+              isPro ? "text-accent-orange" : "text-text-secondary"
             )}
           >
             {isPro ? "₹199" : "₹0"}
@@ -62,7 +62,7 @@ export default function PlanCard({
           <Text
             className={clsx(
               "ml-2 text-lg",
-              isPro ? "text-amber-500" : "text-gray-500"
+              isPro ? "text-accent-orange-light" : "text-text-tertiary"
             )}
           >
             /month
@@ -70,8 +70,8 @@ export default function PlanCard({
         </View>
 
         {isPro && (
-          <View className="px-3 py-1 rounded-full bg-amber-200 self-start">
-            <Text className="text-xs font-semibold text-amber-800">
+          <View className="px-3 py-1 rounded-full bg-accent-orange/30 border border-accent-orange/50 self-start">
+            <Text className="text-xs font-semibold text-accent-orange-light">
               7 days free trial
             </Text>
           </View>
@@ -80,8 +80,8 @@ export default function PlanCard({
 
       {/* Current plan badge */}
       {isCurrentPlan && (
-        <View className="px-3 py-2 mb-4 rounded-lg bg-blue-50 border border-blue-200">
-          <Text className="text-sm font-semibold text-center text-blue-700">
+        <View className="px-3 py-2 mb-4 rounded-lg bg-info-bg border border-info-border">
+          <Text className="text-sm font-semibold text-center text-info-text">
             ✓ Current Plan
           </Text>
         </View>
@@ -89,7 +89,7 @@ export default function PlanCard({
 
       {/* Features */}
       <View className="mb-6">
-        <Text className="mb-3 text-sm font-semibold text-gray-700 uppercase">
+        <Text className="mb-3 text-sm font-semibold text-text-secondary uppercase">
           Features
         </Text>
         <FeatureList features={features} planType={planType} />
@@ -102,13 +102,12 @@ export default function PlanCard({
           onPress={onSelectPlan || (() => {})}
           variant={isPro ? "primary" : "outline"}
           fullWidth
-          className={isPro ? "bg-amber-500" : ""}
         />
       )}
 
       {isCurrentPlan && isPro && onCancel && (
         <TouchableOpacity onPress={onCancel} className="py-3">
-          <Text className="text-sm text-center text-red-600">
+          <Text className="text-sm text-center text-error-border">
             Cancel Subscription
           </Text>
         </TouchableOpacity>

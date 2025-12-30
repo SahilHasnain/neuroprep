@@ -24,12 +24,12 @@ export default function UsageProgressBar({
   className,
 }: UsageProgressBarProps) {
   const { planType, usage, limits } = usePlanStore();
-  
+
   // Guard against undefined values
   if (!usage || !limits) {
     return null;
   }
-  
+
   const usagePercentage = getUsagePercentage(feature);
   const remaining = getRemainingUsage(feature);
   const isPro = planType === "pro";
@@ -41,10 +41,10 @@ export default function UsageProgressBar({
     return (
       <View className={clsx("flex-row items-center", className)}>
         {showLabel && (
-          <Text className="mr-2 text-sm font-semibold text-amber-600">PRO</Text>
+          <Text className="mr-2 text-sm font-semibold text-amber-400">PRO</Text>
         )}
-        <View className="flex-1 bg-amber-100 rounded-full px-3 py-1.5">
-          <Text className="text-xs font-medium text-center text-amber-700">
+        <View className="flex-1 bg-amber-500/20 rounded-full px-3 py-1.5">
+          <Text className="text-xs font-medium text-center text-amber-300">
             Unlimited Usage ∞
           </Text>
         </View>
@@ -56,13 +56,13 @@ export default function UsageProgressBar({
     <View className={clsx("w-full", className)}>
       {showLabel && (
         <View className="flex-row items-center justify-between mb-2">
-          <Text className="text-sm font-medium text-gray-700">Daily Usage</Text>
+          <Text className="text-sm font-medium text-gray-300">Daily Usage</Text>
           <Text
             className={clsx(
               "text-xs font-semibold",
-              isAtLimit && "text-red-600",
-              isNearLimit && !isAtLimit && "text-orange-600",
-              !isNearLimit && "text-gray-600"
+              isAtLimit && "text-red-400",
+              isNearLimit && !isAtLimit && "text-orange-400",
+              !isNearLimit && "text-gray-400"
             )}
           >
             {usage[feature]} / {limits[feature]}
@@ -71,7 +71,7 @@ export default function UsageProgressBar({
       )}
 
       <View
-        className="w-full overflow-hidden bg-gray-200 rounded-full"
+        className="w-full overflow-hidden bg-gray-800 rounded-full"
         style={{ height }}
       >
         <View
@@ -88,11 +88,11 @@ export default function UsageProgressBar({
       {showRemaining && (
         <View className="mt-1">
           {isAtLimit ? (
-            <Text className="text-xs font-medium text-red-600">
+            <Text className="text-xs font-medium text-red-400">
               Daily limit reached. Upgrade to Pro for unlimited access.
             </Text>
           ) : isNearLimit ? (
-            <Text className="text-xs text-orange-600">
+            <Text className="text-xs text-orange-400">
               {remaining} {remaining === 1 ? "use" : "uses"} remaining today
             </Text>
           ) : (

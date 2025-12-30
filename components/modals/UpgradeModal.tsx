@@ -56,7 +56,8 @@ export default function UpgradeModal({
   feature,
   onUpgrade,
 }: UpgradeModalProps) {
-  const { planType, createSubscription, initiatePayment, loading } = usePlanStore();
+  const { planType, createSubscription, initiatePayment, loading } =
+    usePlanStore();
   const { user } = useAuthStore();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
@@ -102,9 +103,9 @@ export default function UpgradeModal({
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <View className="justify-end flex-1 bg-black/60">
+      <View className="justify-end flex-1 bg-black/85">
         <ScrollView
-          className="bg-white rounded-t-3xl max-h-5/6"
+          className="bg-dark-bg-secondary rounded-t-3xl max-h-5/6"
           showsVerticalScrollIndicator={false}
         >
           {/* Close button */}
@@ -113,32 +114,33 @@ export default function UpgradeModal({
               onPress={handleClose}
               className="absolute z-10 p-2 right-4 top-4"
             >
-              <Text className="text-2xl text-gray-400">✕</Text>
+              <Text className="text-2xl text-text-tertiary">✕</Text>
             </Pressable>
           </View>
 
           {/* Header */}
           <View className="items-center px-6 pt-2 pb-6">
-            <View className="items-center justify-center w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-amber-400 to-orange-500">
+            <View className="items-center justify-center w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-accent-orange to-accent-orange-dark">
               <Text className="text-4xl">👑</Text>
             </View>
 
             {feature ? (
               <>
-                <Text className="mb-2 text-2xl font-bold text-center text-gray-900">
+                <Text className="mb-2 text-2xl font-bold text-center text-text-primary">
                   Daily Limit Reached
                 </Text>
-                <Text className="text-center text-gray-600">
-                  You&apos;ve used all your {getFeatureName(feature).toLowerCase()}{" "}
-                  for today. Upgrade to Pro for unlimited access!
+                <Text className="text-center text-text-secondary">
+                  You&apos;ve used all your{" "}
+                  {getFeatureName(feature).toLowerCase()} for today. Upgrade to
+                  Pro for unlimited access!
                 </Text>
               </>
             ) : (
               <>
-                <Text className="mb-2 text-2xl font-bold text-center text-gray-900">
+                <Text className="mb-2 text-2xl font-bold text-center text-text-primary">
                   Upgrade to Pro
                 </Text>
-                <Text className="text-center text-gray-600">
+                <Text className="text-center text-text-secondary">
                   Unlock unlimited access to all features
                 </Text>
               </>
@@ -147,12 +149,14 @@ export default function UpgradeModal({
 
           {/* Pricing */}
           <View className="px-6 mb-6">
-            <View className="p-6 border-2 rounded-2xl border-amber-500 bg-amber-50">
+            <View className="p-6 border-2 rounded-2xl border-accent-orange bg-accent-orange/20">
               <View className="flex-row items-baseline justify-center mb-2">
-                <Text className="text-4xl font-bold text-amber-700">₹199</Text>
-                <Text className="ml-2 text-lg text-amber-600">/month</Text>
+                <Text className="text-4xl font-bold text-accent-orange-light">
+                  ₹199
+                </Text>
+                <Text className="ml-2 text-lg text-accent-orange">/month</Text>
               </View>
-              <Text className="text-sm text-center text-amber-600">
+              <Text className="text-sm text-center text-accent-orange-light">
                 First 7 days free trial
               </Text>
             </View>
@@ -160,22 +164,24 @@ export default function UpgradeModal({
 
           {/* Features list */}
           <View className="px-6 mb-6">
-            <Text className="mb-4 text-lg font-semibold text-gray-900">
+            <Text className="mb-4 text-lg font-semibold text-text-primary">
               What you&apos;ll get:
             </Text>
 
             {PRO_FEATURES.map((item, index) => (
               <View key={index} className="flex-row items-start mb-4">
-                <View className="items-center justify-center w-10 h-10 mr-3 rounded-full bg-amber-100">
+                <View className="items-center justify-center w-10 h-10 mr-3 rounded-full bg-accent-orange/30">
                   <Text className="text-xl">{item.icon}</Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="mb-1 text-base font-semibold text-gray-900">
+                  <Text className="mb-1 text-base font-semibold text-text-primary">
                     {item.title}
                   </Text>
-                  <Text className="text-sm text-gray-600">{item.desc}</Text>
+                  <Text className="text-sm text-text-secondary">
+                    {item.desc}
+                  </Text>
                 </View>
-                <Text className="mt-1 text-lg text-green-500">✓</Text>
+                <Text className="mt-1 text-lg text-success-border">✓</Text>
               </View>
             ))}
           </View>
@@ -183,11 +189,11 @@ export default function UpgradeModal({
           {/* Auth prompt for guests */}
           {showAuthPrompt && !user && (
             <View className="px-6 mb-4">
-              <View className="p-4 border border-blue-200 rounded-xl bg-blue-50">
-                <Text className="mb-1 text-sm font-semibold text-blue-900">
+              <View className="p-4 border border-info-border rounded-xl bg-info-bg">
+                <Text className="mb-1 text-sm font-semibold text-info-text">
                   Sign in required
                 </Text>
-                <Text className="text-sm text-blue-700">
+                <Text className="text-sm text-info-text">
                   Please log in or create an account to upgrade to Pro
                 </Text>
               </View>
@@ -202,32 +208,31 @@ export default function UpgradeModal({
               variant="primary"
               fullWidth
               loading={loading}
-              className="mb-3 bg-gradient-to-r from-amber-500 to-orange-500"
             />
 
             <TouchableOpacity onPress={handleClose} className="py-3">
-              <Text className="text-base font-medium text-center text-gray-600">
+              <Text className="text-base font-medium text-center text-text-tertiary">
                 Maybe Later
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Trust indicators */}
-          <View className="px-6 pb-6 border-t border-gray-200">
+          <View className="px-6 pb-6 border-t border-dark-surface-300">
             <View className="flex-row justify-around pt-4">
               <View className="items-center">
                 <Text className="text-xl">🔒</Text>
-                <Text className="mt-1 text-xs text-gray-600">Secure</Text>
+                <Text className="mt-1 text-xs text-text-tertiary">Secure</Text>
               </View>
               <View className="items-center">
                 <Text className="text-xl">↩️</Text>
-                <Text className="mt-1 text-xs text-gray-600">
+                <Text className="mt-1 text-xs text-text-tertiary">
                   Cancel Anytime
                 </Text>
               </View>
               <View className="items-center">
                 <Text className="text-xl">⚡</Text>
-                <Text className="mt-1 text-xs text-gray-600">
+                <Text className="mt-1 text-xs text-text-tertiary">
                   Instant Access
                 </Text>
               </View>

@@ -18,10 +18,10 @@ export function FeatureItem({
       <View
         className={clsx(
           "w-5 h-5 rounded-full items-center justify-center mr-3 mt-0.5",
-          included ? "bg-green-100" : "bg-gray-100"
+          included ? "bg-green-500/20" : "bg-gray-700"
         )}
       >
-        <Text className={clsx(included ? "text-green-600" : "text-gray-400")}>
+        <Text className={clsx(included ? "text-green-400" : "text-gray-500")}>
           {included ? "✓" : "✕"}
         </Text>
       </View>
@@ -29,7 +29,7 @@ export function FeatureItem({
         className={clsx(
           "flex-1 text-base",
           highlighted && "font-semibold",
-          included ? "text-gray-800" : "text-gray-400"
+          included ? "text-gray-200" : "text-gray-500"
         )}
       >
         {text}

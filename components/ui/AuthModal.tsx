@@ -102,19 +102,19 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View className="justify-end flex-1 bg-black/50">
+      <View className="justify-end flex-1 bg-black/85">
         <ScrollView
-          className="p-6 bg-white rounded-t-2xl max-h-3/4"
+          className="p-6 bg-dark-bg-secondary rounded-t-2xl max-h-3/4"
           scrollEnabled
           showsVerticalScrollIndicator={false}
         >
           {/* Header with close button */}
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-2xl font-bold">
+            <Text className="text-2xl font-bold text-text-primary">
               {isSignUp ? "Create Account" : "Login"}
             </Text>
             <Pressable onPress={onClose} className="p-2">
-              <Text className="text-2xl">✕</Text>
+              <Text className="text-2xl text-text-tertiary">✕</Text>
             </Pressable>
           </View>
 
@@ -124,13 +124,13 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
               onPress={() => isSignUp && handleToggleMode()}
               className={`flex-1 py-3 px-4 rounded-lg border-2 ${
                 !isSignUp
-                  ? "bg-blue-600 border-blue-600"
-                  : "bg-transparent border-gray-300"
+                  ? "bg-gradient-to-r from-accent-blue to-accent-purple border-accent-blue"
+                  : "bg-transparent border-dark-surface-300"
               }`}
             >
               <Text
                 className={`text-center font-semibold ${
-                  !isSignUp ? "text-white" : "text-gray-600"
+                  !isSignUp ? "text-white" : "text-text-tertiary"
                 }`}
               >
                 Login
@@ -140,13 +140,13 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
               onPress={() => !isSignUp && handleToggleMode()}
               className={`flex-1 py-3 px-4 rounded-lg border-2 ${
                 isSignUp
-                  ? "bg-blue-600 border-blue-600"
-                  : "bg-transparent border-gray-300"
+                  ? "bg-gradient-to-r from-accent-blue to-accent-purple border-accent-blue"
+                  : "bg-transparent border-dark-surface-300"
               }`}
             >
               <Text
                 className={`text-center font-semibold ${
-                  isSignUp ? "text-white" : "text-gray-600"
+                  isSignUp ? "text-white" : "text-text-tertiary"
                 }`}
               >
                 Sign Up
@@ -156,68 +156,72 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
 
           {/* Error message */}
           {error && (
-            <View className="p-3 mb-4 border border-red-200 rounded-lg bg-red-50">
-              <Text className="text-sm text-red-700">{error}</Text>
+            <View className="p-3 mb-4 border border-error-border rounded-lg bg-error-bg">
+              <Text className="text-sm text-error-text">{error}</Text>
             </View>
           )}
 
           {/* Name input (signup only) */}
           {isSignUp && (
             <>
-              <Text className="mb-2 text-sm font-semibold text-gray-700">
+              <Text className="mb-2 text-sm font-semibold text-text-secondary">
                 Full Name
               </Text>
               <TextInput
                 placeholder="Umair Farhat"
+                placeholderTextColor="#6b7280"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
                 editable={!loading}
-                className="w-full px-4 py-3 mb-4 bg-white border border-gray-300 rounded-lg"
+                className="w-full px-4 py-3 mb-4 bg-dark-surface-100 border border-dark-surface-300 rounded-lg text-text-secondary"
               />
             </>
           )}
 
           {/* Email input */}
-          <Text className="mb-2 text-sm font-semibold text-gray-700">
+          <Text className="mb-2 text-sm font-semibold text-text-secondary">
             Email
           </Text>
           <TextInput
             placeholder="your@gmail.com"
+            placeholderTextColor="#6b7280"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
             editable={!loading}
-            className="w-full px-4 py-3 mb-4 bg-white border border-gray-300 rounded-lg"
+            className="w-full px-4 py-3 mb-4 bg-dark-surface-100 border border-dark-surface-300 rounded-lg text-text-secondary"
           />
 
           {/* Password input */}
-          <Text className="mb-2 text-sm font-semibold text-gray-700">
+          <Text className="mb-2 text-sm font-semibold text-text-secondary">
             Password
           </Text>
           <TextInput
             placeholder="••••••••"
+            placeholderTextColor="#6b7280"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             editable={!loading}
-            className="w-full px-4 py-3 mb-4 bg-white border border-gray-300 rounded-lg"
+            className="w-full px-4 py-3 mb-4 bg-dark-surface-100 border border-dark-surface-300 rounded-lg text-text-secondary"
           />
 
           {/* Confirm password (signup only) */}
           {isSignUp && (
             <>
-              <Text className="mb-2 text-sm font-semibold text-gray-700">
+              <Text className="mb-2 text-sm font-semibold text-text-secondary">
                 Confirm Password
               </Text>
               <TextInput
                 placeholder="••••••••"
+                placeholderTextColor="#6b7280"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
                 editable={!loading}
-                className="w-full px-4 py-3 mb-6 bg-white border border-gray-300 rounded-lg"
+                className="w-full px-4 py-3 mb-6 bg-dark-surface-100 border border-dark-surface-300 rounded-lg text-text-secondary"
               />
             </>
           )}
@@ -233,7 +237,7 @@ export default function AuthModal({ visible, onClose }: AuthModalProps) {
           />
 
           {/* Info text */}
-          <Text className="text-xs text-center text-gray-500">
+          <Text className="text-xs text-center text-text-tertiary">
             {isSignUp
               ? "By signing up, you agree to our terms"
               : "Login to unlock unlimited Ask Doubt, Questions, and Notes"}

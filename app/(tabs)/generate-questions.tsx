@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Sparkles, Plus } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useQuestions } from "@/hooks/useQuestions";
 import Button from "@/components/ui/Button";
 import ComingSoonModal from "@/components/modals/ComingSoonModal";
@@ -170,7 +171,7 @@ export default function GenerateQuestionsScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
       {/* MVP_BYPASS: Removed AuthModal */}
       <GenerateQuestionsModal
         visible={modalVisible}
@@ -193,15 +194,20 @@ export default function GenerateQuestionsScreen() {
       />
 
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}
-      <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
+      <LinearGradient
+        colors={["#2563eb", "#9333ea"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="px-6 py-4 border-b-[1px] border-gray-700"
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
-            <Sparkles size={28} color="#3b82f6" />
+            <Sparkles size={28} color="#ffffff" />
             <View className="flex-1 ml-3">
-              <Text className="text-2xl font-bold text-gray-900">
+              <Text className="text-2xl font-bold text-white">
                 {questions.length > 0 ? "Practice Questions" : "Question Sets"}
               </Text>
-              <Text className="mt-1 text-base text-gray-600">
+              <Text className="mt-1 text-base text-gray-200">
                 {questions.length > 0
                   ? `${questions.length} questions`
                   : `${questionSets.length} saved sets`}
@@ -220,7 +226,7 @@ export default function GenerateQuestionsScreen() {
             </Text>
           </View>
         )} */}
-      </View>
+      </LinearGradient>
 
       {questions.length === 0 ? (
         <ScrollView className="flex-1">
@@ -243,13 +249,13 @@ export default function GenerateQuestionsScreen() {
 
             {filteredQuestionSets.length === 0 && !loadingSets ? (
               <View className="items-center justify-center py-12">
-                <Sparkles size={48} color="#d1d5db" />
-                <Text className="mt-3 text-lg font-semibold text-gray-400">
+                <Sparkles size={48} color="#4b5563" />
+                <Text className="mt-3 text-lg font-semibold text-gray-500">
                   {searchQuery || filterSubject
                     ? "No question sets found"
                     : "No question sets yet"}
                 </Text>
-                <Text className="mt-1 text-sm text-center text-gray-400">
+                <Text className="mt-1 text-sm text-center text-gray-600">
                   {searchQuery || filterSubject
                     ? "Try adjusting your filters"
                     : "Generate your first question set"}
@@ -283,7 +289,7 @@ export default function GenerateQuestionsScreen() {
 
       {/* Only show Generate button when not in practice mode */}
       {questions.length === 0 && (
-        <View className="px-6 py-4 bg-white border-t border-gray-200">
+        <View className="px-6 py-4 bg-[#1e1e1e] border-t border-gray-700">
           <Button
             title="Generate New Questions"
             onPress={() => setModalVisible(true)}

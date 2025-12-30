@@ -22,7 +22,7 @@ export default function QuickActionButton({
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="w-[48%] rounded-xl border-[1px] border-gray-200 p-4 items-center justify-center bg-white mb-4 shadow-sm"
+      className="w-[48%] rounded-xl border-[1px] border-dark-surface-300 p-4 items-center justify-center bg-dark-surface-100 mb-4"
     >
       <View
         className={clsx(
@@ -33,8 +33,10 @@ export default function QuickActionButton({
         <Icon size={24} color={iconColor} />
       </View>
 
-      <Text className="mb-1 text-base font-semibold text-gray-900">{label}</Text>
-      <Text className="text-xs text-gray-500">{description}</Text>
+      <Text className="mb-1 text-base font-semibold text-text-primary">
+        {label}
+      </Text>
+      <Text className="text-xs text-text-tertiary">{description}</Text>
     </TouchableOpacity>
   );
 }

@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Dark theme base styles */
+@layer base {
+  * {
+    @apply border-dark-surface-300;
+  }
+
+  body {
+    @apply bg-dark-bg-primary text-text-primary;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .bg-surface-dark {
+    background-color: #1e1e1e;
+  }
+}

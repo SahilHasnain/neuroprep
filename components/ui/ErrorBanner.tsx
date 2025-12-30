@@ -8,17 +8,28 @@ interface ErrorBannerProps {
   onDismiss: () => void;
 }
 
-export default function ErrorBanner({ error, onAction, onDismiss }: ErrorBannerProps) {
-  const isLimitError = error.errorCode === 'DAILY_LIMIT_REACHED';
-  const isFeatureLocked = error.errorCode === 'FEATURE_LOCKED';
+export default function ErrorBanner({
+  error,
+  onAction,
+  onDismiss,
+}: ErrorBannerProps) {
+  const isLimitError = error.errorCode === "DAILY_LIMIT_REACHED";
+  const isFeatureLocked = error.errorCode === "FEATURE_LOCKED";
 
-  const bgColor = isLimitError || isFeatureLocked ? "bg-amber-50" : "bg-red-50";
-  const borderColor = isLimitError || isFeatureLocked ? "border-amber-200" : "border-red-200";
-  const textColor = isLimitError || isFeatureLocked ? "text-amber-800" : "text-red-600";
-  const iconColor = isLimitError || isFeatureLocked ? "#d97706" : "#dc2626";
+  const bgColor =
+    isLimitError || isFeatureLocked ? "bg-amber-500/10" : "bg-red-500/10";
+  const borderColor =
+    isLimitError || isFeatureLocked
+      ? "border-amber-500/30"
+      : "border-red-500/30";
+  const textColor =
+    isLimitError || isFeatureLocked ? "text-amber-400" : "text-red-400";
+  const iconColor = isLimitError || isFeatureLocked ? "#fbbf24" : "#f87171";
 
   return (
-    <View className={`mt-3 p-3 ${bgColor} rounded-xl border-[1px] ${borderColor} flex-row items-start`}>
+    <View
+      className={`mt-3 p-3 ${bgColor} rounded-xl border-[1px] ${borderColor} flex-row items-start`}
+    >
       {isFeatureLocked ? (
         <Lock size={18} color={iconColor} style={{ marginTop: 2 }} />
       ) : (
@@ -28,7 +39,9 @@ export default function ErrorBanner({ error, onAction, onDismiss }: ErrorBannerP
         <Text className={`text-sm ${textColor}`}>{error.message}</Text>
         {onAction && (
           <Pressable onPress={onAction} className="mt-2">
-            <Text className="text-sm font-semibold text-blue-600">Upgrade to Pro →</Text>
+            <Text className="text-sm font-semibold text-blue-400">
+              Upgrade to Pro →
+            </Text>
           </Pressable>
         )}
       </View>

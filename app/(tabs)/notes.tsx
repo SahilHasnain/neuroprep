@@ -9,7 +9,7 @@ import ComingSoonModal from "@/components/modals/ComingSoonModal";
 import { NoteViewer } from "@/components/notes";
 import { useNotes } from "@/hooks/useNotes";
 import { SUBJECTS, NOTE_LENGTHS } from "@/constants";
-import { BookOpen, Sparkles, X, Plus } from "lucide-react-native";
+import { BookOpen, Sparkles, X, Plus, Info } from "lucide-react-native";
 import {
   Modal,
   Pressable,
@@ -19,13 +19,14 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import type {
   NoteContext,
   QuestionToNoteContext,
   DoubtToNoteContext,
+  DoubtContext,
 } from "@/lib/types/domain.types";
-import { Info } from "lucide-react-native";
 import {
   validateQuestionToNoteContext,
   validateDoubtToNoteContext,
@@ -104,6 +105,32 @@ export default function NotesScreen() {
     });
   };
 
+  const handleGenerateQuestionsFromDoubt = (context: DoubtContext) => {
+    // Close the note viewer
+    setIsViewModalVisible(false);
+
+    // Navigate to generate-questions tab with doubt context
+    router.push({
+      pathname: "/(tabs)/generate-questions",
+      params: {
+        doubtContext: JSON.stringify(context),
+      },
+    });
+  };
+
+  const handleGenerateNotesFromDoubt = (context: DoubtToNoteContext) => {
+    // Close the note viewer
+    setIsViewModalVisible(false);
+
+    // Navigate to notes tab with doubt context
+    router.push({
+      pathname: "/(tabs)/notes",
+      params: {
+        doubtContext: JSON.stringify(context),
+      },
+    });
+  };
+
   // Handle question context from navigation params
   useEffect(() => {
     if (params.questionContext) {
@@ -133,7 +160,7 @@ export default function NotesScreen() {
         // Graceful degradation - continue without context
       }
     }
-  }, [params.questionContext]);
+  }, [params.questionContext, setGenerateConfig, setIsModalVisible]);
 
   // Handle doubt context from navigation params
   useEffect(() => {
@@ -164,19 +191,24 @@ export default function NotesScreen() {
         // Graceful degradation - continue without context
       }
     }
-  }, [params.doubtContext]);
+  }, [params.doubtContext, setGenerateConfig, setIsModalVisible]);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
       {/* MVP_BYPASS: Removed AuthModal */}
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}
-      <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
+      <LinearGradient
+        colors={["#2563eb", "#9333ea"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="px-6 py-4 border-b-[1px] border-gray-700"
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
-            <BookOpen size={28} color="#3b82f6" />
+            <BookOpen size={28} color="#ffffff" />
             <View className="flex-1 ml-3">
-              <Text className="text-2xl font-bold text-gray-900">AI Notes</Text>
-              <Text className="mt-1 text-base text-gray-600">
+              <Text className="text-2xl font-bold text-white">AI Notes</Text>
+              <Text className="mt-1 text-base text-gray-200">
                 {notes.length} {notes.length === 1 ? "note" : "notes"} generated
               </Text>
             </View>
@@ -192,7 +224,7 @@ export default function NotesScreen() {
             </Text>
           </View>
         )} */}
-      </View>
+      </LinearGradient>
 
       <ScrollView className="flex-1">
         <View className="px-6 py-4">
@@ -214,13 +246,13 @@ export default function NotesScreen() {
 
           {filteredNotes.length === 0 ? (
             <View className="items-center justify-center py-12">
-              <Sparkles size={48} color="#d1d5db" />
-              <Text className="mt-3 text-lg font-semibold text-gray-400">
+              <Sparkles size={48} color="#4b5563" />
+              <Text className="mt-3 text-lg font-semibold text-gray-500">
                 {searchQuery || filterSubject
                   ? "No notes found"
                   : "No AI notes yet"}
               </Text>
-              <Text className="mt-1 text-sm text-center text-gray-400">
+              <Text className="mt-1 text-sm text-center text-gray-600">
                 {searchQuery || filterSubject
                   ? "Try adjusting your filters"
                   : "Generate your first AI-powered notes"}
@@ -252,28 +284,33 @@ export default function NotesScreen() {
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View
-          className="flex-1 bg-black/50"
+          className="flex-1 bg-black/85"
           onTouchEnd={() => setIsModalVisible(false)}
         >
           <View className="flex-1" />
           <View
-            className="bg-white rounded-t-3xl"
+            className="bg-[#121212] rounded-t-3xl"
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200 flex-row items-center justify-between">
-              <Text className="text-xl font-bold text-gray-900">
+            <LinearGradient
+              colors={["#2563eb", "#9333ea"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className="px-6 py-4 border-b-[1px] border-gray-700 flex-row items-center justify-between rounded-t-3xl"
+            >
+              <Text className="text-xl font-bold text-white">
                 Generate AI Notes
               </Text>
               <Pressable
                 onPress={() => setIsModalVisible(false)}
                 className="p-2"
               >
-                <X size={24} color="#000" />
+                <X size={24} color="#fff" />
               </Pressable>
-            </View>
+            </LinearGradient>
 
             <ScrollView
-              className="px-6 pt-6"
+              className="px-6 pt-6 bg-[#121212]"
               style={{ maxHeight: 500 }}
               contentContainerStyle={{ paddingBottom: 400 }}
               showsVerticalScrollIndicator={true}
@@ -281,9 +318,9 @@ export default function NotesScreen() {
             >
               {/* Context Indicator */}
               {(questionContext || doubtContext) && (
-                <View className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg flex-row items-center">
-                  <Info size={16} color="#2563eb" />
-                  <Text className="ml-2 text-sm text-blue-700 flex-1">
+                <View className="mb-4 px-3 py-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg flex-row items-center">
+                  <Info size={16} color="#60a5fa" />
+                  <Text className="ml-2 text-sm text-blue-300 flex-1">
                     From {questionContext ? "Questions" : "Doubts"}:{" "}
                     {questionContext?.topic || doubtContext?.topic}
                   </Text>
@@ -325,11 +362,11 @@ export default function NotesScreen() {
 
               {loading ? (
                 <View className="py-8">
-                  <ActivityIndicator size="large" color="#3b82f6" />
-                  <Text className="mt-3 text-sm font-semibold text-center text-gray-900">
+                  <ActivityIndicator size="large" color="#60a5fa" />
+                  <Text className="mt-3 text-sm font-semibold text-center text-gray-100">
                     AI is generating your notes...
                   </Text>
-                  <Text className="mt-2 text-xs text-center text-gray-600">
+                  <Text className="mt-2 text-xs text-center text-gray-400">
                     {getMotivationalMessage()}
                   </Text>
                 </View>
@@ -345,7 +382,7 @@ export default function NotesScreen() {
               )}
 
               {!canGenerate && !loading && (
-                <Text className="mt-3 text-sm text-center text-gray-500">
+                <Text className="mt-3 text-sm text-center text-gray-400">
                   Please select subject and topic to generate notes
                 </Text>
               )}
@@ -360,6 +397,8 @@ export default function NotesScreen() {
         note={selectedNote}
         onClose={() => setIsViewModalVisible(false)}
         onGenerateQuestions={handleGenerateQuestions}
+        onGenerateQuestionsFromDoubt={handleGenerateQuestionsFromDoubt}
+        onGenerateNotesFromDoubt={handleGenerateNotesFromDoubt}
       />
 
       {/* MVP_BYPASS: Using ComingSoonModal instead of LimitReachedModal */}
@@ -369,7 +408,7 @@ export default function NotesScreen() {
         feature="notes"
       />
 
-      <View className="px-6 py-4 bg-white border-t border-gray-200">
+      <View className="px-6 py-4 bg-[#1e1e1e] border-t border-gray-700">
         <Button
           title="Generate Notes"
           onPress={() => {

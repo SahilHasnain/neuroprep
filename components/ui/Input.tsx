@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { Send } from "lucide-react-native";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface InputProps {
   value: string;
@@ -18,27 +19,40 @@ export default function Input({
   onSend,
 }: InputProps) {
   return (
-    <View className="bg-white border-t-[1px] border-gray-200 px-4 py-3 flex-row items-end">
+    <View className="bg-dark-surface-100 border-t-[1px] border-dark-surface-300 px-4 py-3 flex-row items-end">
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor="#6b7280"
         multiline={multiline}
-        className="flex-1 px-4 py-3 text-base text-gray-900 bg-gray-50 rounded-2xl max-h-24"
+        className="flex-1 px-4 py-3 text-base text-text-secondary bg-dark-surface-200 border border-dark-surface-300 rounded-2xl max-h-24"
         style={{
           textAlignVertical: multiline ? "top" : "center",
         }}
       />
-      <TouchableOpacity
-        onPress={onSend}
-        className={clsx(
-          "items-center justify-center w-10 h-10 rounded-full ml-2",
-          value.trim() ? "bg-blue-500" : "bg-gray-200"
-        )}
-      >
-        <Send size={18} color={value.trim() ? "#ffffff" : "#9ca3af"} />
-      </TouchableOpacity>
+      {value.trim() ? (
+        <TouchableOpacity
+          onPress={onSend}
+          className="ml-2 overflow-hidden rounded-full"
+        >
+          <LinearGradient
+            colors={["#3b82f6", "#8b5cf6"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="items-center justify-center w-10 h-10"
+          >
+            <Send size={18} color="#ffffff" />
+          </LinearGradient>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          onPress={onSend}
+          className="items-center justify-center w-10 h-10 ml-2 rounded-full bg-dark-surface-300"
+        >
+          <Send size={18} color="#6b7280" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

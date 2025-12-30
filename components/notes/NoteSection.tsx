@@ -79,20 +79,20 @@ export default function NoteSection({
   }
 
   return (
-    <View className="mb-5 overflow-hidden border-2 border-gray-200 rounded-xl bg-white shadow-sm">
+    <View className="mb-5 overflow-hidden border-2 border-gray-700 rounded-xl bg-[#1e1e1e] shadow-sm">
       {/* Header - Always Visible */}
       <Pressable
         onPress={toggleExpand}
-        className="flex-row items-center justify-between p-4 active:bg-gray-50"
+        className="flex-row items-center justify-between p-4 active:bg-gray-800"
       >
         <View className="flex-1 mr-3">
-          <Text className="text-base font-bold leading-tight text-gray-900">
+          <Text className="text-base font-bold leading-tight text-gray-100">
             {safeHeading}
           </Text>
           {/* Concept line - visible when collapsed */}
           {!isExpanded && safeConcept && (
             <Text
-              className="mt-2 text-sm leading-5 text-gray-600"
+              className="mt-2 text-sm leading-5 text-gray-400"
               numberOfLines={2}
             >
               {safeConcept}
@@ -101,9 +101,9 @@ export default function NoteSection({
         </View>
         <View className="p-1">
           {isExpanded ? (
-            <ChevronDown size={22} color="#3b82f6" />
+            <ChevronDown size={22} color="#60a5fa" />
           ) : (
-            <ChevronRight size={22} color="#6b7280" />
+            <ChevronRight size={22} color="#9ca3af" />
           )}
         </View>
       </Pressable>
@@ -113,8 +113,8 @@ export default function NoteSection({
         <View className="px-4 pb-4 pt-2">
           {/* Concept Explanation */}
           {safeConcept && (
-            <View className="p-3 mb-4 rounded-lg bg-blue-50 border border-blue-100">
-              <Text className="text-sm font-semibold leading-6 text-blue-900">
+            <View className="p-3 mb-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <Text className="text-sm font-semibold leading-6 text-blue-300">
                 {safeConcept}
               </Text>
             </View>
@@ -126,17 +126,17 @@ export default function NoteSection({
               <MathMarkdown
                 style={{
                   body: {
-                    color: "#374151",
+                    color: "#e5e5e5",
                     fontSize: 15,
                     lineHeight: 24,
                   },
                   paragraph: {
                     marginVertical: 4,
-                    color: "#4b5563",
+                    color: "#d4d4d4",
                     lineHeight: 22,
                   },
-                  strong: { color: "#1f2937", fontWeight: "bold" },
-                  em: { color: "#4b5563", fontStyle: "italic" },
+                  strong: { color: "#f5f5f5", fontWeight: "bold" },
+                  em: { color: "#a3a3a3", fontStyle: "italic" },
                 }}
               >
                 {safeContent}
@@ -147,15 +147,15 @@ export default function NoteSection({
           {/* Key Points with Icons */}
           {safeKeyPoints.length > 0 && (
             <View className="mb-4">
-              <Text className="mb-3 text-sm font-bold text-gray-800">
+              <Text className="mb-3 text-sm font-bold text-gray-200">
                 Key Points:
               </Text>
               {safeKeyPoints.map((point, index) => (
                 <View key={index} className="flex-row items-start mb-3">
                   <View className="mt-0.5 mr-2">
-                    <CheckCircle2 size={18} color="#3b82f6" />
+                    <CheckCircle2 size={18} color="#60a5fa" />
                   </View>
-                  <Text className="flex-1 text-sm leading-6 text-gray-700">
+                  <Text className="flex-1 text-sm leading-6 text-gray-300">
                     {point}
                   </Text>
                 </View>
@@ -165,14 +165,14 @@ export default function NoteSection({
 
           {/* Example */}
           {safeExample && (
-            <View className="p-4 border-l-4 rounded-lg bg-amber-50 border-amber-500">
+            <View className="p-4 border-l-4 rounded-lg bg-amber-500/10 border-amber-500">
               <View className="flex-row items-center mb-2">
-                <BookOpen size={18} color="#d97706" />
-                <Text className="ml-2 text-sm font-bold text-amber-900">
+                <BookOpen size={18} color="#fbbf24" />
+                <Text className="ml-2 text-sm font-bold text-amber-300">
                   Example:
                 </Text>
               </View>
-              <Text className="text-sm leading-6 text-amber-800">
+              <Text className="text-sm leading-6 text-amber-200">
                 {safeExample}
               </Text>
             </View>

@@ -15,14 +15,14 @@ export default function QuickSummary({ summary }: QuickSummaryProps) {
   }
 
   return (
-    <View className="p-5 mb-6 rounded-xl bg-purple-50 border-2 border-purple-200 shadow-sm">
+    <View className="p-5 mb-6 rounded-xl bg-purple-500/10 border-2 border-purple-500/30 shadow-sm">
       <View className="flex-row items-center mb-3">
-        <FileText size={20} color="#9333ea" />
-        <Text className="ml-2 text-sm font-bold uppercase tracking-wide text-purple-900">
+        <FileText size={20} color="#c084fc" />
+        <Text className="ml-2 text-sm font-bold uppercase tracking-wide text-purple-300">
           Why This Matters
         </Text>
       </View>
-      <Text className="text-sm leading-6 text-purple-800">{safeSummary}</Text>
+      <Text className="text-sm leading-6 text-purple-200">{safeSummary}</Text>
     </View>
   );
 }

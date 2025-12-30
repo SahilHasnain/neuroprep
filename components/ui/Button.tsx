@@ -29,16 +29,20 @@ export default function Button({
       className={clsx(
         "py-3 px-6 rounded-xl items-center justify-center flex-row",
         fullWidth && "w-full",
-        variant === "primary" && "bg-blue-500",
-        variant === "secondary" && "bg-gray-200",
-        variant === "outline" && "bg-white border-[1.5px] border-blue-500",
-        (disabled || loading) && "opacity-50", className
+        variant === "primary" &&
+          "bg-gradient-to-r from-accent-blue to-accent-purple",
+        variant === "secondary" &&
+          "bg-dark-surface-200 border border-dark-surface-300",
+        variant === "outline" &&
+          "bg-transparent border-[1.5px] border-accent-blue",
+        (disabled || loading) && "opacity-50",
+        className
       )}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === "primary" ? "#ffffff" : "#3b82f6"}
+          color={variant === "primary" ? "#ffffff" : "#60a5fa"}
         />
       ) : (
         <>
@@ -47,8 +51,8 @@ export default function Button({
             className={clsx(
               "text-base font-semibold",
               variant === "primary" && "text-white",
-              variant === "secondary" && "text-gray-900",
-              variant === "outline" && "text-blue-500",
+              variant === "secondary" && "text-text-secondary",
+              variant === "outline" && "text-accent-blue-light",
               icon && "ml-2"
             )}
           >

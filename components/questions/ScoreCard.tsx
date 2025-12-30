@@ -1,5 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { Trophy, Star, TrendingUp, RotateCcw, Home } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -69,7 +70,7 @@ export default function ScoreCard({
   const performance = getPerformanceData();
 
   return (
-    <View className="flex-1 items-center justify-center px-6">
+    <View className="flex-1 items-center justify-center px-6 bg-[#121212]">
       {/* Trophy Icon */}
       <Animated.View entering={BounceIn.delay(200).duration(600)}>
         <View
@@ -81,10 +82,10 @@ export default function ScoreCard({
 
       {/* Title */}
       <Animated.View entering={FadeInUp.delay(400).duration(500)}>
-        <Text className="text-3xl font-bold text-gray-900 text-center mb-2">
+        <Text className="text-3xl font-bold text-gray-100 text-center mb-2">
           {performance.title}
         </Text>
-        <Text className="text-base text-gray-600 text-center mb-8">
+        <Text className="text-base text-gray-400 text-center mb-8">
           {performance.message}
         </Text>
       </Animated.View>
@@ -95,54 +96,54 @@ export default function ScoreCard({
         className="w-full"
       >
         <View
-          className={`rounded-2xl p-6 mb-6 border-2 ${performance.borderColor} ${performance.bgColor}`}
+          className={`rounded-2xl p-6 mb-6 border-2 ${performance.borderColor} bg-[#1e1e1e]`}
         >
           {/* Main Score */}
           <View className="items-center mb-4">
             <Text className={`text-6xl font-bold ${performance.textColor}`}>
               {score}/{totalQuestions}
             </Text>
-            <Text className="text-lg text-gray-600 mt-2">Correct Answers</Text>
+            <Text className="text-lg text-gray-400 mt-2">Correct Answers</Text>
           </View>
 
           {/* Percentage */}
-          <View className="items-center py-4 border-t border-gray-200">
+          <View className="items-center py-4 border-t border-gray-700">
             <Text className={`text-4xl font-bold ${performance.textColor}`}>
               {percentage}%
             </Text>
-            <Text className="text-sm text-gray-600 mt-1">Accuracy</Text>
+            <Text className="text-sm text-gray-400 mt-1">Accuracy</Text>
           </View>
 
           {/* Stats Row */}
-          <View className="flex-row justify-around mt-4 pt-4 border-t border-gray-200">
+          <View className="flex-row justify-around mt-4 pt-4 border-t border-gray-700">
             <View className="items-center">
               <View className="flex-row items-center mb-1">
                 <Star size={16} color="#10b981" fill="#10b981" />
-                <Text className="text-xl font-bold text-gray-900 ml-1">
+                <Text className="text-xl font-bold text-gray-100 ml-1">
                   {score}
                 </Text>
               </View>
-              <Text className="text-xs text-gray-600">Correct</Text>
+              <Text className="text-xs text-gray-400">Correct</Text>
             </View>
 
             <View className="items-center">
               <View className="flex-row items-center mb-1">
-                <TrendingUp size={16} color="#3b82f6" />
-                <Text className="text-xl font-bold text-gray-900 ml-1">
+                <TrendingUp size={16} color="#60a5fa" />
+                <Text className="text-xl font-bold text-gray-100 ml-1">
                   {percentage}%
                 </Text>
               </View>
-              <Text className="text-xs text-gray-600">Score</Text>
+              <Text className="text-xs text-gray-400">Score</Text>
             </View>
 
             <View className="items-center">
               <View className="flex-row items-center mb-1">
                 <Trophy size={16} color="#f59e0b" />
-                <Text className="text-xl font-bold text-gray-900 ml-1">
+                <Text className="text-xl font-bold text-gray-100 ml-1">
                   {totalQuestions - score}
                 </Text>
               </View>
-              <Text className="text-xs text-gray-600">Missed</Text>
+              <Text className="text-xs text-gray-400">Missed</Text>
             </View>
           </View>
         </View>
@@ -155,20 +156,27 @@ export default function ScoreCard({
       >
         <Pressable
           onPress={onRetry}
-          className="flex-row items-center justify-center px-6 py-4 rounded-xl bg-blue-600 active:bg-blue-700"
+          className="rounded-xl overflow-hidden active:opacity-80"
         >
-          <RotateCcw size={20} color="#ffffff" />
-          <Text className="ml-2 text-base font-semibold text-white">
-            Try Again
-          </Text>
+          <LinearGradient
+            colors={["#2563eb", "#1d4ed8"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="flex-row items-center justify-center px-6 py-4"
+          >
+            <RotateCcw size={20} color="#ffffff" />
+            <Text className="ml-2 text-base font-semibold text-white">
+              Try Again
+            </Text>
+          </LinearGradient>
         </Pressable>
 
         <Pressable
           onPress={onExit}
-          className="flex-row items-center justify-center px-6 py-4 rounded-xl bg-gray-200 active:bg-gray-300"
+          className="flex-row items-center justify-center px-6 py-4 rounded-xl bg-gray-700 active:bg-gray-600"
         >
-          <Home size={20} color="#374151" />
-          <Text className="ml-2 text-base font-semibold text-gray-700">
+          <Home size={20} color="#e5e5e5" />
+          <Text className="ml-2 text-base font-semibold text-gray-200">
             Back to Home
           </Text>
         </Pressable>

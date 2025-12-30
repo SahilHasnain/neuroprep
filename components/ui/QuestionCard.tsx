@@ -37,11 +37,11 @@ export default function QuestionCard({
   };
 
   return (
-    <View className="p-4 mb-4 bg-white rounded-2xl shadow-sm border-[1px] border-gray-200">
+    <View className="p-4 mb-4 bg-dark-surface-100 rounded-2xl border-[1px] border-dark-surface-300">
       <MathMarkdown
         style={{
           body: {
-            color: "#111827",
+            color: "#f5f5f5",
             fontSize: 16,
             lineHeight: 22,
             fontWeight: "600",
@@ -67,13 +67,17 @@ export default function QuestionCard({
                 "flex-row items-center p-3 rounded-xl border-[1.5px] mb-2",
                 shouldHighlight &&
                   isCorrectOption &&
-                  "bg-green-50 border-green-500",
+                  "bg-success-bg border-success-border",
                 shouldHighlight &&
                   isSelected &&
                   !isCorrectOption &&
-                  "bg-red-50 border-red-500",
-                !shouldHighlight && isSelected && "bg-blue-50 border-blue-500",
-                !shouldHighlight && !isSelected && "bg-gray-50 border-gray-200"
+                  "bg-error-bg border-error-border",
+                !shouldHighlight &&
+                  isSelected &&
+                  "bg-info-bg border-info-border",
+                !shouldHighlight &&
+                  !isSelected &&
+                  "bg-dark-surface-200 border-dark-surface-300"
               )}
             >
               <View className="flex-row items-center flex-1">
@@ -82,17 +86,17 @@ export default function QuestionCard({
                     "w-6 h-6 rounded-full items-center justify-center mr-3 border-[1.5px]",
                     shouldHighlight &&
                       isCorrectOption &&
-                      "bg-green-500 border-green-500",
+                      "bg-success-border border-success-border",
                     shouldHighlight &&
                       isSelected &&
                       !isCorrectOption &&
-                      "bg-red-500 border-red-500",
+                      "bg-error-border border-error-border",
                     !shouldHighlight &&
                       isSelected &&
-                      "bg-blue-500 border-blue-500",
+                      "bg-info-border border-info-border",
                     !shouldHighlight &&
                       !isSelected &&
-                      "bg-white border-gray-300"
+                      "bg-dark-surface-100 border-dark-surface-300"
                   )}
                 >
                   {shouldHighlight && isCorrectOption ? (
@@ -102,7 +106,7 @@ export default function QuestionCard({
                       className={clsx(
                         "text-xs font-semibold",
                         isSelected && !shouldHighlight && "text-white",
-                        !isSelected && "text-gray-600"
+                        !isSelected && "text-text-tertiary"
                       )}
                     >
                       {String.fromCharCode(65 + index)}
@@ -117,11 +121,11 @@ export default function QuestionCard({
                         lineHeight: 20,
                         color: shouldHighlight
                           ? isCorrectOption
-                            ? "#065f46" // green-900
+                            ? "#6ee7b7" // success-text
                             : isSelected
-                              ? "#7f1d1d" // red-900
-                              : "#111827"
-                          : "#111827",
+                              ? "#fca5a5" // error-text
+                              : "#e5e5e5"
+                          : "#e5e5e5",
                         fontWeight:
                           shouldHighlight && isCorrectOption ? "600" : "400",
                       },

@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
@@ -133,33 +134,36 @@ export default function QuestionDisplay({
         {/* Compact Header with Progress */}
         <View className="mb-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-sm font-medium text-gray-500">
+            <Text className="text-sm font-medium text-gray-400">
               Question {currentQuestionIndex + 1} of {questions.length}
             </Text>
             <View className="flex-row gap-2">
               <Pressable
                 onPress={handleGenerateNotes}
-                className="px-3 py-1.5 rounded-lg bg-gray-100 active:bg-gray-200"
+                className="px-3 py-1.5 rounded-lg bg-gray-800 active:bg-gray-700"
               >
-                <BookOpen size={16} color="#6b7280" />
+                <BookOpen size={16} color="#9ca3af" />
               </Pressable>
               <Pressable
                 onPress={onReset}
-                className="px-3 py-1.5 rounded-lg bg-gray-100 active:bg-gray-200"
+                className="px-3 py-1.5 rounded-lg bg-gray-800 active:bg-gray-700"
               >
-                <Text className="text-sm font-medium text-gray-700">Exit</Text>
+                <Text className="text-sm font-medium text-gray-300">Exit</Text>
               </Pressable>
             </View>
           </View>
 
           {/* Progress Bar */}
-          <View className="h-2 overflow-hidden rounded-full bg-gray-200">
-            <View
-              className="h-full rounded-full bg-blue-500"
+          <View className="h-2 overflow-hidden rounded-full bg-gray-700">
+            <LinearGradient
+              colors={["#2563eb", "#3b82f6"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className="h-full rounded-full"
               style={{ width: `${progressPercentage}%` }}
             />
           </View>
-          <Text className="mt-1 text-xs text-center text-gray-500">
+          <Text className="mt-1 text-xs text-center text-gray-400">
             {answeredCount} of {questions.length} answered
           </Text>
         </View>
@@ -180,10 +184,10 @@ export default function QuestionDisplay({
           {selectedAnswers[currentQuestion.id] && (
             <Pressable
               onPress={() => handleAskDoubt(currentQuestion)}
-              className="flex-row items-center justify-center px-4 py-3 mt-4 rounded-xl bg-blue-50 border-[1px] border-blue-200 active:bg-blue-100"
+              className="flex-row items-center justify-center px-4 py-3 mt-4 rounded-xl bg-blue-500/10 border-[1px] border-blue-500/30 active:bg-blue-500/20"
             >
-              <HelpCircle size={18} color="#3b82f6" />
-              <Text className="ml-2 text-sm font-medium text-blue-600">
+              <HelpCircle size={18} color="#60a5fa" />
+              <Text className="ml-2 text-sm font-medium text-blue-400">
                 Need help with this?
               </Text>
             </Pressable>
@@ -191,24 +195,24 @@ export default function QuestionDisplay({
         </ScrollView>
 
         {/* Navigation Footer */}
-        <View className="pt-4 mt-4 border-t border-gray-200">
+        <View className="pt-4 mt-4 border-t border-gray-700">
           <View className="flex-row items-center justify-between gap-3">
             <Pressable
               onPress={handlePrevious}
               disabled={currentQuestionIndex === 0}
               className={`flex-row items-center justify-center px-4 py-3 rounded-xl flex-1 ${
                 currentQuestionIndex === 0
-                  ? "bg-gray-100"
-                  : "bg-gray-200 active:bg-gray-300"
+                  ? "bg-gray-800"
+                  : "bg-gray-700 active:bg-gray-600"
               }`}
             >
               <ChevronLeft
                 size={20}
-                color={currentQuestionIndex === 0 ? "#d1d5db" : "#374151"}
+                color={currentQuestionIndex === 0 ? "#4b5563" : "#e5e5e5"}
               />
               <Text
                 className={`ml-1 text-sm font-semibold ${
-                  currentQuestionIndex === 0 ? "text-gray-400" : "text-gray-700"
+                  currentQuestionIndex === 0 ? "text-gray-600" : "text-gray-200"
                 }`}
               >
                 Previous
@@ -217,9 +221,9 @@ export default function QuestionDisplay({
 
             <Pressable
               onPress={() => setShowAllQuestions(true)}
-              className="px-4 py-3 rounded-xl bg-gray-100 active:bg-gray-200"
+              className="px-4 py-3 rounded-xl bg-gray-800 active:bg-gray-700"
             >
-              <Text className="text-sm font-medium text-gray-700">
+              <Text className="text-sm font-medium text-gray-300">
                 {currentQuestionIndex + 1}/{questions.length}
               </Text>
             </Pressable>
@@ -229,9 +233,18 @@ export default function QuestionDisplay({
             selectedAnswers[currentQuestion.id] ? (
               <Pressable
                 onPress={() => setShowScore(true)}
-                className="flex-row items-center justify-center px-4 py-3 rounded-xl flex-1 bg-green-600 active:bg-green-700"
+                className="flex-1 rounded-xl overflow-hidden active:opacity-80"
               >
-                <Text className="text-sm font-semibold text-white">Finish</Text>
+                <LinearGradient
+                  colors={["#16a34a", "#15803d"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="flex-row items-center justify-center px-4 py-3"
+                >
+                  <Text className="text-sm font-semibold text-white">
+                    Finish
+                  </Text>
+                </LinearGradient>
               </Pressable>
             ) : (
               <Pressable
@@ -239,27 +252,30 @@ export default function QuestionDisplay({
                 disabled={currentQuestionIndex === questions.length - 1}
                 className={`flex-row items-center justify-center px-4 py-3 rounded-xl flex-1 ${
                   currentQuestionIndex === questions.length - 1
-                    ? "bg-gray-100"
-                    : "bg-blue-600 active:bg-blue-700"
+                    ? "bg-gray-800"
+                    : "overflow-hidden"
                 }`}
               >
-                <Text
-                  className={`mr-1 text-sm font-semibold ${
-                    currentQuestionIndex === questions.length - 1
-                      ? "text-gray-400"
-                      : "text-white"
-                  }`}
-                >
-                  Next
-                </Text>
-                <ChevronRight
-                  size={20}
-                  color={
-                    currentQuestionIndex === questions.length - 1
-                      ? "#d1d5db"
-                      : "#ffffff"
-                  }
-                />
+                {currentQuestionIndex === questions.length - 1 ? (
+                  <>
+                    <Text className="mr-1 text-sm font-semibold text-gray-600">
+                      Next
+                    </Text>
+                    <ChevronRight size={20} color="#4b5563" />
+                  </>
+                ) : (
+                  <LinearGradient
+                    colors={["#2563eb", "#1d4ed8"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="flex-row items-center justify-center px-4 py-3 absolute inset-0"
+                  >
+                    <Text className="mr-1 text-sm font-semibold text-white">
+                      Next
+                    </Text>
+                    <ChevronRight size={20} color="#ffffff" />
+                  </LinearGradient>
+                )}
               </Pressable>
             )}
           </View>
@@ -281,14 +297,14 @@ export default function QuestionDisplay({
   return (
     <ScrollView className="flex-1">
       <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-lg font-semibold text-gray-900">
+        <Text className="text-lg font-semibold text-gray-100">
           All Questions
         </Text>
         <Pressable
           onPress={() => setShowAllQuestions(false)}
-          className="px-3 py-1.5 rounded-lg bg-gray-100 active:bg-gray-200"
+          className="px-3 py-1.5 rounded-lg bg-gray-800 active:bg-gray-700"
         >
-          <Text className="text-sm font-medium text-gray-700">
+          <Text className="text-sm font-medium text-gray-300">
             Back to Practice
           </Text>
         </Pressable>
@@ -298,15 +314,15 @@ export default function QuestionDisplay({
       <View
         className={`p-4 mb-4 rounded-xl border-[1px] ${
           answeredCount === questions.length
-            ? "bg-green-50 border-green-200"
-            : "bg-blue-50 border-blue-200"
+            ? "bg-green-500/10 border-green-500/30"
+            : "bg-blue-500/10 border-blue-500/30"
         }`}
       >
         <Text
           className={`text-sm font-medium ${
             answeredCount === questions.length
-              ? "text-green-900"
-              : "text-blue-900"
+              ? "text-green-300"
+              : "text-blue-300"
           }`}
         >
           {answeredCount === questions.length
@@ -315,15 +331,20 @@ export default function QuestionDisplay({
         </Text>
         <View
           className={`h-2 mt-2 overflow-hidden rounded-full ${
-            answeredCount === questions.length ? "bg-green-200" : "bg-blue-200"
+            answeredCount === questions.length
+              ? "bg-green-500/20"
+              : "bg-blue-500/20"
           }`}
         >
-          <View
-            className={`h-full rounded-full ${
+          <LinearGradient
+            colors={
               answeredCount === questions.length
-                ? "bg-green-600"
-                : "bg-blue-600"
-            }`}
+                ? ["#16a34a", "#22c55e"]
+                : ["#2563eb", "#3b82f6"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="h-full rounded-full"
             style={{ width: `${progressPercentage}%` }}
           />
         </View>
@@ -339,21 +360,29 @@ export default function QuestionDisplay({
             <Pressable
               key={question.id}
               onPress={() => handleQuestionSelect(index)}
-              className={`w-14 h-14 rounded-xl items-center justify-center border-[1.5px] ${
+              className={`w-14 h-14 rounded-xl items-center justify-center border-[1.5px] overflow-hidden ${
                 isCurrent
-                  ? "bg-blue-600 border-blue-600"
+                  ? "border-blue-500"
                   : isAnswered
-                    ? "bg-green-50 border-green-500"
-                    : "bg-gray-50 border-gray-300"
+                    ? "bg-green-500/10 border-green-500"
+                    : "bg-gray-800 border-gray-600"
               }`}
             >
+              {isCurrent && (
+                <LinearGradient
+                  colors={["#2563eb", "#1d4ed8"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="absolute inset-0"
+                />
+              )}
               <Text
                 className={`text-base font-semibold ${
                   isCurrent
                     ? "text-white"
                     : isAnswered
-                      ? "text-green-700"
-                      : "text-gray-600"
+                      ? "text-green-400"
+                      : "text-gray-400"
                 }`}
               >
                 {index + 1}

@@ -32,20 +32,20 @@ export default function Dropdown({
 
   return (
     <View className="mb-4">
-      <Text className="mb-2 text-base font-medium text-gray-700">{label}</Text>
+      <Text className="mb-2 text-base font-medium text-gray-300">{label}</Text>
       <TouchableOpacity
         onPress={() => setIsOpen(true)}
-        className="flex-row items-center justify-between px-4 py-3 bg-white border-[1px] border-gray-300 rounded-xl"
+        className="flex-row items-center justify-between px-4 py-3 bg-surface-dark border-[1px] border-gray-700 rounded-xl"
       >
         <Text
           className={clsx(
             "text-base",
-            selectedOption ? "text-gray-900" : "text-gray-400"
+            selectedOption ? "text-gray-100" : "text-gray-500"
           )}
         >
           {selectedOption?.label || placeholder}
         </Text>
-        <ChevronDown size={20} color="#9ca3af" />
+        <ChevronDown size={20} color="#6b7280" />
       </TouchableOpacity>
 
       <Modal
@@ -54,7 +54,7 @@ export default function Dropdown({
         animationType="fade"
         onRequestClose={() => setIsOpen(false)}
       >
-        <SafeAreaView className="flex-1 bg-black/50" edges={["bottom"]}>
+        <SafeAreaView className="flex-1 bg-black/85" edges={["bottom"]}>
           <TouchableOpacity
             className="flex-1"
             activeOpacity={1}
@@ -65,10 +65,10 @@ export default function Dropdown({
                 activeOpacity={1}
                 onPress={(e) => e.stopPropagation()}
               >
-                <View className="bg-white rounded-t-3xl max-h-96">
-                  <View className="items-center py-3 border-b-[1px] border-gray-200">
-                    <View className="w-12 h-1 bg-gray-300 rounded-full" />
-                    <Text className="mt-3 text-lg font-semibold text-gray-900">
+                <View className="bg-surface-dark rounded-t-3xl max-h-96 border-t-[1px] border-gray-700">
+                  <View className="items-center py-3 border-b-[1px] border-gray-700">
+                    <View className="w-12 h-1 bg-gray-600 rounded-full" />
+                    <Text className="mt-3 text-lg font-semibold text-gray-100">
                       {label}
                     </Text>
                   </View>
@@ -86,8 +86,8 @@ export default function Dropdown({
                           }
                         }}
                         className={clsx(
-                          "py-4 border-b-[1px] border-gray-100 flex-row items-center justify-between",
-                          value === option.value && "bg-blue-50",
+                          "py-4 border-b-[1px] border-gray-800 flex-row items-center justify-between",
+                          value === option.value && "bg-blue-500/10",
                           (option.locked || option.disabled) && "opacity-60"
                         )}
                       >
@@ -95,16 +95,16 @@ export default function Dropdown({
                           className={clsx(
                             "text-base",
                             value === option.value
-                              ? "text-blue-600 font-semibold"
+                              ? "text-blue-400 font-semibold"
                               : option.locked || option.disabled
                                 ? "text-gray-500"
-                                : "text-gray-900"
+                                : "text-gray-200"
                           )}
                         >
                           {option.label}
                         </Text>
                         {(option.locked || option.disabled) && (
-                          <Lock size={16} color="#9ca3af" />
+                          <Lock size={16} color="#6b7280" />
                         )}
                       </TouchableOpacity>
                     ))}

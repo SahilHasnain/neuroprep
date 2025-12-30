@@ -42,8 +42,8 @@ export default function ChatBubble({
         className={clsx(
           "max-w-[80%] px-4 py-3 rounded-xl",
           isUser
-            ? "bg-blue-500 rounded-tr-sm"
-            : "bg-gray-100 rounded-tl-sm border-[1px] border-gray-200"
+            ? "bg-gradient-to-r from-accent-blue to-accent-purple rounded-tr-sm"
+            : "bg-dark-surface-200 rounded-tl-sm border-[1px] border-dark-surface-300"
         )}
       >
         {isUser ? (
@@ -51,12 +51,12 @@ export default function ChatBubble({
         ) : (
           <MathMarkdown
             style={{
-              body: { color: "#111827", fontSize: 15, lineHeight: 22 },
-              strong: { color: "#1f2937", fontWeight: "bold" },
-              em: { color: "#374151", fontStyle: "italic" },
+              body: { color: "#e5e5e5", fontSize: 15, lineHeight: 22 },
+              strong: { color: "#f5f5f5", fontWeight: "bold" },
+              em: { color: "#e5e5e5", fontStyle: "italic" },
               code_inline: {
-                backgroundColor: "#e5e7eb",
-                color: "#dc2626",
+                backgroundColor: "#2a2a2a",
+                color: "#60a5fa",
                 paddingHorizontal: 4,
                 paddingVertical: 2,
                 borderRadius: 4,
@@ -64,7 +64,7 @@ export default function ChatBubble({
                 fontSize: 14,
               },
               blockquote: {
-                backgroundColor: "#dbeafe",
+                backgroundColor: "#1e3a8a",
                 borderLeftColor: "#3b82f6",
                 borderLeftWidth: 3,
                 paddingLeft: 10,
@@ -74,7 +74,7 @@ export default function ChatBubble({
               },
               paragraph: {
                 marginVertical: 2,
-                color: "#111827",
+                color: "#e5e5e5",
                 lineHeight: 20,
               },
             }}
@@ -86,12 +86,14 @@ export default function ChatBubble({
         {showGenerateQuestionsButton && (
           <TouchableOpacity
             onPress={() => onGenerateQuestions(doubtContext)}
-            className="mt-3 pt-3 border-t border-gray-200"
+            className="mt-3 pt-3 border-t border-dark-surface-300"
             activeOpacity={0.7}
           >
-            <View className="flex-row items-center justify-center py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Text className="text-blue-600 font-medium text-sm mr-1">📝</Text>
-              <Text className="text-blue-600 font-medium text-sm">
+            <View className="flex-row items-center justify-center py-2 px-3 bg-info-bg rounded-lg border border-info-border">
+              <Text className="text-info-text font-medium text-sm mr-1">
+                📝
+              </Text>
+              <Text className="text-info-text font-medium text-sm">
                 Generate Questions on this topic
               </Text>
             </View>
@@ -104,11 +106,11 @@ export default function ChatBubble({
             className="mt-2"
             activeOpacity={0.7}
           >
-            <View className="flex-row items-center justify-center py-2 px-3 bg-green-50 rounded-lg border border-green-200">
-              <Text className="text-green-600 font-medium text-sm mr-1">
+            <View className="flex-row items-center justify-center py-2 px-3 bg-success-bg rounded-lg border border-success-border">
+              <Text className="text-success-text font-medium text-sm mr-1">
                 📚
               </Text>
-              <Text className="text-green-600 font-medium text-sm">
+              <Text className="text-success-text font-medium text-sm">
                 Generate Notes on this topic
               </Text>
             </View>
@@ -117,7 +119,9 @@ export default function ChatBubble({
       </View>
 
       {timeStamp && (
-        <Text className="px-1 mt-1 text-xs text-gray-400">{timeStamp}</Text>
+        <Text className="px-1 mt-1 text-xs text-text-tertiary">
+          {timeStamp}
+        </Text>
       )}
     </View>
   );

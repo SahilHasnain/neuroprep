@@ -31,27 +31,27 @@ export default function UsageBadge({
       <View
         className={clsx(
           "px-3 py-1.5 rounded-full flex-row items-center",
-          isPro && "bg-amber-100",
-          !isPro && isAtLimit && "bg-red-100",
-          !isPro && isNearLimit && !isAtLimit && "bg-orange-100",
-          !isPro && !isNearLimit && "bg-gray-100",
+          isPro && "bg-amber-500/20",
+          !isPro && isAtLimit && "bg-red-500/20",
+          !isPro && isNearLimit && !isAtLimit && "bg-orange-500/20",
+          !isPro && !isNearLimit && "bg-gray-700",
           className
         )}
       >
         {isPro ? (
           <>
-            <Text className="text-amber-700 text-xs font-semibold mr-1">
+            <Text className="text-amber-400 text-xs font-semibold mr-1">
               PRO
             </Text>
-            <Text className="text-amber-600 text-xs">∞</Text>
+            <Text className="text-amber-300 text-xs">∞</Text>
           </>
         ) : (
           <Text
             className={clsx(
               "text-xs font-medium",
-              isAtLimit && "text-red-700",
-              isNearLimit && !isAtLimit && "text-orange-700",
-              !isNearLimit && "text-gray-700"
+              isAtLimit && "text-red-400",
+              isNearLimit && !isAtLimit && "text-orange-400",
+              !isNearLimit && "text-gray-300"
             )}
           >
             {displayText}
@@ -66,10 +66,13 @@ export default function UsageBadge({
     <View
       className={clsx(
         "px-4 py-2 rounded-lg border",
-        isPro && "bg-amber-50 border-amber-200",
-        !isPro && isAtLimit && "bg-red-50 border-red-200",
-        !isPro && isNearLimit && !isAtLimit && "bg-orange-50 border-orange-200",
-        !isPro && !isNearLimit && "bg-white border-gray-200",
+        isPro && "bg-amber-500/10 border-amber-500/30",
+        !isPro && isAtLimit && "bg-red-500/10 border-red-500/30",
+        !isPro &&
+          isNearLimit &&
+          !isAtLimit &&
+          "bg-orange-500/10 border-orange-500/30",
+        !isPro && !isNearLimit && "bg-surface-dark border-gray-700",
         className
       )}
     >
@@ -77,10 +80,10 @@ export default function UsageBadge({
         <Text
           className={clsx(
             "text-sm font-semibold",
-            isPro && "text-amber-700",
-            !isPro && isAtLimit && "text-red-700",
-            !isPro && isNearLimit && !isAtLimit && "text-orange-700",
-            !isPro && !isNearLimit && "text-gray-700"
+            isPro && "text-amber-400",
+            !isPro && isAtLimit && "text-red-400",
+            !isPro && isNearLimit && !isAtLimit && "text-orange-400",
+            !isPro && !isNearLimit && "text-gray-300"
           )}
         >
           {isPro ? "Pro Plan" : "Free Plan"}
@@ -88,10 +91,10 @@ export default function UsageBadge({
         <Text
           className={clsx(
             "text-sm font-bold",
-            isPro && "text-amber-600",
-            !isPro && isAtLimit && "text-red-600",
-            !isPro && isNearLimit && !isAtLimit && "text-orange-600",
-            !isPro && !isNearLimit && "text-gray-600"
+            isPro && "text-amber-300",
+            !isPro && isAtLimit && "text-red-300",
+            !isPro && isNearLimit && !isAtLimit && "text-orange-300",
+            !isPro && !isNearLimit && "text-gray-400"
           )}
         >
           {displayText}
@@ -101,7 +104,7 @@ export default function UsageBadge({
       {!isPro && (
         <View className="flex-row items-center">
           <Text className="text-xs text-gray-500 mr-2">Usage:</Text>
-          <View className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <View className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
             <View
               className={clsx(
                 "h-full rounded-full",
@@ -116,7 +119,7 @@ export default function UsageBadge({
       )}
 
       {isAtLimit && (
-        <Text className="text-xs text-red-600 mt-1">Daily limit reached</Text>
+        <Text className="text-xs text-red-400 mt-1">Daily limit reached</Text>
       )}
     </View>
   );

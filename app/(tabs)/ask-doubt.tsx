@@ -7,6 +7,7 @@ import { LAUNCH_V1_BYPASS } from "@/constants";
 import { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { Send, Info } from "lucide-react-native";
 import type { QuestionContext, NoteContext } from "@/lib/types";
@@ -130,12 +131,17 @@ Correct Answer: ${parsedContext.correctAnswer}
   const showLimit = limitInfo;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="px-6 py-4 bg-white border-b-[1px] border-gray-200">
+    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
+      <LinearGradient
+        colors={["#2563eb", "#9333ea"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="px-6 py-4 border-b-[1px] border-gray-700"
+      >
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-1">
-            <Text className="text-2xl font-bold text-gray-900">Ask Doubt</Text>
-            <Text className="mt-1 text-base text-gray-600">
+            <Text className="text-2xl font-bold text-white">Ask Doubt</Text>
+            <Text className="mt-1 text-base text-gray-200">
               Get instant help with your queries
             </Text>
           </View>
@@ -169,10 +175,10 @@ Correct Answer: ${parsedContext.correctAnswer}
 
         {/* Note Context Indicator */}
         {noteContext && (
-          <View className="p-3 mb-3 rounded-lg bg-blue-50 border border-blue-200">
+          <View className="p-3 mb-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
             <View className="flex-row items-center">
-              <Info size={16} color="#3b82f6" />
-              <Text className="ml-2 text-sm text-blue-700">
+              <Info size={16} color="#60a5fa" />
+              <Text className="ml-2 text-sm text-blue-300">
                 Related to note: {noteContext.noteTitle}
               </Text>
             </View>
@@ -180,14 +186,14 @@ Correct Answer: ${parsedContext.correctAnswer}
         )}
 
         {/* Input Area */}
-        <View className="flex-row items-end p-3 mb-3 bg-gray-100 rounded-2xl">
+        <View className="flex-row items-end p-3 mb-3 bg-[#1e1e1e] rounded-2xl border border-gray-700">
           <TextInput
             value={inputText}
             onChangeText={setInputText}
             placeholder="Type your doubt here..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#6b7280"
             multiline
-            className="flex-1 text-base text-gray-900 max-h-32"
+            className="flex-1 text-base text-gray-100 max-h-32"
             style={{ minHeight: 40 }}
             onSubmitEditing={handleSend}
             editable={!loading}
@@ -195,11 +201,22 @@ Correct Answer: ${parsedContext.correctAnswer}
           <Pressable
             onPress={handleSend}
             disabled={!inputText.trim() || loading}
-            className={`ml-3 p-2.5 rounded-full ${
-              inputText.trim() && !loading ? "bg-blue-600" : "bg-gray-300"
+            className={`ml-3 p-2.5 rounded-full overflow-hidden ${
+              inputText.trim() && !loading ? "" : "bg-gray-700"
             }`}
           >
-            <Send size={20} color="white" />
+            {inputText.trim() && !loading ? (
+              <LinearGradient
+                colors={["#2563eb", "#1d4ed8"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="p-2.5 absolute inset-0 items-center justify-center"
+              >
+                <Send size={20} color="white" />
+              </LinearGradient>
+            ) : (
+              <Send size={20} color="white" />
+            )}
           </Pressable>
         </View>
 
@@ -229,15 +246,15 @@ Correct Answer: ${parsedContext.correctAnswer}
             </View>
           </View>
         )}
-      </View>
+      </LinearGradient>
 
       <ScrollView
-        className="flex-1 px-6 py-4"
+        className="flex-1 px-6 py-4 bg-[#121212]"
         contentContainerStyle={{ paddingBottom: 20 }}
       >
         {loading && messages.length === 0 && (
           <View className="items-center justify-center py-8">
-            <Text className="text-base text-gray-500">Thinking...</Text>
+            <Text className="text-base text-gray-400">Thinking...</Text>
           </View>
         )}
         {messages.map((message, index) => (
