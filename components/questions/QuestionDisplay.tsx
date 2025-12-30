@@ -16,6 +16,8 @@ import type {
   Question,
   QuestionContext,
   QuestionToNoteContext,
+  DoubtContext,
+  DoubtToNoteContext,
 } from "@/lib/types";
 
 interface QuestionDisplayProps {
@@ -88,6 +90,26 @@ export default function QuestionDisplay({
       pathname: "/(tabs)/notes",
       params: {
         questionContext: JSON.stringify(context),
+      },
+    });
+  };
+
+  const handleGenerateQuestionsFromDoubt = (context: DoubtContext) => {
+    setDoubtModalVisible(false);
+    router.push({
+      pathname: "/(tabs)/generate-questions",
+      params: {
+        doubtContext: JSON.stringify(context),
+      },
+    });
+  };
+
+  const handleGenerateNotesFromDoubt = (context: DoubtToNoteContext) => {
+    setDoubtModalVisible(false);
+    router.push({
+      pathname: "/(tabs)/notes",
+      params: {
+        doubtContext: JSON.stringify(context),
       },
     });
   };
@@ -287,6 +309,8 @@ export default function QuestionDisplay({
             visible={doubtModalVisible}
             onClose={() => setDoubtModalVisible(false)}
             questionContext={selectedQuestionContext}
+            onGenerateQuestions={handleGenerateQuestionsFromDoubt}
+            onGenerateNotes={handleGenerateNotesFromDoubt}
           />
         )}
       </View>
@@ -417,6 +441,8 @@ export default function QuestionDisplay({
           visible={doubtModalVisible}
           onClose={() => setDoubtModalVisible(false)}
           questionContext={selectedQuestionContext}
+          onGenerateQuestions={handleGenerateQuestionsFromDoubt}
+          onGenerateNotes={handleGenerateNotesFromDoubt}
         />
       )}
     </ScrollView>
