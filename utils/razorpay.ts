@@ -1,5 +1,6 @@
 import RazorpayCheckout from "react-native-razorpay";
 import { RAZORPAY_KEY_ID } from "@/constants";
+import { THEME } from "@/constants/theme";
 
 export interface RazorpayOptions {
   subscriptionId: string;
@@ -33,7 +34,7 @@ export const openRazorpayCheckout = (
       description: options.description || "Pro Subscription - ₹199/month",
       prefill: options.prefill || {},
       theme: {
-        color: "#f59e0b",
+        color: THEME.colors.accent.orange,
       },
     };
 

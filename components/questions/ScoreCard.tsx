@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import { Trophy, Star, TrendingUp, RotateCcw, Home } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -70,7 +71,10 @@ export default function ScoreCard({
   const performance = getPerformanceData();
 
   return (
-    <View className="flex-1 items-center justify-center px-6 bg-[#121212]">
+    <View
+      style={{ backgroundColor: THEME.colors.background.primary }}
+      className="flex-1 items-center justify-center px-6"
+    >
       {/* Trophy Icon */}
       <Animated.View entering={BounceIn.delay(200).duration(600)}>
         <View
@@ -96,7 +100,8 @@ export default function ScoreCard({
         className="w-full"
       >
         <View
-          className={`rounded-2xl p-6 mb-6 border-2 ${performance.borderColor} bg-[#1e1e1e]`}
+          style={{ backgroundColor: THEME.colors.background.secondary }}
+          className={`rounded-2xl p-6 mb-6 border-2 ${performance.borderColor}`}
         >
           {/* Main Score */}
           <View className="items-center mb-4">

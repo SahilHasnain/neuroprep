@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import { router, useLocalSearchParams } from "expo-router";
 import { Send, Info } from "lucide-react-native";
 import type { QuestionContext, NoteContext } from "@/lib/types";
@@ -186,7 +187,10 @@ Correct Answer: ${parsedContext.correctAnswer}
         )}
 
         {/* Input Area */}
-        <View className="flex-row items-end p-3 mb-3 bg-[#1e1e1e] rounded-2xl border border-gray-700">
+        <View
+          style={{ backgroundColor: THEME.colors.background.secondary }}
+          className="flex-row items-end p-3 mb-3 rounded-2xl border border-gray-700"
+        >
           <TextInput
             value={inputText}
             onChangeText={setInputText}
@@ -215,7 +219,7 @@ Correct Answer: ${parsedContext.correctAnswer}
                 <Send size={20} color="white" />
               </LinearGradient>
             ) : (
-              <Send size={20} color="white" />
+              <Send size={20} color={THEME.colors.text.primary} />
             )}
           </Pressable>
         </View>
@@ -249,7 +253,8 @@ Correct Answer: ${parsedContext.correctAnswer}
       </LinearGradient>
 
       <ScrollView
-        className="flex-1 px-6 py-4 bg-[#121212]"
+        style={{ backgroundColor: THEME.colors.background.primary }}
+        className="flex-1 px-6 py-4"
         contentContainerStyle={{ paddingBottom: 20 }}
       >
         {loading && messages.length === 0 && (

@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import { router, useLocalSearchParams } from "expo-router";
 import type {
   NoteContext,
@@ -194,12 +195,16 @@ export default function NotesScreen() {
   }, [params.doubtContext, setGenerateConfig, setIsModalVisible]);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
+    <SafeAreaView
+      style={{ backgroundColor: THEME.colors.background.primary }}
+      className="flex-1"
+      edges={["top"]}
+    >
       {/* MVP_BYPASS: Removed AuthModal */}
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}
       <LinearGradient
-        colors={["#2563eb", "#9333ea"]}
-        start={{ x: 0, y: 0 }}
+        colors={THEME.gradients.primary}
+        start={THEME.gradientConfig.start}
         end={{ x: 1, y: 0 }}
         className="px-6 py-4 border-b-[1px] border-gray-700"
       >
@@ -289,12 +294,13 @@ export default function NotesScreen() {
         >
           <View className="flex-1" />
           <View
-            className="bg-[#121212] rounded-t-3xl"
+            style={{ backgroundColor: THEME.colors.background.primary }}
+            className="rounded-t-3xl"
             onTouchEnd={(e) => e.stopPropagation()}
           >
             <LinearGradient
-              colors={["#2563eb", "#9333ea"]}
-              start={{ x: 0, y: 0 }}
+              colors={THEME.gradients.primary}
+              start={THEME.gradientConfig.start}
               end={{ x: 1, y: 0 }}
               className="px-6 py-4 border-b-[1px] border-gray-700 flex-row items-center justify-between rounded-t-3xl"
             >
@@ -310,9 +316,9 @@ export default function NotesScreen() {
             </LinearGradient>
 
             <ScrollView
-              className="px-6 pt-6 bg-[#121212]"
-              style={{ maxHeight: 500 }}
-              contentContainerStyle={{ paddingBottom: 400 }}
+              style={{ backgroundColor: THEME.colors.background.primary }}
+              className="px-6 pt-6"
+              contentContainerStyle={{ maxHeight: 500, paddingBottom: 400 }}
               showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
             >
@@ -408,7 +414,10 @@ export default function NotesScreen() {
         feature="notes"
       />
 
-      <View className="px-6 py-4 bg-[#1e1e1e] border-t border-gray-700">
+      <View
+        style={{ backgroundColor: THEME.colors.background.secondary }}
+        className="px-6 py-4 border-t border-gray-700"
+      >
         <Button
           title="Generate Notes"
           onPress={() => {
@@ -418,7 +427,7 @@ export default function NotesScreen() {
             setIsModalVisible(true);
           }}
           fullWidth
-          icon={<Plus size={20} color="#fff" />}
+          icon={<Plus size={20} color={THEME.colors.text.primary} />}
         />
       </View>
     </SafeAreaView>

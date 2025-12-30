@@ -4,6 +4,7 @@ import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Sparkles, Plus } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import { useQuestions } from "@/hooks/useQuestions";
 import Button from "@/components/ui/Button";
 import ComingSoonModal from "@/components/modals/ComingSoonModal";
@@ -171,7 +172,11 @@ export default function GenerateQuestionsScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
+    <SafeAreaView
+      style={{ backgroundColor: THEME.colors.background.primary }}
+      className="flex-1"
+      edges={["top"]}
+    >
       {/* MVP_BYPASS: Removed AuthModal */}
       <GenerateQuestionsModal
         visible={modalVisible}
@@ -195,8 +200,8 @@ export default function GenerateQuestionsScreen() {
 
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}
       <LinearGradient
-        colors={["#2563eb", "#9333ea"]}
-        start={{ x: 0, y: 0 }}
+        colors={THEME.gradients.primary}
+        start={THEME.gradientConfig.start}
         end={{ x: 1, y: 0 }}
         className="px-6 py-4 border-b-[1px] border-gray-700"
       >
@@ -289,7 +294,10 @@ export default function GenerateQuestionsScreen() {
 
       {/* Only show Generate button when not in practice mode */}
       {questions.length === 0 && (
-        <View className="px-6 py-4 bg-[#1e1e1e] border-t border-gray-700">
+        <View
+          style={{ backgroundColor: THEME.colors.background.secondary }}
+          className="px-6 py-4 border-t border-gray-700"
+        >
           <Button
             title="Generate New Questions"
             onPress={() => setModalVisible(true)}

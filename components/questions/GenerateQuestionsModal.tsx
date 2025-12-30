@@ -2,6 +2,7 @@
 import { Modal, View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { X, Info } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import Button from "@/components/ui/Button";
 import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
@@ -65,12 +66,13 @@ export default function GenerateQuestionsModal({
       <View className="flex-1 bg-black/85" onTouchEnd={onClose}>
         <View className="flex-1" />
         <View
-          className="bg-[#121212] rounded-t-3xl"
+          style={{ backgroundColor: THEME.colors.background.primary }}
+          className="rounded-t-3xl"
           onTouchEnd={(e) => e.stopPropagation()}
         >
           <LinearGradient
-            colors={["#2563eb", "#9333ea"]}
-            start={{ x: 0, y: 0 }}
+            colors={THEME.gradients.primary}
+            start={THEME.gradientConfig.start}
             end={{ x: 1, y: 0 }}
             className="px-6 py-4 border-b-[1px] border-gray-700 flex-row items-center justify-between rounded-t-3xl"
           >
@@ -83,9 +85,9 @@ export default function GenerateQuestionsModal({
           </LinearGradient>
 
           <ScrollView
-            className="px-6 pt-6 bg-[#121212]"
-            style={{ maxHeight: 500 }}
-            contentContainerStyle={{ paddingBottom: 400 }}
+            style={{ backgroundColor: THEME.colors.background.primary }}
+            className="px-6 pt-6"
+            contentContainerStyle={{ maxHeight: 500, paddingBottom: 400 }}
             showsVerticalScrollIndicator={true}
             keyboardShouldPersistTaps="handled"
           >

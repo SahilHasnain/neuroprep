@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogOut, LogIn } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import { usePlanStore } from "@/store/planStore";
 import { useAuthStore } from "@/store/authStore";
 import PlanCard from "@/components/ui/PlanCard";
@@ -149,7 +150,10 @@ export default function SubscriptionScreen() {
 
         {/* Current Usage (Free users only) */}
         {!isPro && (
-          <View className="px-6 py-6 bg-[#1e1e1e] border-b border-gray-700">
+          <View
+            style={{ backgroundColor: THEME.colors.background.secondary }}
+            className="px-6 py-6 border-b border-gray-700"
+          >
             <Text className="mb-4 text-lg font-semibold text-gray-100">
               Today&apos;s Usage
             </Text>
@@ -190,7 +194,10 @@ export default function SubscriptionScreen() {
         )}
 
         {/* Plans */}
-        <View className="px-6 py-6 bg-[#121212]">
+        <View
+          style={{ backgroundColor: THEME.colors.background.primary }}
+          className="px-6 py-6"
+        >
           <Text className="mb-4 text-xl font-semibold text-gray-100">
             Choose Your Plan
           </Text>
@@ -213,7 +220,10 @@ export default function SubscriptionScreen() {
         </View>
 
         {/* FAQ Section */}
-        <View className="px-6 py-6 bg-[#1e1e1e] border-t border-gray-700">
+        <View
+          style={{ backgroundColor: THEME.colors.background.secondary }}
+          className="px-6 py-6 border-t border-gray-700"
+        >
           <Text className="mb-4 text-lg font-semibold text-gray-100">
             Frequently Asked Questions
           </Text>

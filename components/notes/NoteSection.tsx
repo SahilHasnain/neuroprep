@@ -23,6 +23,8 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+import { THEME } from "@/constants/theme";
+
 interface NoteSectionProps {
   heading: string;
   concept: string;
@@ -79,7 +81,10 @@ export default function NoteSection({
   }
 
   return (
-    <View className="mb-5 overflow-hidden border-2 border-gray-700 rounded-xl bg-[#1e1e1e] shadow-sm">
+    <View
+      style={{ backgroundColor: THEME.colors.background.secondary }}
+      className="mb-5 overflow-hidden border-2 border-gray-700 rounded-xl shadow-sm"
+    >
       {/* Header - Always Visible */}
       <Pressable
         onPress={toggleExpand}

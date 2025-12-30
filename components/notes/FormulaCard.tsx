@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
 import { Calculator } from "lucide-react-native";
 import MathMarkdown from "@/components/shared/MathMarkdown";
+import { THEME } from "@/constants/theme";
 
 interface FormulaCardProps {
   name: string;
@@ -34,7 +35,10 @@ export default function FormulaCard({
       </View>
 
       {/* Formula Display */}
-      <View className="p-4 mb-4 rounded-lg bg-[#1e1e1e] border border-blue-500/20">
+      <View
+        style={{ backgroundColor: THEME.colors.background.secondary }}
+        className="p-4 mb-4 rounded-lg border border-blue-500/20"
+      >
         <MathMarkdown
           style={{
             body: {

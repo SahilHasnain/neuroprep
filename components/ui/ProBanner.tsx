@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { Crown, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 
 interface ProBannerProps {
   onUpgrade: () => void;
@@ -11,9 +12,9 @@ export default function ProBanner({ onUpgrade, onDismiss }: ProBannerProps) {
   return (
     <View className="mx-6 mb-6 overflow-hidden rounded-xl">
       <LinearGradient
-        colors={["#fbbf24", "#f59e0b", "#d97706"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={THEME.gradients.gold}
+        start={THEME.gradientConfig.start}
+        end={THEME.gradientConfig.end}
         className="relative p-4"
       >
         <TouchableOpacity

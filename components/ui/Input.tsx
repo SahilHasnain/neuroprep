@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { Send } from "lucide-react-native";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 
 interface InputProps {
   value: string;
@@ -37,12 +38,12 @@ export default function Input({
           className="ml-2 overflow-hidden rounded-full"
         >
           <LinearGradient
-            colors={["#3b82f6", "#8b5cf6"]}
-            start={{ x: 0, y: 0 }}
+            colors={THEME.gradients.primary}
+            start={THEME.gradientConfig.start}
             end={{ x: 1, y: 0 }}
             className="items-center justify-center w-10 h-10"
           >
-            <Send size={18} color="#ffffff" />
+            <Send size={18} color={THEME.colors.text.primary} />
           </LinearGradient>
         </TouchableOpacity>
       ) : (

@@ -8,6 +8,7 @@ import {
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import QuickActionButton from "../../components/ui/QuickActionButton";
 
 export default function HomeScreen() {

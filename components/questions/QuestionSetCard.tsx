@@ -1,6 +1,7 @@
 import { Calendar, Trash2 } from "lucide-react-native";
 import { Pressable, Text, View, Alert } from "react-native";
 import type { StoredQuestionSet } from "@/lib/types";
+import { THEME } from "@/constants/theme";
 
 interface QuestionSetCardProps {
   set: StoredQuestionSet;
@@ -39,7 +40,8 @@ export default function QuestionSetCard({
   return (
     <Pressable
       onPress={onPress}
-      className="mb-3 overflow-hidden bg-[#1e1e1e] border border-gray-700 rounded-2xl active:opacity-70"
+      style={{ backgroundColor: THEME.colors.background.secondary }}
+      className="mb-3 overflow-hidden border border-gray-700 rounded-2xl active:opacity-70"
     >
       <View className="p-4">
         <View className="flex-row items-start justify-between mb-2">

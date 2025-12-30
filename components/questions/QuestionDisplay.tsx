@@ -6,6 +6,7 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
@@ -178,7 +179,7 @@ export default function QuestionDisplay({
           {/* Progress Bar */}
           <View className="h-2 overflow-hidden rounded-full bg-gray-700">
             <LinearGradient
-              colors={["#2563eb", "#3b82f6"]}
+              colors={THEME.gradients.progress}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               className="h-full rounded-full"
@@ -258,8 +259,8 @@ export default function QuestionDisplay({
                 className="flex-1 rounded-xl overflow-hidden active:opacity-80"
               >
                 <LinearGradient
-                  colors={["#16a34a", "#15803d"]}
-                  start={{ x: 0, y: 0 }}
+                  colors={THEME.gradients.green}
+                  start={THEME.gradientConfig.start}
                   end={{ x: 1, y: 0 }}
                   className="flex-row items-center justify-center px-4 py-3"
                 >
@@ -287,15 +288,15 @@ export default function QuestionDisplay({
                   </>
                 ) : (
                   <LinearGradient
-                    colors={["#2563eb", "#1d4ed8"]}
-                    start={{ x: 0, y: 0 }}
+                    colors={THEME.gradients.primaryButton}
+                    start={THEME.gradientConfig.start}
                     end={{ x: 1, y: 0 }}
                     className="flex-row items-center justify-center px-4 py-3 absolute inset-0"
                   >
                     <Text className="mr-1 text-sm font-semibold text-white">
                       Next
                     </Text>
-                    <ChevronRight size={20} color="#ffffff" />
+                    <ChevronRight size={20} color={THEME.colors.text.primary} />
                   </LinearGradient>
                 )}
               </Pressable>
@@ -363,8 +364,8 @@ export default function QuestionDisplay({
           <LinearGradient
             colors={
               answeredCount === questions.length
-                ? ["#16a34a", "#22c55e"]
-                : ["#2563eb", "#3b82f6"]
+                ? THEME.gradients.green
+                : THEME.gradients.progress
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
@@ -394,8 +395,8 @@ export default function QuestionDisplay({
             >
               {isCurrent && (
                 <LinearGradient
-                  colors={["#2563eb", "#1d4ed8"]}
-                  start={{ x: 0, y: 0 }}
+                  colors={THEME.gradients.primaryButton}
+                  start={THEME.gradientConfig.start}
                   end={{ x: 1, y: 0 }}
                   className="absolute inset-0"
                 />

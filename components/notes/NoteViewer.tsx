@@ -2,6 +2,7 @@ import { View, Text, ScrollView, Pressable, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { X, FileQuestion, MessageCircleQuestion } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { THEME } from "@/constants/theme";
 import { useState } from "react";
 import { SUBJECTS } from "@/constants";
 import QuickSummary from "./QuickSummary";
@@ -125,8 +126,11 @@ export default function NoteViewer({
     >
       <View className="justify-end flex-1 bg-black/85">
         <SafeAreaView
-          className="bg-[#121212] rounded-t-3xl"
-          style={{ maxHeight: "90%" }}
+          style={{
+            backgroundColor: THEME.colors.background.primary,
+            maxHeight: "90%",
+          }}
+          className="rounded-t-3xl"
           edges={["bottom"]}
         >
           {/* Sticky Header with Enhanced Visual Hierarchy */}
@@ -165,7 +169,10 @@ export default function NoteViewer({
           </LinearGradient>
 
           {/* Scrollable Content Area with Enhanced Spacing */}
-          <ScrollView className="px-6 py-6 bg-[#121212]">
+          <ScrollView
+            style={{ backgroundColor: THEME.colors.background.primary }}
+            className="px-6 py-6"
+          >
             {parseError ? (
               // Error state - show friendly message
               <View className="items-center justify-center py-12">
@@ -364,7 +371,10 @@ export default function NoteViewer({
 
           {/* Action Buttons Section */}
           {!parseError && (
-            <View className="px-6 py-4 bg-[#1e1e1e] border-t-2 border-gray-700">
+            <View
+              style={{ backgroundColor: THEME.colors.background.secondary }}
+              className="px-6 py-4 border-t-2 border-gray-700"
+            >
               <View className="flex-row gap-3">
                 <Pressable
                   onPress={handleGenerateQuestions}
