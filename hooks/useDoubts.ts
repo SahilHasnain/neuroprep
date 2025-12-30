@@ -68,7 +68,12 @@ export const useDoubts = () => {
 
   const askDoubt = async (
     doubtText: string,
-    questionContext?: QuestionContext
+    questionContext?: QuestionContext,
+    documentContext?: {
+      documentId: string;
+      documentTitle: string;
+      ocrText: string;
+    }
   ) => {
     // MVP_BYPASS: Always check guest limit, no auth user checks
     const canUse = await checkGuestLimit("doubts");
@@ -133,7 +138,8 @@ export const useDoubts = () => {
       const response = await doubtsService.askDoubt(
         doubtText,
         historyContext,
-        questionContext
+        questionContext,
+        documentContext
       );
 
       if (!response.success) {

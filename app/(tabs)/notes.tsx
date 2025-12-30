@@ -27,10 +27,12 @@ import type {
   QuestionToNoteContext,
   DoubtToNoteContext,
   DoubtContext,
+  DocumentContext,
 } from "@/lib/types/domain.types";
 import {
   validateQuestionToNoteContext,
   validateDoubtToNoteContext,
+  validateDocumentContext,
 } from "@/utils/contextValidation";
 
 // Motivational messages for loading state
@@ -82,15 +84,19 @@ export default function NotesScreen() {
   const [doubtContext, setDoubtContext] = useState<DoubtToNoteContext | null>(
     null
   );
+  const [documentContext, setDocumentContext] = useState<
+    import("@/lib/types").DocumentContext | null
+  >(null);
 
   // Get route params
   const params = useLocalSearchParams();
 
   const handleGenerateNotes = async () => {
-    await generateNotes();
+    await generateNotes(documentContext || undefined);
     // Clear contexts after generating
     setQuestionContext(null);
     setDoubtContext(null);
+    setDocumentContext(null);
   };
 
   const handleGenerateQuestions = (context: NoteContext) => {
@@ -193,6 +199,37 @@ export default function NotesScreen() {
       }
     }
   }, [params.doubtContext, setGenerateConfig, setIsModalVisible]);
+
+  // Handle document context from navigation params
+  useEffect(() => {
+    if (params.documentContext) {
+      try {
+        const parsedContext = JSON.parse(params.documentContext as string);
+
+        // Validate context before using it
+        if (validateDocumentContext(parsedContext)) {
+          setDocumentContext(parsedContext);
+
+          // Auto-fill topic from document title
+          setGenerateConfig({
+            subject: "",
+            topic: parsedContext.documentTitle,
+            noteLength: "medium",
+          });
+
+          // Open modal automatically
+          setIsModalVisible(true);
+        } else {
+          console.error(
+            "Invalid document context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing document context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.documentContext, setGenerateConfig, setIsModalVisible]);
 
   return (
     <SafeAreaView
@@ -323,12 +360,21 @@ export default function NotesScreen() {
               keyboardShouldPersistTaps="handled"
             >
               {/* Context Indicator */}
-              {(questionContext || doubtContext) && (
+              {(questionContext || doubtContext || documentContext) && (
                 <View className="mb-4 px-3 py-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg flex-row items-center">
                   <Info size={16} color="#60a5fa" />
                   <Text className="ml-2 text-sm text-blue-300 flex-1">
-                    From {questionContext ? "Questions" : "Doubts"}:{" "}
-                    {questionContext?.topic || doubtContext?.topic}
+                    From{" "}
+                    {questionContext
+                      ? "Questions"
+                      : doubtContext
+                        ? "Doubts"
+                        : "Document"}
+                    :{" "}
+                    {questionContext?.topic ||
+                      doubtContext?.topic ||
+                      documentContext?.documentTitle ||
+                      ""}
                   </Text>
                 </View>
               )}

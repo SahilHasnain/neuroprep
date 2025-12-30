@@ -17,7 +17,12 @@ export const doubtsService = {
       topic: string;
       aiAnswer?: string;
     }>,
-    questionContext?: QuestionContext
+    questionContext?: QuestionContext,
+    documentContext?: {
+      documentId: string;
+      documentTitle: string;
+      ocrText: string;
+    }
   ): Promise<ApiResponse<AskDoubtResponse>> {
     const payload: AskDoubtRequest = {
       doubtText,
@@ -29,6 +34,10 @@ export const doubtsService = {
 
     if (questionContext) {
       payload.questionContext = questionContext;
+    }
+
+    if (documentContext) {
+      payload.documentContext = documentContext;
     }
 
     return apiClient.post<AskDoubtResponse>(API_ENDPOINTS.ASK_DOUBT, payload);

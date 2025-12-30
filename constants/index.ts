@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
   VERIFY_PAYMENT: "https://6947ac55003801e0a004.fra.appwrite.run",
   GET_PLAN_STATUS: "https://6947ac7f002a1d447604.fra.appwrite.run",
   CANCEL_SUBSCRIPTION: "https://6947acaf0021f3fbd316.fra.appwrite.run",
+  DOCUMENTS: "https://YOUR_APPWRITE_FUNCTION_URL/documents",
+  DOCUMENTS_UPLOAD: "https://YOUR_APPWRITE_FUNCTION_URL/documents/upload",
 };
 
 // Subjects

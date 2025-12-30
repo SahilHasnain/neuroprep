@@ -18,11 +18,17 @@ import {
   loadQuestionsFromStorage,
   deleteQuestionFromStorage,
 } from "@/services/storage/questions.storage";
-import type { StoredQuestionSet, DoubtContext, NoteContext } from "@/lib/types";
+import type {
+  StoredQuestionSet,
+  DoubtContext,
+  NoteContext,
+  DocumentContext,
+} from "@/lib/types";
 import { useLocalSearchParams } from "expo-router";
 import {
   validateDoubtContext,
   validateNoteContext,
+  validateDocumentContext,
 } from "@/utils/contextValidation";
 
 export default function GenerateQuestionsScreen() {
@@ -33,6 +39,8 @@ export default function GenerateQuestionsScreen() {
   const [filterSubject, setFilterSubject] = useState("");
   const [doubtContext, setDoubtContext] = useState<DoubtContext | null>(null);
   const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
+  const [documentContext, setDocumentContext] =
+    useState<DocumentContext | null>(null);
 
   // Get route params
   const params = useLocalSearchParams();
@@ -125,6 +133,33 @@ export default function GenerateQuestionsScreen() {
     }
   }, [params.noteContext, setSubject, setTopic]);
 
+  // Handle document context from navigation params
+  useEffect(() => {
+    if (params.documentContext) {
+      try {
+        const parsedContext = JSON.parse(params.documentContext as string);
+
+        // Validate context before using it
+        if (validateDocumentContext(parsedContext)) {
+          setDocumentContext(parsedContext);
+
+          // Auto-fill topic from document title
+          setTopic(parsedContext.documentTitle);
+
+          // Open modal automatically
+          setModalVisible(true);
+        } else {
+          console.error(
+            "Invalid document context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing document context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.documentContext, setTopic]);
+
   const loadSets = async () => {
     setLoadingSets(true);
     const sets = await loadQuestionsFromStorage();
@@ -138,6 +173,7 @@ export default function GenerateQuestionsScreen() {
     // Clear contexts after generating
     setDoubtContext(null);
     setNoteContext(null);
+    setDocumentContext(null);
     await loadSets();
   };
 
@@ -196,6 +232,7 @@ export default function GenerateQuestionsScreen() {
         isQuestionCountLocked={isQuestionCountLocked}
         doubtContext={doubtContext || undefined}
         noteContext={noteContext || undefined}
+        documentContext={documentContext || undefined}
       />
 
       {/* MVP_BYPASS: Removed Free/Pro badge from header */}

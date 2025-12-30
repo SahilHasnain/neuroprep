@@ -58,6 +58,11 @@ export interface AskDoubtRequest {
     topic: string;
     difficulty: string;
   };
+  documentContext?: {
+    documentId: string;
+    documentTitle: string;
+    ocrText: string;
+  };
 }
 
 export interface AskDoubtResponse {
@@ -74,6 +79,11 @@ export interface GenerateQuestionsRequest {
   topic: string;
   difficulty: string;
   questionCount: string;
+  documentContext?: {
+    documentId: string;
+    documentTitle: string;
+    ocrText: string;
+  };
 }
 
 export interface QuestionResponse {
@@ -90,6 +100,11 @@ export interface GenerateNotesRequest {
   subject: string;
   topic: string;
   noteLength: string;
+  documentContext?: {
+    documentId: string;
+    documentTitle: string;
+    ocrText: string;
+  };
 }
 
 export interface NoteSection {

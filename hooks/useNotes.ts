@@ -70,7 +70,11 @@ export const useNotes = () => {
     return matchesSearch && matchesSubject;
   });
 
-  const generateNotes = async () => {
+  const generateNotes = async (documentContext?: {
+    documentId: string;
+    documentTitle: string;
+    ocrText: string;
+  }) => {
     if (!generateConfig.subject || !generateConfig.topic.trim()) {
       Alert.alert("Error", "Please select subject and enter topic");
       return;
@@ -96,6 +100,7 @@ export const useNotes = () => {
         subject: generateConfig.subject,
         topic: generateConfig.topic,
         noteLength: generateConfig.noteLength,
+        documentContext,
       });
 
       if (!response.success) {

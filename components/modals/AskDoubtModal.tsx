@@ -16,12 +16,20 @@ import type {
   DoubtContext,
   DoubtToNoteContext,
 } from "@/lib/types";
+import type { Document } from "@/types/document";
+
+interface DocumentContext {
+  documentId: string;
+  documentTitle: string;
+  ocrText: string;
+}
 
 interface AskDoubtModalProps {
   visible: boolean;
   onClose: () => void;
   questionContext?: QuestionContext;
   noteContext?: NoteContext;
+  documentContext?: DocumentContext;
   onGenerateQuestions?: (context: DoubtContext) => void;
   onGenerateNotes?: (context: DoubtToNoteContext) => void;
 }
@@ -31,6 +39,7 @@ export default function AskDoubtModal({
   onClose,
   questionContext,
   noteContext,
+  documentContext,
   onGenerateQuestions,
   onGenerateNotes,
 }: AskDoubtModalProps) {
@@ -56,15 +65,19 @@ Correct Answer: ${questionContext.correctAnswer}
         setInputText(
           `I have a doubt about the note "${noteContext.noteTitle}":\n\n`
         );
+      } else if (documentContext) {
+        setInputText(
+          `I have a doubt about the document "${documentContext.documentTitle}":\n\n`
+        );
       }
     }
-  }, [visible, questionContext, noteContext]);
+  }, [visible, questionContext, noteContext, documentContext]);
 
   const handleSend = async () => {
     if (!inputText.trim() || loading) return;
     const doubtText = inputText.trim();
     setInputText("");
-    await askDoubt(doubtText, questionContext || undefined);
+    await askDoubt(doubtText, questionContext || undefined, documentContext);
   };
 
   const handleGenerateQuestions = (context: DoubtContext) => {
@@ -101,7 +114,13 @@ Correct Answer: ${questionContext.correctAnswer}
                   </Text>
                   <Text className="text-sm text-white/80">
                     Get instant help with this{" "}
-                    {questionContext ? "question" : "note"}
+                    {questionContext
+                      ? "question"
+                      : noteContext
+                        ? "note"
+                        : documentContext
+                          ? "document"
+                          : "topic"}
                   </Text>
                 </View>
               </View>

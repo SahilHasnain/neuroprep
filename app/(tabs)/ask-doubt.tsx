@@ -11,10 +11,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { THEME } from "@/constants/theme";
 import { router, useLocalSearchParams } from "expo-router";
 import { Send, Info } from "lucide-react-native";
-import type { QuestionContext, NoteContext } from "@/lib/types";
+import type {
+  QuestionContext,
+  NoteContext,
+  DocumentContext,
+} from "@/lib/types";
 import {
   validateQuestionContext,
   validateNoteContext,
+  validateDocumentContext,
 } from "@/utils/contextValidation";
 
 export default function AskDoubtScreen() {
@@ -26,6 +31,8 @@ export default function AskDoubtScreen() {
   const [questionContext, setQuestionContext] =
     useState<QuestionContext | null>(null);
   const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
+  const [documentContext, setDocumentContext] =
+    useState<DocumentContext | null>(null);
 
   // Get route params
   const params = useLocalSearchParams();
@@ -94,6 +101,32 @@ Correct Answer: ${parsedContext.correctAnswer}
     }
   }, [params.noteContext]);
 
+  // Handle document context from navigation params
+  useEffect(() => {
+    if (params.documentContext) {
+      try {
+        const parsedContext = JSON.parse(params.documentContext as string);
+
+        // Validate context before using it
+        if (validateDocumentContext(parsedContext)) {
+          setDocumentContext(parsedContext);
+
+          // Pre-fill input with document reference and OCR text
+          setInputText(
+            `I have a doubt about the document "${parsedContext.documentTitle}":\n\n${parsedContext.ocrText ? `Content:\n${parsedContext.ocrText.substring(0, 500)}${parsedContext.ocrText.length > 500 ? "..." : ""}\n\n` : ""}My question: `
+          );
+        } else {
+          console.error(
+            "Invalid document context received, continuing without context"
+          );
+        }
+      } catch (err) {
+        console.error("Error parsing document context:", err);
+        // Graceful degradation - continue without context
+      }
+    }
+  }, [params.documentContext]);
+
   const handleSend = async () => {
     if (!inputText.trim() || loading) return;
     const doubtText = inputText.trim();
@@ -102,6 +135,7 @@ Correct Answer: ${parsedContext.correctAnswer}
     // Clear contexts after sending
     setQuestionContext(null);
     setNoteContext(null);
+    setDocumentContext(null);
   };
 
   const handleGenerateQuestions = (
@@ -174,13 +208,23 @@ Correct Answer: ${parsedContext.correctAnswer}
           )}
         </View>
 
-        {/* Note Context Indicator */}
+        {/* Context Indicators */}
         {noteContext && (
           <View className="p-3 mb-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
             <View className="flex-row items-center">
               <Info size={16} color="#60a5fa" />
               <Text className="ml-2 text-sm text-blue-300">
                 Related to note: {noteContext.noteTitle}
+              </Text>
+            </View>
+          </View>
+        )}
+        {documentContext && (
+          <View className="p-3 mb-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+            <View className="flex-row items-center">
+              <Info size={16} color="#c084fc" />
+              <Text className="ml-2 text-sm text-purple-300">
+                Related to document: {documentContext.documentTitle}
               </Text>
             </View>
           </View>

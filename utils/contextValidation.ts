@@ -4,6 +4,7 @@ import type {
   NoteContext,
   QuestionToNoteContext,
   DoubtToNoteContext,
+  DocumentContext,
 } from "@/lib/types";
 
 /**
@@ -138,6 +139,43 @@ export function validateDoubtToNoteContext(
     return true;
   } catch (error) {
     console.error("Doubt-to-note context validation failed:", error);
+    return false;
+  }
+}
+
+/**
+ * Validate document context before navigation from documents to questions/doubts/notes
+ */
+export function validateDocumentContext(
+  context: any
+): context is DocumentContext {
+  try {
+    if (!context || typeof context !== "object") {
+      console.error(
+        "Document context validation failed: Invalid context object"
+      );
+      return false;
+    }
+
+    const required = ["documentId", "documentTitle", "documentType"];
+    for (const field of required) {
+      if (!context[field] || typeof context[field] !== "string") {
+        console.error(
+          `Document context validation failed: Missing or invalid field '${field}'`
+        );
+        return false;
+      }
+    }
+
+    // ocrText is optional but should be a string if present
+    if (context.ocrText !== undefined && typeof context.ocrText !== "string") {
+      console.error("Document context validation failed: Invalid ocrText type");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Document context validation failed:", error);
     return false;
   }
 }

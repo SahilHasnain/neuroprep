@@ -129,3 +129,11 @@ export interface DoubtToNoteContext {
   subject: string;
   topic: string;
 }
+
+// Document context passed from documents to questions/doubts/notes
+export interface DocumentContext {
+  documentId: string;
+  documentTitle: string;
+  documentType: string;
+  ocrText: string;
+}

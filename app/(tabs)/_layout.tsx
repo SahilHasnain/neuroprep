@@ -5,6 +5,7 @@ import {
   FileText,
   PencilRuler,
   Crown,
+  FolderOpen,
 } from "lucide-react-native";
 import { isMVPBypassMode } from "@/config/featureFlags";
 
@@ -61,6 +62,17 @@ export default function TabsLayout() {
           title: "Notes",
           tabBarIcon: ({ color, size }) => (
             <FileText size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* Documents Tab */}
+      <Tabs.Screen
+        name="documents"
+        options={{
+          title: "Documents",
+          tabBarIcon: ({ color, size }) => (
+            <FolderOpen size={size} color={color} />
           ),
         }}
       />
