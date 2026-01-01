@@ -18,6 +18,27 @@ import DocumentCard from "@/components/documents/DocumentCard";
 import DocumentUploadModal from "@/components/documents/DocumentUploadModal";
 import { COLORS } from "@/constants/theme";
 
+// Helper functions for formatting upload stats
+const formatSpeed = (bytesPerSecond: number): string => {
+  if (bytesPerSecond < 1024) {
+    return `${bytesPerSecond.toFixed(0)} B/s`;
+  } else if (bytesPerSecond < 1024 * 1024) {
+    return `${(bytesPerSecond / 1024).toFixed(1)} KB/s`;
+  } else {
+    return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
+  }
+};
+
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${Math.ceil(seconds)}s`;
+  } else {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.ceil(seconds % 60);
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+};
+
 export default function DocumentsScreen() {
   const router = useRouter();
   const {
@@ -25,6 +46,7 @@ export default function DocumentsScreen() {
     isLoading,
     error,
     uploadStatus,
+    uploadProgress,
     generationStates,
     fetchDocuments,
     uploadDocument,
@@ -95,7 +117,7 @@ export default function DocumentsScreen() {
         type: selectedFile.mimeType || selectedFile.type,
       };
 
-      const documentId = await uploadDocument(
+      const { documentId, ocrStatus } = await uploadDocument(
         fileToUpload,
         documentTitle.trim(),
         selectedFile.type,
@@ -113,7 +135,16 @@ export default function DocumentsScreen() {
         const hasShortText =
           uploadedDoc?.ocrText && uploadedDoc.ocrText.length < 50;
 
-        if (hasNoText) {
+        const isPendingOcr =
+          (ocrStatus?.status === "pending" || selectedFile.type === "pdf") &&
+          hasNoText;
+
+        if (isPendingOcr) {
+          Alert.alert(
+            "Upload received",
+            "PDF saved. We’re processing its text in the background. You can start generation once processing finishes."
+          );
+        } else if (hasNoText) {
           Alert.alert(
             "Upload Successful - Text Extraction Failed",
             "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image or a text-based PDF.",
@@ -138,11 +169,54 @@ export default function DocumentsScreen() {
         setDocumentTitle("");
         setUploadOptions(null);
       } else {
-        Alert.alert("Error", "Failed to upload document. Please try again.");
+        // Upload failed - show retry option
+        Alert.alert(
+          "Upload Failed",
+          "Failed to upload document. Would you like to try again?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => {
+                setSelectedFile(null);
+                setDocumentTitle("");
+                setUploadOptions(null);
+              },
+            },
+            {
+              text: "Retry",
+              onPress: () => {
+                // Reopen the title modal to retry
+                setTitleModalVisible(true);
+              },
+            },
+          ]
+        );
       }
     } catch (err) {
       console.error("Upload error:", err);
-      Alert.alert("Error", "An error occurred during upload");
+      Alert.alert(
+        "Upload Error",
+        "An error occurred during upload. Would you like to try again?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => {
+              setSelectedFile(null);
+              setDocumentTitle("");
+              setUploadOptions(null);
+            },
+          },
+          {
+            text: "Retry",
+            onPress: () => {
+              // Reopen the title modal to retry
+              setTitleModalVisible(true);
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -209,10 +283,42 @@ export default function DocumentsScreen() {
         </View>
       )}
 
-      {uploadStatus === "uploading" && (
+      {uploadStatus === "uploading" && uploadProgress && (
         <View style={styles.uploadingBanner}>
-          <ActivityIndicator size="small" color="#fff" />
-          <Text style={styles.uploadingText}>Uploading document...</Text>
+          <View style={styles.uploadingContent}>
+            <View style={styles.uploadingHeader}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.uploadingText}>
+                Uploading document... {uploadProgress.percentage}%
+              </Text>
+            </View>
+
+            {/* Progress Bar */}
+            <View style={styles.progressBarContainer}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${uploadProgress.percentage}%` },
+                ]}
+              />
+            </View>
+
+            {/* Upload Stats */}
+            <View style={styles.uploadStats}>
+              {uploadProgress.speed && uploadProgress.speed > 0 && (
+                <Text style={styles.uploadStatsText}>
+                  {formatSpeed(uploadProgress.speed)}
+                </Text>
+              )}
+              {uploadProgress.estimatedTimeRemaining &&
+                uploadProgress.estimatedTimeRemaining > 0 && (
+                  <Text style={styles.uploadStatsText}>
+                    {formatTime(uploadProgress.estimatedTimeRemaining)}{" "}
+                    remaining
+                  </Text>
+                )}
+            </View>
+          </View>
         </View>
       )}
 
@@ -339,10 +445,42 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
   },
+  uploadingContent: {
+    flex: 1,
+  },
+  uploadingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginBottom: 8,
+  },
   uploadingText: {
     color: COLORS.text.primary,
     fontSize: 14,
     fontWeight: "500",
+  },
+  progressBarContainer: {
+    height: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 3,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 3,
+  },
+  uploadStats: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 16,
+  },
+  uploadStatsText: {
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 12,
+    fontWeight: "400",
   },
   grid: {
     padding: 16,

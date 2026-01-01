@@ -12,9 +12,13 @@ export const API_ENDPOINTS = {
   CANCEL_SUBSCRIPTION: "https://6947acaf0021f3fbd316.fra.appwrite.run",
   // Documents endpoints (separate functions)
   DOCUMENTS_UPLOAD: "https://69541719002fc4f32810.fra.appwrite.run",
+  DOCUMENTS_CHUNKED_UPLOAD:
+    "https://69564444002726a42e94.fra.appwrite.run", // Update after deployment
   DOCUMENTS_GET_ALL: "https://6954179700045dd890d4.fra.appwrite.run",
   DOCUMENTS_GET_DETAIL: "https://695417e2001d46e74d6b.fra.appwrite.run",
   DOCUMENTS_DELETE: "https://69541808000216397dc9.fra.appwrite.run",
+  PROCESS_OCR: "https://695607f20031b594e614.fra.appwrite.run", // Update this after deployment
+  PROCESS_THUMBNAIL: "https://695644b4001690e61503.fra.appwrite.run"
 };
 
 // Subjects
@@ -109,11 +113,3 @@ export const RAZORPAY_KEY_ID = "rzp_test_xxx"; // Replace with your key
 
 // MVP Bypass Flag - Set to true to bypass authentication and subscription features
 export const LAUNCH_V1_BYPASS = true;
-s const;"],
-} alication/pdfES: ["app_PDF_TYPALLOWED,
-  bp"]ge/wepng", "imamage/", "ijpg "image/ge/jpeg",ma ["iPES:GE_TYWED_IMAALLO0,
-  SIZE_MB: 1MAX_MB
-  4, // 10* 102* 1024 _BYTES: 10   MAX_SIZE= {
-FILE_UPLOAD  const port
-ex Limitsploadile U
-// F

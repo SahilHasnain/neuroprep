@@ -10,6 +10,7 @@ import type {
   GenerationState,
   DocumentGenerationState,
   UploadOptions,
+  UploadProgress,
 } from "@/types/document";
 
 interface DocumentState {
@@ -18,6 +19,9 @@ interface DocumentState {
   isLoading: boolean;
   uploadStatus: UploadStatus;
   error: string | null;
+
+  // Upload progress tracking
+  uploadProgress: UploadProgress | null;
 
   // Generation states per document
   generationStates: Record<string, DocumentGenerationState>;
@@ -29,9 +33,10 @@ interface DocumentState {
     title: string,
     type: string,
     options?: UploadOptions
-  ) => Promise<string | null>; // Returns document ID
+  ) => Promise<{ documentId: string | null; ocrStatus?: any }>; // Returns document ID + status
   getDocumentById: (id: string) => Promise<void>;
   deleteDocument: (id: string) => Promise<boolean>;
+  processDocument: (id: string) => Promise<boolean>;
   setCurrentDocument: (document: Document | null) => void;
 
   // Generation actions
@@ -66,6 +71,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   isLoading: false,
   uploadStatus: "idle",
   error: null,
+  uploadProgress: null,
   generationStates: {},
 
   fetchDocuments: async () => {
@@ -88,11 +94,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   uploadDocument: async (file, title, type, options) => {
-    set({ uploadStatus: "uploading", error: null });
+    set({ uploadStatus: "uploading", error: null, uploadProgress: null });
     try {
-      const result = await documentsService.uploadDocument(file, title, type);
+      const result = await documentsService.uploadDocument(
+        file,
+        title,
+        type,
+        (progress) => {
+          // Update progress state
+          set({ uploadProgress: progress });
+        }
+      );
+
       if (result.success && result.data) {
-        set({ uploadStatus: "success" });
+        set({ uploadStatus: "success", uploadProgress: null });
         await get().fetchDocuments();
 
         const documentId = result.data.$id;
@@ -141,18 +156,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         }
 
         setTimeout(() => set({ uploadStatus: "idle" }), 2000);
-        return documentId;
+        return { documentId, ocrStatus };
       } else {
         set({
           uploadStatus: "error",
           error: result.message || "Upload failed",
+          uploadProgress: null,
         });
-        return null;
+        return { documentId: null, ocrStatus: null };
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      set({ uploadStatus: "error", error: errorMessage });
-      return null;
+      set({ uploadStatus: "error", error: errorMessage, uploadProgress: null });
+      return { documentId: null, ocrStatus: null };
     }
   },
 
@@ -198,6 +214,37 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
+  processDocument: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await documentsService.processDocument(id);
+      if (result.success && result.data) {
+        const updatedDoc = result.data;
+        set((state) => ({
+          documents: state.documents.map((doc) =>
+            doc.$id === id ? updatedDoc : doc
+          ),
+          currentDocument:
+            state.currentDocument?.$id === id
+              ? updatedDoc
+              : state.currentDocument,
+          isLoading: false,
+        }));
+        return true;
+      } else {
+        set({
+          error: result.message || "Failed to process document",
+          isLoading: false,
+        });
+        return false;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      set({ error: errorMessage, isLoading: false });
+      return false;
+    }
+  },
+
   setCurrentDocument: (document: Document | null) => {
     set({ currentDocument: document });
   },
@@ -220,8 +267,48 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   generateQuestions: async (documentId, settings) => {
-    const document = get().documents.find((d) => d.$id === documentId);
+    let document = get().documents.find((d) => d.$id === documentId);
     if (!document) return null;
+
+    // Check if OCR is pending
+    if (
+      document.ocrStatus === "pending" ||
+      (!document.ocrText && document.type === "pdf")
+    ) {
+      console.log("⏳ [Store] OCR pending, processing first...");
+      // Update state to processing OCR
+      set((state) => ({
+        generationStates: {
+          ...state.generationStates,
+          [documentId]: {
+            ...(state.generationStates[documentId] ||
+              defaultDocumentGenerationState),
+            questions: { status: "generating", progress: 5, error: undefined }, // message not in type yet
+          },
+        },
+      }));
+
+      const processed = await get().processDocument(documentId);
+      if (!processed) {
+        set((state) => ({
+          generationStates: {
+            ...state.generationStates,
+            [documentId]: {
+              ...state.generationStates[documentId],
+              questions: {
+                status: "error",
+                progress: 0,
+                error: "Document processing failed",
+              },
+            },
+          },
+        }));
+        return null;
+      }
+      // Refresh document
+      document = get().documents.find((d) => d.$id === documentId);
+      if (!document) return null;
+    }
 
     console.log("🎯 [Store] Starting question generation for:", documentId);
     console.log("📄 [Store] Document:", {
@@ -348,8 +435,46 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   generateNotes: async (documentId, settings) => {
-    const document = get().documents.find((d) => d.$id === documentId);
+    let document = get().documents.find((d) => d.$id === documentId);
     if (!document) return null;
+
+    // Check if OCR is pending
+    if (
+      document.ocrStatus === "pending" ||
+      (!document.ocrText && document.type === "pdf")
+    ) {
+      console.log("⏳ [Store] OCR pending, processing first...");
+      set((state) => ({
+        generationStates: {
+          ...state.generationStates,
+          [documentId]: {
+            ...(state.generationStates[documentId] ||
+              defaultDocumentGenerationState),
+            notes: { status: "generating", progress: 5, error: undefined },
+          },
+        },
+      }));
+
+      const processed = await get().processDocument(documentId);
+      if (!processed) {
+        set((state) => ({
+          generationStates: {
+            ...state.generationStates,
+            [documentId]: {
+              ...state.generationStates[documentId],
+              notes: {
+                status: "error",
+                progress: 0,
+                error: "Document processing failed",
+              },
+            },
+          },
+        }));
+        return null;
+      }
+      document = get().documents.find((d) => d.$id === documentId);
+      if (!document) return null;
+    }
 
     set((state) => ({
       generationStates: {

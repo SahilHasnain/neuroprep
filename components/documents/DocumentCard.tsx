@@ -35,6 +35,7 @@ export default function DocumentCard({
   // Check if document has no OCR text
   const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
   const hasShortText = document.ocrText && document.ocrText.length < 50;
+  const isPendingOcr = document.ocrStatus === "pending";
 
   if (isLoading) {
     return (
@@ -185,16 +186,25 @@ export default function DocumentCard({
             </View>
           )}
 
-          {/* No Text Warning */}
-          {hasNoText && (
-            <View style={styles.warningBadge}>
-              <Text style={styles.warningText}>⚠️ No text extracted</Text>
+          {/* No Text / Pending OCR Warnings */}
+          {isPendingOcr ? (
+            <View style={styles.pendingBadge}>
+              <Loader size={12} color={COLORS.text.primary} />
+              <Text style={styles.pendingText}>Processing PDF text</Text>
             </View>
-          )}
-          {!hasNoText && hasShortText && (
-            <View style={styles.warningBadge}>
-              <Text style={styles.warningText}>⚠️ Limited text</Text>
-            </View>
+          ) : (
+            <>
+              {hasNoText && (
+                <View style={styles.warningBadge}>
+                  <Text style={styles.warningText}>⚠️ No text extracted</Text>
+                </View>
+              )}
+              {!hasNoText && hasShortText && (
+                <View style={styles.warningBadge}>
+                  <Text style={styles.warningText}>⚠️ Limited text</Text>
+                </View>
+              )}
+            </>
           )}
         </View>
       </View>
@@ -251,6 +261,21 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
+    pendingBadge: {
+      marginTop: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      backgroundColor: "#E0ECFF",
+      borderRadius: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    pendingText: {
+      color: COLORS.text.primary,
+      fontSize: 12,
+      fontWeight: "600",
+    },
     gap: 2,
     paddingHorizontal: 6,
     paddingVertical: 3,

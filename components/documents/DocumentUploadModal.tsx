@@ -298,6 +298,17 @@ export default function DocumentUploadModal({
                 </Text>
               </View>
 
+              {pendingFile?.type === "pdf" && (
+                <View style={styles.infoBanner}>
+                  <Text style={styles.infoBannerTitle}>PDF processing</Text>
+                  <Text style={styles.infoBannerText}>
+                    We’ll upload instantly, then process the PDF text in the
+                    background. AI generation will start once processing
+                    finishes.
+                  </Text>
+                </View>
+              )}
+
               {/* AI Generation Options */}
               <View style={styles.aiSection}>
                 <View style={styles.aiHeader}>
@@ -377,8 +388,8 @@ export default function DocumentUploadModal({
                 </Pressable>
                 <Pressable style={styles.confirmButton} onPress={handleConfirm}>
                   <Text style={styles.confirmButtonText}>
-                    Upload{" "}
-                    {(generateQuestions || generateNotes) && "& Generate"}
+                    {pendingFile?.type === "pdf" ? "Upload PDF" : "Upload"}
+                    {(generateQuestions || generateNotes) && " & Generate"}
                   </Text>
                 </Pressable>
               </View>
@@ -495,6 +506,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.text.primary,
     fontWeight: "500",
+  },
+  infoBanner: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: COLORS.background.card,
+    borderWidth: 1,
+    borderColor: COLORS.border.blue,
+    marginBottom: 16,
+  },
+  infoBannerTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.text.primary,
+    marginBottom: 4,
+  },
+  infoBannerText: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    lineHeight: 18,
   },
   aiSection: {
     backgroundColor: COLORS.background.card,
