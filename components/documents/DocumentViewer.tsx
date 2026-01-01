@@ -1,13 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  Alert,
-  Share,
-  StyleSheet,
-} from "react-native";
-import * as Haptics from "expo-haptics";
+import React from "react";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { COLORS } from "@/constants/theme";
 import type { Document, DocumentGenerationState } from "@/types/document";
 import DocumentHeader from "./DocumentHeader";
@@ -17,7 +9,8 @@ import DocumentContent from "./DocumentContent";
 import StatusBanners from "./StatusBanners";
 import ActionButtons from "./ActionButtons";
 import GenerationStatusCard from "./GenerationStatusCard";
-import Toast, { ToastType } from "@/components/shared/Toast";
+import Toast from "@/components/shared/Toast";
+import { useDocumentViewer } from "./useDocumentViewer";
 
 interface DocumentViewerProps {
   document: Document;
@@ -58,99 +51,32 @@ export default function DocumentViewer({
   generationState,
   isLoading = false,
 }: DocumentViewerProps) {
-  const [showDocInfo, setShowDocInfo] = useState(false);
-  const [fabMenuOpen, setFabMenuOpen] = useState(false);
-  const [toast, setToast] = useState<{
-    visible: boolean;
-    message: string;
-    type: ToastType;
-  }>({
-    visible: false,
-    message: "",
-    type: "info",
-  });
+  const {
+    // state
+    showDocInfo,
+    setShowDocInfo,
+    fabMenuOpen,
+    setFabMenuOpen,
+    toast,
+    hideToast,
 
-  const isPDF = document.type === "pdf";
+    // derived
+    isPDF,
+    questionsState,
+    notesState,
+    isOcrPending,
+    isOcrFailed,
+    hasNoText,
+    hasShortText,
+    canGenerate,
+    isGeneratingBannerVisible,
+    bannerText,
 
-  const questionsState = generationState?.questions || {
-    status: "idle",
-    progress: 0,
-  };
-  const notesState = generationState?.notes || { status: "idle", progress: 0 };
-
-  // Show toast on generation success
-  useEffect(() => {
-    if (questionsState.status === "success") {
-      showToast("Questions generated successfully! 🎉", "success");
-    } else if (questionsState.status === "error") {
-      showToast("Failed to generate questions. Please try again.", "error");
-    }
-  }, [questionsState.status]);
-
-  useEffect(() => {
-    if (notesState.status === "success") {
-      showToast("Notes generated successfully! 📝", "success");
-    } else if (notesState.status === "error") {
-      showToast("Failed to generate notes. Please try again.", "error");
-    }
-  }, [notesState.status]);
-
-  const showToast = (message: string, type: ToastType) => {
-    setToast({ visible: true, message, type });
-  };
-
-  // Check OCR status
-  const isOcrPending = document.ocrStatus === "pending";
-  const isOcrFailed = document.ocrStatus === "failed";
-  const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
-  const hasShortText = document.ocrText && document.ocrText.length < 50;
-  const canGenerate = !isOcrPending && !hasNoText && !hasShortText;
-
-  // Handlers
-  const handleDelete = () => {
-    setFabMenuOpen(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      "Delete Document",
-      "Are you sure you want to delete this document? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            onDelete();
-          },
-        },
-      ]
-    );
-  };
-
-  const handleShare = async () => {
-    setFabMenuOpen(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    try {
-      const result = await Share.share({
-        message: `Check out this ${isPDF ? "PDF" : "image"}: ${document.title}`,
-        url: document.fileUrl,
-        title: document.title,
-      });
-
-      if (result.action === Share.sharedAction) {
-        showToast("Document shared successfully!", "success");
-      }
-    } catch (error) {
-      showToast("Failed to share document", "error");
-    }
-  };
-
-  const handleInfo = () => {
-    setFabMenuOpen(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setShowDocInfo(!showDocInfo);
-  };
+    // handlers
+    handleDelete,
+    handleShare,
+    handleInfo,
+  } = useDocumentViewer({ document, generationState, onDelete });
 
   // Loading state
   if (isLoading) {
@@ -180,8 +106,7 @@ export default function DocumentViewer({
       />
 
       {/* Generation Progress Banner */}
-      {(questionsState.status === "generating" ||
-        notesState.status === "generating") && (
+      {isGeneratingBannerVisible && (
         <View
           className="flex-row items-center gap-3 px-4 py-3"
           style={styles.progressBanner}
@@ -191,12 +116,7 @@ export default function DocumentViewer({
             className="flex-1 text-sm font-medium"
             style={styles.textPrimary}
           >
-            {questionsState.status === "generating" &&
-            notesState.status === "generating"
-              ? "AI is generating questions and notes..."
-              : questionsState.status === "generating"
-                ? "AI is generating questions..."
-                : "AI is generating notes..."}
+            {bannerText}
           </Text>
         </View>
       )}
@@ -218,7 +138,7 @@ export default function DocumentViewer({
         visible={toast.visible}
         message={toast.message}
         type={toast.type}
-        onHide={() => setToast({ ...toast, visible: false })}
+        onHide={hideToast}
       />
 
       {/* Bottom Panel */}
