@@ -244,7 +244,7 @@ export default function DocumentUploadModal({
       onRequestClose={handleClose}
     >
       <Pressable
-        className="flex-1 bg-black/80 justify-end"
+        className="justify-end flex-1 bg-black/80"
         onPress={handleClose}
       >
         <Pressable
@@ -257,7 +257,7 @@ export default function DocumentUploadModal({
             <View className="flex-row items-center gap-3">
               {currentStep !== "select" && (
                 <Pressable
-                  className="w-8 h-8 items-center justify-center rounded-full bg-gray-800 active:scale-90"
+                  className="items-center justify-center w-8 h-8 bg-gray-800 rounded-full active:scale-90"
                   onPress={handleBack}
                 >
                   <ArrowLeft size={18} color={COLORS.text.secondary} />
@@ -281,7 +281,7 @@ export default function DocumentUploadModal({
               </View>
             </View>
             <Pressable
-              className="w-9 h-9 items-center justify-center rounded-full bg-gray-800 active:scale-90"
+              className="items-center justify-center bg-gray-800 rounded-full w-9 h-9 active:scale-90"
               onPress={handleClose}
             >
               <X size={20} color={COLORS.text.secondary} />
@@ -291,7 +291,7 @@ export default function DocumentUploadModal({
           {currentStep === "select" ? (
             <>
               {/* Enhanced File Source Options */}
-              <View className="p-5 gap-3">
+              <View className="gap-3 p-5">
                 <Pressable
                   className={`flex-row items-center p-4 bg-[#121212] rounded-2xl border border-gray-700 ${
                     requesting ? "opacity-50" : "active:scale-[0.98]"
@@ -299,11 +299,11 @@ export default function DocumentUploadModal({
                   onPress={handleCamera}
                   disabled={requesting}
                 >
-                  <View className="w-14 h-14 rounded-full bg-blue-600/20 items-center justify-center mr-4">
+                  <View className="items-center justify-center mr-4 rounded-full w-14 h-14 bg-blue-600/20">
                     <Camera size={28} color={COLORS.primary.blue} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-base font-semibold text-white mb-1">
+                    <Text className="mb-1 text-base font-semibold text-white">
                       Camera
                     </Text>
                     <Text className="text-sm text-gray-400">
@@ -325,11 +325,11 @@ export default function DocumentUploadModal({
                   onPress={handleGallery}
                   disabled={requesting}
                 >
-                  <View className="w-14 h-14 rounded-full bg-purple-600/20 items-center justify-center mr-4">
+                  <View className="items-center justify-center mr-4 rounded-full w-14 h-14 bg-purple-600/20">
                     <ImageIcon size={28} color="#9333ea" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-base font-semibold text-white mb-1">
+                    <Text className="mb-1 text-base font-semibold text-white">
                       Gallery
                     </Text>
                     <Text className="text-sm text-gray-400">
@@ -348,11 +348,11 @@ export default function DocumentUploadModal({
                   onPress={handlePDF}
                   disabled={requesting}
                 >
-                  <View className="w-14 h-14 rounded-full bg-amber-500/20 items-center justify-center mr-4">
+                  <View className="items-center justify-center mr-4 rounded-full w-14 h-14 bg-amber-500/20">
                     <FileText size={28} color={COLORS.accent.gold} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-base font-semibold text-white mb-1">
+                    <Text className="mb-1 text-base font-semibold text-white">
                       PDF Document
                     </Text>
                     <Text className="text-sm text-gray-400">
@@ -369,14 +369,14 @@ export default function DocumentUploadModal({
               </View>
 
               {/* Enhanced Tips Section */}
-              <View className="mx-5 mb-5 p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl">
+              <View className="p-4 mx-5 mb-5 border bg-blue-600/10 border-blue-600/30 rounded-xl">
                 <View className="flex-row items-center gap-2 mb-2">
                   <Sparkles size={16} color={COLORS.primary.blue} />
                   <Text className="text-sm font-semibold text-blue-400">
                     Pro Tips
                   </Text>
                 </View>
-                <Text className="text-xs text-gray-300 leading-5">
+                <Text className="text-xs leading-5 text-gray-300">
                   • Ensure good lighting for photos{"\n"}• Keep text clear and
                   readable{"\n"}• PDFs work best for multi-page documents
                 </Text>
@@ -386,11 +386,11 @@ export default function DocumentUploadModal({
             <ScrollView className="p-5" keyboardShouldPersistTaps="handled">
               {/* Enhanced Selected File Card */}
               <View className="flex-row items-center p-4 bg-[#121212] rounded-2xl border border-blue-600/50 mb-4 shadow-lg shadow-blue-600/20">
-                <View className="w-12 h-12 rounded-xl bg-blue-600/20 items-center justify-center mr-3">
+                <View className="items-center justify-center w-12 h-12 mr-3 rounded-xl bg-blue-600/20">
                   <FileText size={24} color={COLORS.primary.blue} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-xs text-gray-400 mb-1">
+                  <Text className="mb-1 text-xs text-gray-400">
                     Selected File
                   </Text>
                   <Text
@@ -405,7 +405,7 @@ export default function DocumentUploadModal({
 
               {/* Title Input Section */}
               <View className="mb-4">
-                <Text className="text-sm font-semibold text-white mb-2">
+                <Text className="mb-2 text-sm font-semibold text-white">
                   Document Title
                 </Text>
                 <TextInput
@@ -422,16 +422,16 @@ export default function DocumentUploadModal({
 
               {/* PDF Processing Info */}
               {pendingFile?.type === "pdf" && (
-                <View className="p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl mb-4">
+                <View className="p-4 mb-4 border bg-blue-600/10 border-blue-600/30 rounded-xl">
                   <View className="flex-row items-center gap-2 mb-2">
                     <Sparkles size={16} color={COLORS.primary.blue} />
                     <Text className="text-sm font-bold text-white">
                       PDF Processing
                     </Text>
                   </View>
-                  <Text className="text-sm text-gray-300 leading-5">
-                    We'll upload your PDF instantly, then extract text in the
-                    background. You'll be notified when it's ready for AI
+                  <Text className="text-sm leading-5 text-gray-300">
+                    We&apos;ll upload your PDF instantly, then extract text in the
+                    background. You&apos;ll be notified when it&apos;s ready for AI
                     generation.
                   </Text>
                 </View>
@@ -439,7 +439,7 @@ export default function DocumentUploadModal({
 
               {/* What Happens Next Section */}
               <View className="p-4 bg-[#121212] border border-gray-700 rounded-xl mb-4">
-                <Text className="text-sm font-bold text-white mb-3">
+                <Text className="mb-3 text-sm font-bold text-white">
                   What happens next?
                 </Text>
                 <View className="gap-3">
@@ -448,10 +448,10 @@ export default function DocumentUploadModal({
                       <Text className="text-xs font-bold text-white">1</Text>
                     </View>
                     <View className="flex-1">
-                      <Text className="text-sm font-medium text-white mb-1">
+                      <Text className="mb-1 text-sm font-medium text-white">
                         Upload & Process
                       </Text>
-                      <Text className="text-xs text-gray-400 leading-4">
+                      <Text className="text-xs leading-4 text-gray-400">
                         Your document will be uploaded and text will be
                         extracted
                       </Text>
@@ -462,10 +462,10 @@ export default function DocumentUploadModal({
                       <CheckCircle2 size={14} color="#fff" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-sm font-medium text-white mb-1">
+                      <Text className="mb-1 text-sm font-medium text-white">
                         Title Added
                       </Text>
-                      <Text className="text-xs text-gray-400 leading-4">
+                      <Text className="text-xs leading-4 text-gray-400">
                         Your document has a memorable name
                       </Text>
                     </View>
@@ -475,10 +475,10 @@ export default function DocumentUploadModal({
                       <Text className="text-xs font-bold text-white">3</Text>
                     </View>
                     <View className="flex-1">
-                      <Text className="text-sm font-medium text-white mb-1">
+                      <Text className="mb-1 text-sm font-medium text-white">
                         Generate Content
                       </Text>
-                      <Text className="text-xs text-gray-400 leading-4">
+                      <Text className="text-xs leading-4 text-gray-400">
                         Create questions and notes from your document
                       </Text>
                     </View>

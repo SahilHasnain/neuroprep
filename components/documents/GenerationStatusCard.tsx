@@ -1,15 +1,9 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import {
   FileQuestion,
   NotebookPen,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
   ChevronRight,
   RefreshCw,
@@ -41,16 +35,28 @@ export default function GenerationStatusCard({
     switch (state.status) {
       case "generating":
         return (
-          <View style={styles.generatingContainer}>
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
+          <View className="gap-2">
+            <View className="flex-row items-center gap-3">
+              <View
+                className="flex-1 h-2 overflow-hidden rounded-full"
+                style={{ backgroundColor: COLORS.border.default }}
+              >
                 <View
-                  style={[styles.progressFill, { width: `${state.progress}%` }]}
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${state.progress}%`,
+                    backgroundColor: COLORS.primary.blue,
+                  }}
                 />
               </View>
-              <Text style={styles.progressText}>{state.progress}%</Text>
+              <Text
+                className="w-10 text-xs"
+                style={{ color: COLORS.text.tertiary }}
+              >
+                {state.progress}%
+              </Text>
             </View>
-            <Text style={styles.generatingText}>
+            <Text className="text-sm" style={{ color: COLORS.text.tertiary }}>
               Generating {title.toLowerCase()}...
             </Text>
           </View>
@@ -59,28 +65,61 @@ export default function GenerationStatusCard({
       case "success":
         const questionsCount = previewData?.length || state.data?.length || 0;
         return (
-          <View style={styles.successContainer}>
-            <View style={styles.successHeader}>
-              <CheckCircle size={16} color={COLORS.status.success} />
-              <Text style={styles.successText}>
+          <View className="gap-2.5">
+            <View className="flex-row items-center gap-2">
+              <CheckCircle2 size={16} color={COLORS.status.success} />
+              <Text
+                className="text-sm font-medium"
+                style={{ color: COLORS.status.success }}
+              >
                 {isQuestions
                   ? `${questionsCount} questions ready`
                   : "Notes ready"}
               </Text>
             </View>
-            {/* Preview */}
+            {/* Preview Card */}
             {isQuestions && previewData && previewData.length > 0 && (
-              <View style={styles.preview}>
-                <Text style={styles.previewLabel}>Preview:</Text>
-                <Text style={styles.previewText} numberOfLines={2}>
+              <View
+                className="p-3 border rounded-xl"
+                style={{
+                  backgroundColor: COLORS.background.primary,
+                  borderColor: COLORS.border.default,
+                }}
+              >
+                <Text
+                  className="text-xs mb-1.5"
+                  style={{ color: COLORS.text.tertiary }}
+                >
+                  Preview
+                </Text>
+                <Text
+                  className="text-sm leading-5"
+                  style={{ color: COLORS.text.primary }}
+                  numberOfLines={2}
+                >
                   Q1: {previewData[0]?.question || "Question generated"}
                 </Text>
               </View>
             )}
             {!isQuestions && previewData?.content && (
-              <View style={styles.preview}>
-                <Text style={styles.previewLabel}>Preview:</Text>
-                <Text style={styles.previewText} numberOfLines={2}>
+              <View
+                className="p-3 border rounded-xl"
+                style={{
+                  backgroundColor: COLORS.background.primary,
+                  borderColor: COLORS.border.default,
+                }}
+              >
+                <Text
+                  className="text-xs mb-1.5"
+                  style={{ color: COLORS.text.tertiary }}
+                >
+                  Preview
+                </Text>
+                <Text
+                  className="text-sm leading-5"
+                  style={{ color: COLORS.text.primary }}
+                  numberOfLines={2}
+                >
                   {previewData.content?.summary ||
                     previewData.content?.title ||
                     "Notes generated"}
@@ -89,11 +128,22 @@ export default function GenerationStatusCard({
             )}
             {onViewAll && (
               <TouchableOpacity
-                style={styles.viewAllButton}
+                className="flex-row items-center justify-center gap-2 py-3 rounded-xl active:scale-95"
+                style={{
+                  backgroundColor: isQuestions
+                    ? COLORS.primary.blue
+                    : COLORS.accent.gold,
+                }}
                 onPress={onViewAll}
+                activeOpacity={0.8}
               >
-                <Text style={styles.viewAllText}>View All {title}</Text>
-                <ChevronRight size={16} color={COLORS.primary.blue} />
+                <Text
+                  className="font-semibold"
+                  style={{ color: COLORS.text.primary }}
+                >
+                  View All {title}
+                </Text>
+                <ChevronRight size={16} color={COLORS.text.primary} />
               </TouchableOpacity>
             )}
           </View>
@@ -101,17 +151,30 @@ export default function GenerationStatusCard({
 
       case "error":
         return (
-          <View style={styles.errorContainer}>
-            <View style={styles.errorHeader}>
+          <View className="gap-2.5">
+            <View className="flex-row items-center gap-2">
               <XCircle size={16} color={COLORS.status.error} />
-              <Text style={styles.errorText}>
+              <Text
+                className="flex-1 text-sm"
+                style={{ color: COLORS.status.error }}
+              >
                 {state.error || "Generation failed"}
               </Text>
             </View>
             {onRetry && (
-              <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+              <TouchableOpacity
+                className="flex-row items-center justify-center gap-2 py-2.5 rounded-xl active:scale-95"
+                style={{ backgroundColor: COLORS.primary.blue }}
+                onPress={onRetry}
+                activeOpacity={0.8}
+              >
                 <RefreshCw size={14} color={COLORS.text.primary} />
-                <Text style={styles.retryText}>Retry</Text>
+                <Text
+                  className="font-medium"
+                  style={{ color: COLORS.text.primary }}
+                >
+                  Retry
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -125,146 +188,44 @@ export default function GenerationStatusCard({
   if (state.status === "idle") return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View
+      className="p-5 border shadow-lg rounded-2xl"
+      style={{
+        backgroundColor: COLORS.background.card,
+        borderColor: COLORS.border.default,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
+      }}
+    >
+      {/* Enhanced Header */}
+      <View className="flex-row items-center gap-3 mb-4">
         <View
-          style={[styles.iconContainer, { backgroundColor: iconColor + "20" }]}
+          className="items-center justify-center w-12 h-12 rounded-full"
+          style={{ backgroundColor: iconColor + "20" }}
         >
           {state.status === "generating" ? (
             <ActivityIndicator size="small" color={iconColor} />
           ) : (
-            <Icon size={18} color={iconColor} />
+            <Icon size={24} color={iconColor} />
           )}
         </View>
-        <Text style={styles.title}>{title}</Text>
+        <View className="flex-1">
+          <Text
+            className="text-lg font-bold"
+            style={{ color: COLORS.text.primary }}
+          >
+            {title}
+          </Text>
+          {state.status === "success" && (
+            <Text className="text-xs" style={{ color: COLORS.text.tertiary }}>
+              Generation complete
+            </Text>
+          )}
+        </View>
       </View>
       {renderContent()}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-  },
-  generatingContainer: {
-    gap: 8,
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  progressBar: {
-    flex: 1,
-    height: 6,
-    backgroundColor: COLORS.border.default,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: COLORS.primary.blue,
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    color: COLORS.text.tertiary,
-    width: 35,
-  },
-  generatingText: {
-    fontSize: 13,
-    color: COLORS.text.tertiary,
-  },
-  successContainer: {
-    gap: 10,
-  },
-  successHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  successText: {
-    fontSize: 14,
-    color: COLORS.status.success,
-    fontWeight: "500",
-  },
-  preview: {
-    backgroundColor: COLORS.background.primary,
-    borderRadius: 8,
-    padding: 10,
-  },
-  previewLabel: {
-    fontSize: 11,
-    color: COLORS.text.tertiary,
-    marginBottom: 4,
-  },
-  previewText: {
-    fontSize: 13,
-    color: COLORS.text.secondary,
-    lineHeight: 18,
-  },
-  viewAllButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    paddingVertical: 8,
-    backgroundColor: COLORS.background.primary,
-    borderRadius: 8,
-  },
-  viewAllText: {
-    fontSize: 14,
-    color: COLORS.primary.blue,
-    fontWeight: "500",
-  },
-  errorContainer: {
-    gap: 10,
-  },
-  errorHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  errorText: {
-    fontSize: 13,
-    color: COLORS.status.error,
-    flex: 1,
-  },
-  retryButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 8,
-    backgroundColor: COLORS.primary.blue,
-    borderRadius: 8,
-  },
-  retryText: {
-    fontSize: 14,
-    color: COLORS.text.primary,
-    fontWeight: "500",
-  },
-});

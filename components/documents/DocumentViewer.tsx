@@ -1,29 +1,14 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  Dimensions,
-  Alert,
-} from "react-native";
-import { Image } from "expo-image";
-import { WebView } from "react-native-webview";
-import {
-  ArrowLeft,
-  MoreVertical,
-  Sparkles,
-  Trash2,
-  FileQuestion,
-  NotebookPen,
-} from "lucide-react-native";
+import { View, Text, ActivityIndicator, Alert } from "react-native";
 import { COLORS } from "@/constants/theme";
 import type { Document, DocumentGenerationState } from "@/types/document";
+import DocumentHeader from "./DocumentHeader";
+import FloatingActionMenu from "./FloatingActionMenu";
+import DocumentInfoPanel from "./DocumentInfoPanel";
+import DocumentContent from "./DocumentContent";
+import StatusBanners from "./StatusBanners";
+import ActionButtons from "./ActionButtons";
 import GenerationStatusCard from "./GenerationStatusCard";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface DocumentViewerProps {
   document: Document;
@@ -48,8 +33,8 @@ export default function DocumentViewer({
   generationState,
   isLoading = false,
 }: DocumentViewerProps) {
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [showDocInfo, setShowDocInfo] = useState(false);
+  const [fabMenuOpen, setFabMenuOpen] = useState(false);
 
   const isPDF = document.type === "pdf";
 
@@ -59,16 +44,16 @@ export default function DocumentViewer({
   };
   const notesState = generationState?.notes || { status: "idle", progress: 0 };
 
-  // Check if OCR is still processing
+  // Check OCR status
   const isOcrPending = document.ocrStatus === "pending";
   const isOcrFailed = document.ocrStatus === "failed";
-  // Check if document has no OCR text
   const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
   const hasShortText = document.ocrText && document.ocrText.length < 50;
   const canGenerate = !isOcrPending && !hasNoText && !hasShortText;
 
+  // Handlers
   const handleDelete = () => {
-    setMenuVisible(false);
+    setFabMenuOpen(false);
     Alert.alert(
       "Delete Document",
       "Are you sure you want to delete this document? This action cannot be undone.",
@@ -83,63 +68,61 @@ export default function DocumentViewer({
     );
   };
 
+  const handleShare = () => {
+    setFabMenuOpen(false);
+    Alert.alert("Coming Soon", "Share functionality will be available soon!");
+  };
+
+  const handleInfo = () => {
+    setFabMenuOpen(false);
+    setShowDocInfo(!showDocInfo);
+  };
+
+  // Loading state
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={onBack}
-            activeOpacity={0.7}
-          >
-            <ArrowLeft size={24} color={COLORS.text.primary} />
-          </TouchableOpacity>
-          <View style={styles.headerTitle}>
-            <Text style={styles.title} numberOfLines={1}>
-              Loading...
-            </Text>
-          </View>
-          <View style={styles.headerButton} />
-        </View>
-        <View style={styles.loadingContainer}>
+      <View
+        className="flex-1"
+        style={{ backgroundColor: COLORS.background.primary }}
+      >
+        <DocumentHeader
+          title="Loading..."
+          isPDF={isPDF}
+          createdAt={document.$createdAt}
+          onBack={onBack}
+        />
+        <View className="items-center justify-center flex-1 gap-4">
           <ActivityIndicator size="large" color={COLORS.primary.blue} />
-          <Text style={styles.loadingText}>Loading document...</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      className="flex-1"
+      style={{ backgroundColor: COLORS.background.primary }}
+    >
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={onBack}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={24} color={COLORS.text.primary} />
-        </TouchableOpacity>
-        <View style={styles.headerTitle}>
-          <Text style={styles.title} numberOfLines={1}>
-            {document.title}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => setMenuVisible(!menuVisible)}
-          activeOpacity={0.7}
-        >
-          <MoreVertical size={24} color={COLORS.text.primary} />
-        </TouchableOpacity>
-      </View>
+      <DocumentHeader
+        title={document.title}
+        isPDF={isPDF}
+        createdAt={document.$createdAt}
+        onBack={onBack}
+      />
 
       {/* Generation Progress Banner */}
       {(questionsState.status === "generating" ||
         notesState.status === "generating") && (
-        <View style={styles.generationBanner}>
-          <ActivityIndicator size="small" color="#fff" />
-          <Text style={styles.generationBannerText}>
+        <View
+          className="flex-row items-center gap-3 px-4 py-3"
+          style={{ backgroundColor: COLORS.primary.blue }}
+        >
+          <ActivityIndicator size="small" color={COLORS.text.primary} />
+          <Text
+            className="flex-1 text-sm font-medium"
+            style={{ color: COLORS.text.primary }}
+          >
             {questionsState.status === "generating" &&
             notesState.status === "generating"
               ? "AI is generating questions and notes..."
@@ -150,105 +133,46 @@ export default function DocumentViewer({
         </View>
       )}
 
-      {/* Menu Dropdown */}
-      {menuVisible && (
-        <View style={styles.menu}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={handleDelete}
-            activeOpacity={0.7}
-          >
-            <Trash2 size={20} color={COLORS.status.error} />
-            <Text style={[styles.menuText, { color: COLORS.status.error }]}>
-              Delete Document
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* Document Content */}
-      <View style={styles.content}>
-        {isPDF ? (
-          <WebView
-            source={{ uri: document.fileUrl }}
-            style={styles.webview}
-            startInLoadingState
-            renderLoading={() => (
-              <View style={styles.webviewLoading}>
-                <ActivityIndicator size="large" color={COLORS.primary.blue} />
-              </View>
-            )}
-            onError={() => {
-              Alert.alert(
-                "Error",
-                "Failed to load PDF. Please try again later."
-              );
-            }}
+      <DocumentContent fileUrl={document.fileUrl} isPDF={isPDF} />
+
+      {/* Floating Action Menu */}
+      <FloatingActionMenu
+        isOpen={fabMenuOpen}
+        onToggle={() => setFabMenuOpen(!fabMenuOpen)}
+        onInfo={handleInfo}
+        onShare={handleShare}
+        onDelete={handleDelete}
+      />
+
+      {/* Bottom Panel */}
+      <View
+        className="p-4 pb-8 border-t"
+        style={{
+          backgroundColor: COLORS.background.secondary,
+          borderTopColor: COLORS.border.default,
+        }}
+      >
+        {/* Document Info Panel */}
+        {showDocInfo && (
+          <DocumentInfoPanel
+            document={document}
+            isPDF={isPDF}
+            onClose={() => setShowDocInfo(false)}
           />
-        ) : (
-          <ScrollView
-            style={styles.imageScroll}
-            contentContainerStyle={styles.imageScrollContent}
-            maximumZoomScale={3}
-            minimumZoomScale={1}
-            showsVerticalScrollIndicator={false}
-          >
-            {!imageError ? (
-              <Image
-                source={{ uri: document.fileUrl }}
-                style={styles.image}
-                contentFit="contain"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Failed to load image</Text>
-              </View>
-            )}
-          </ScrollView>
-        )}
-      </View>
-
-      {/* Bottom Action Panel */}
-      <View style={styles.bottomPanel}>
-        {/* OCR Processing Banner */}
-        {isOcrPending && (
-          <View style={styles.processingBanner}>
-            <ActivityIndicator size="small" color={COLORS.primary.blue} />
-            <Text style={styles.processingTitle}>
-              ✨ Extracting text from document...
-            </Text>
-            <Text style={styles.processingText}>
-              This happens in the background. You can view other documents while
-              we process this one. Actions will be available once complete.
-            </Text>
-          </View>
         )}
 
-        {/* No Text Warning (only on OCR failure) */}
-        {isOcrFailed && hasNoText && (
-          <View style={styles.warningBanner}>
-            <Text style={styles.warningTitle}>⚠️ Text Extraction Failed</Text>
-            <Text style={styles.warningText}>
-              Unable to extract text from this document. AI features like
-              question and note generation won't work. Try uploading a clearer
-              image or a text-based PDF.
-            </Text>
-          </View>
-        )}
-        {!hasNoText && hasShortText && (
-          <View style={styles.warningBanner}>
-            <Text style={styles.warningTitle}>⚠️ Limited Text Content</Text>
-            <Text style={styles.warningText}>
-              Very little text was extracted from this document. AI-generated
-              content may be limited or generic.
-            </Text>
-          </View>
-        )}
+        {/* Status Banners */}
+        <StatusBanners
+          isOcrPending={isOcrPending}
+          isOcrFailed={isOcrFailed}
+          hasNoText={hasNoText}
+          hasShortText={hasShortText}
+        />
 
         {/* Generation Status Cards */}
         {(questionsState.status !== "idle" || notesState.status !== "idle") && (
-          <View style={styles.statusCards}>
+          <View className="gap-3 mb-4">
             {questionsState.status !== "idle" && (
               <GenerationStatusCard
                 type="questions"
@@ -270,277 +194,15 @@ export default function DocumentViewer({
           </View>
         )}
 
-        {/* Quick Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              (questionsState.status === "generating" || !canGenerate) &&
-                styles.actionButtonDisabled,
-            ]}
-            onPress={onGenerateQuestions}
-            disabled={questionsState.status === "generating" || !canGenerate}
-            activeOpacity={0.8}
-          >
-            <View
-              style={[
-                styles.actionIcon,
-                { backgroundColor: COLORS.primary.blue + "20" },
-              ]}
-            >
-              {questionsState.status === "generating" ? (
-                <ActivityIndicator size="small" color={COLORS.primary.blue} />
-              ) : (
-                <FileQuestion size={20} color={COLORS.primary.blue} />
-              )}
-            </View>
-            <Text style={styles.actionButtonText}>
-              {questionsState.status === "generating"
-                ? "Generating..."
-                : questionsState.status === "success"
-                  ? "Regenerate Questions"
-                  : "Generate Questions"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              notesState.status === "generating" && styles.actionButtonDisabled,
-            ]}
-            onPress={onGenerateNotes}
-            disabled={notesState.status === "generating"}
-            activeOpacity={0.8}
-          >
-            <View
-              style={[
-                styles.actionIcon,
-                { backgroundColor: COLORS.accent.gold + "20" },
-              ]}
-            >
-              {notesState.status === "generating" ? (
-                <ActivityIndicator size="small" color={COLORS.accent.gold} />
-              ) : (
-                <NotebookPen size={20} color={COLORS.accent.gold} />
-              )}
-            </View>
-            <Text style={styles.actionButtonText}>
-              {notesState.status === "generating"
-                ? "Generating..."
-                : notesState.status === "success"
-                  ? "Regenerate Notes"
-                  : "Generate Notes"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Action Buttons */}
+        <ActionButtons
+          canGenerate={canGenerate}
+          questionsState={questionsState}
+          notesState={notesState}
+          onGenerateQuestions={onGenerateQuestions}
+          onGenerateNotes={onGenerateNotes}
+        />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background.primary,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: COLORS.background.secondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.default,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-    textAlign: "center",
-  },
-  generationBanner: {
-    backgroundColor: COLORS.primary.blue,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  generationBannerText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
-    flex: 1,
-  },
-  menu: {
-    position: "absolute",
-    top: 110,
-    right: 16,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-    padding: 8,
-    zIndex: 1000,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  menuText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  content: {
-    flex: 1,
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: COLORS.background.primary,
-  },
-  webviewLoading: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.background.primary,
-  },
-  imageScroll: {
-    flex: 1,
-  },
-  imageScrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  image: {
-    width: SCREEN_WIDTH,
-    height: "100%",
-    minHeight: 400,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: COLORS.text.tertiary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.text.tertiary,
-    textAlign: "center",
-  },
-  bottomPanel: {
-    backgroundColor: COLORS.background.secondary,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.default,
-    padding: 16,
-    paddingBottom: 32,
-  },
-  statusCards: {
-    gap: 12,
-    marginBottom: 16,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-  },
-  actionButtonDisabled: {
-    opacity: 0.6,
-  },
-  actionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionButtonText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "500",
-    color: COLORS.text.primary,
-  },
-  warningBanner: {
-    backgroundColor: COLORS.status.warning + "20",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.status.warning + "40",
-  },
-  processingBanner: {
-    backgroundColor: COLORS.primary.blue + "15",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.primary.blue + "30",
-    gap: 8,
-  },
-  processingTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.primary.blue,
-    marginTop: 4,
-  },
-  processingText: {
-    fontSize: 13,
-    color: COLORS.text.secondary,
-    lineHeight: 18,
-  },
-  warningTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.status.warning,
-    marginBottom: 8,
-  },
-  warningText: {
-    fontSize: 13,
-    color: COLORS.text.secondary,
-    lineHeight: 18,
-  },
-});
