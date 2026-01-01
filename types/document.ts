@@ -10,7 +10,7 @@ export enum DocumentType {
 export interface Document {
   $id: string;
   title: string;
-  type: DocumentType;
+  type: "pdf" | "image";
   fileUrl: string;
   thumbnailUrl?: string;
   ocrText?: string;
@@ -30,3 +30,45 @@ export type UploadStatus =
   | "processing"
   | "success"
   | "error";
+
+// Generation Status Types
+export type GenerationStatus = "idle" | "generating" | "success" | "error";
+
+export interface GenerationState {
+  status: GenerationStatus;
+  progress: number;
+  error?: string;
+  data?: any;
+}
+
+export interface DocumentGenerationState {
+  questions: GenerationState;
+  notes: GenerationState;
+}
+
+// Upload Options
+export interface UploadOptions {
+  generateQuestions: boolean;
+  generateNotes: boolean;
+  questionSettings?: {
+    difficulty: "easy" | "medium" | "hard";
+    count: number;
+  };
+  noteSettings?: {
+    length: "brief" | "detailed" | "exam";
+  };
+}
+
+// Generated Content Preview
+export interface QuestionPreview {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+}
+
+export interface NotesPreview {
+  title: string;
+  summary: string;
+  keyPoints: string[];
+}

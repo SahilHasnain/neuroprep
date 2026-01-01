@@ -11,10 +11,17 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { WebView } from "react-native-webview";
-import { ArrowLeft, MoreVertical, Sparkles, Trash2 } from "lucide-react-native";
+import {
+  ArrowLeft,
+  MoreVertical,
+  Sparkles,
+  Trash2,
+  FileQuestion,
+  NotebookPen,
+} from "lucide-react-native";
 import { COLORS } from "@/constants/theme";
-import type { Document, DocumentType } from "@/types/document";
-import { getDocumentSuggestion } from "@/utils/documentSuggestions";
+import type { Document, DocumentGenerationState } from "@/types/document";
+import GenerationStatusCard from "./GenerationStatusCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -22,7 +29,11 @@ interface DocumentViewerProps {
   document: Document;
   onBack: () => void;
   onDelete: () => void;
-  onAIAction: () => void;
+  onGenerateQuestions: () => void;
+  onGenerateNotes: () => void;
+  onViewQuestions?: () => void;
+  onViewNotes?: () => void;
+  generationState?: DocumentGenerationState;
   isLoading?: boolean;
 }
 
@@ -30,14 +41,28 @@ export default function DocumentViewer({
   document,
   onBack,
   onDelete,
-  onAIAction,
+  onGenerateQuestions,
+  onGenerateNotes,
+  onViewQuestions,
+  onViewNotes,
+  generationState,
   isLoading = false,
 }: DocumentViewerProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const isPDF = document.type === DocumentType.PDF;
-  const suggestion = getDocumentSuggestion();
+  const isPDF = document.type === "pdf";
+
+  const questionsState = generationState?.questions || {
+    status: "idle",
+    progress: 0,
+  };
+  const notesState = generationState?.notes || { status: "idle", progress: 0 };
+
+  // Check if document has no OCR text
+  const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
+  const hasShortText = document.ocrText && document.ocrText.length < 50;
+  const canGenerate = !hasNoText && !hasShortText;
 
   const handleDelete = () => {
     setMenuVisible(false);
@@ -106,6 +131,22 @@ export default function DocumentViewer({
         </TouchableOpacity>
       </View>
 
+      {/* Generation Progress Banner */}
+      {(questionsState.status === "generating" ||
+        notesState.status === "generating") && (
+        <View style={styles.generationBanner}>
+          <ActivityIndicator size="small" color="#fff" />
+          <Text style={styles.generationBannerText}>
+            {questionsState.status === "generating" &&
+            notesState.status === "generating"
+              ? "AI is generating questions and notes..."
+              : questionsState.status === "generating"
+                ? "AI is generating questions..."
+                : "AI is generating notes..."}
+          </Text>
+        </View>
+      )}
+
       {/* Menu Dropdown */}
       {menuVisible && (
         <View style={styles.menu}>
@@ -165,33 +206,117 @@ export default function DocumentViewer({
         )}
       </View>
 
-      {/* AI Suggestion Banner */}
-      <TouchableOpacity
-        style={styles.suggestionBanner}
-        onPress={onAIAction}
-        activeOpacity={0.8}
-      >
-        <View style={styles.suggestionContent}>
-          <View style={styles.suggestionIcon}>
-            <Sparkles size={20} color={COLORS.primary.blue} />
-          </View>
-          <View style={styles.suggestionText}>
-            <Text style={styles.suggestionTitle}>{suggestion.text}</Text>
-            <Text style={styles.suggestionDescription}>
-              {suggestion.description}
+      {/* Bottom Action Panel */}
+      <View style={styles.bottomPanel}>
+        {/* No Text Warning */}
+        {hasNoText && (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningTitle}>⚠️ Text Extraction Failed</Text>
+            <Text style={styles.warningText}>
+              Unable to extract text from this document. AI features like
+              question and note generation won't work. Try uploading a clearer
+              image or a text-based PDF.
             </Text>
           </View>
-        </View>
-      </TouchableOpacity>
+        )}
+        {!hasNoText && hasShortText && (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningTitle}>⚠️ Limited Text Content</Text>
+            <Text style={styles.warningText}>
+              Very little text was extracted from this document. AI-generated
+              content may be limited or generic.
+            </Text>
+          </View>
+        )}
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={onAIAction}
-        activeOpacity={0.8}
-      >
-        <Sparkles size={24} color={COLORS.text.primary} />
-      </TouchableOpacity>
+        {/* Generation Status Cards */}
+        {(questionsState.status !== "idle" || notesState.status !== "idle") && (
+          <View style={styles.statusCards}>
+            {questionsState.status !== "idle" && (
+              <GenerationStatusCard
+                type="questions"
+                state={questionsState}
+                onViewAll={onViewQuestions}
+                onRetry={onGenerateQuestions}
+                previewData={questionsState.data}
+              />
+            )}
+            {notesState.status !== "idle" && (
+              <GenerationStatusCard
+                type="notes"
+                state={notesState}
+                onViewAll={onViewNotes}
+                onRetry={onGenerateNotes}
+                previewData={notesState.data}
+              />
+            )}
+          </View>
+        )}
+
+        {/* Quick Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              (questionsState.status === "generating" || !canGenerate) &&
+                styles.actionButtonDisabled,
+            ]}
+            onPress={onGenerateQuestions}
+            disabled={questionsState.status === "generating" || !canGenerate}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: COLORS.primary.blue + "20" },
+              ]}
+            >
+              {questionsState.status === "generating" ? (
+                <ActivityIndicator size="small" color={COLORS.primary.blue} />
+              ) : (
+                <FileQuestion size={20} color={COLORS.primary.blue} />
+              )}
+            </View>
+            <Text style={styles.actionButtonText}>
+              {questionsState.status === "generating"
+                ? "Generating..."
+                : questionsState.status === "success"
+                  ? "Regenerate Questions"
+                  : "Generate Questions"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              notesState.status === "generating" && styles.actionButtonDisabled,
+            ]}
+            onPress={onGenerateNotes}
+            disabled={notesState.status === "generating"}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: COLORS.accent.gold + "20" },
+              ]}
+            >
+              {notesState.status === "generating" ? (
+                <ActivityIndicator size="small" color={COLORS.accent.gold} />
+              ) : (
+                <NotebookPen size={20} color={COLORS.accent.gold} />
+              )}
+            </View>
+            <Text style={styles.actionButtonText}>
+              {notesState.status === "generating"
+                ? "Generating..."
+                : notesState.status === "success"
+                  ? "Regenerate Notes"
+                  : "Generate Notes"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -227,6 +352,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.text.primary,
     textAlign: "center",
+  },
+  generationBanner: {
+    backgroundColor: COLORS.primary.blue,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  generationBannerText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
   },
   menu: {
     position: "absolute",
@@ -306,62 +445,65 @@ const styles = StyleSheet.create({
     color: COLORS.text.tertiary,
     textAlign: "center",
   },
-  suggestionBanner: {
-    position: "absolute",
-    bottom: 100,
-    left: 16,
-    right: 16,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 16,
+  bottomPanel: {
+    backgroundColor: COLORS.background.secondary,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.default,
     padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border.blue,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    paddingBottom: 32,
   },
-  suggestionContent: {
+  statusCards: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  actionButtons: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 12,
   },
-  suggestionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.background.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  suggestionText: {
+  actionButton: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: COLORS.background.card,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border.default,
   },
-  suggestionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-    marginBottom: 4,
+  actionButtonDisabled: {
+    opacity: 0.6,
   },
-  suggestionDescription: {
-    fontSize: 12,
-    color: COLORS.text.tertiary,
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary.blue,
+  actionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+  },
+  actionButtonText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "500",
+    color: COLORS.text.primary,
+  },
+  warningBanner: {
+    backgroundColor: COLORS.status.warning + "20",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.status.warning + "40",
+  },
+  warningTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.status.warning,
+    marginBottom: 8,
+  },
+  warningText: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    lineHeight: 18,
   },
 });

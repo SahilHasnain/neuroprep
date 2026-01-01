@@ -1,6 +1,16 @@
 import { create } from "zustand";
 import { documentsService } from "@/services/api/documents.service";
-import type { Document, UploadStatus } from "@/types/document";
+import { saveQuestionsToStorage } from "@/services/storage/questions.storage";
+import { saveNoteToStorage } from "@/services/storage/notes.storage";
+import { Note } from "@/lib/models";
+import { formatNotesContent } from "@/utils/formatters";
+import type {
+  Document,
+  UploadStatus,
+  GenerationState,
+  DocumentGenerationState,
+  UploadOptions,
+} from "@/types/document";
 
 interface DocumentState {
   documents: Document[];
@@ -9,16 +19,46 @@ interface DocumentState {
   uploadStatus: UploadStatus;
   error: string | null;
 
+  // Generation states per document
+  generationStates: Record<string, DocumentGenerationState>;
+
+  // Actions
   fetchDocuments: () => Promise<void>;
   uploadDocument: (
-    file: File | Blob,
+    file: File | Blob | { uri: string; name: string; type: string },
     title: string,
-    type: string
-  ) => Promise<boolean>;
+    type: string,
+    options?: UploadOptions
+  ) => Promise<string | null>; // Returns document ID
   getDocumentById: (id: string) => Promise<void>;
   deleteDocument: (id: string) => Promise<boolean>;
   setCurrentDocument: (document: Document | null) => void;
+
+  // Generation actions
+  generateQuestions: (
+    documentId: string,
+    settings?: { difficulty: string; count: number }
+  ) => Promise<any>;
+  generateNotes: (
+    documentId: string,
+    settings?: { length: string }
+  ) => Promise<any>;
+  getGenerationState: (documentId: string) => DocumentGenerationState;
+  resetGenerationState: (
+    documentId: string,
+    type: "questions" | "notes"
+  ) => void;
 }
+
+const defaultGenerationState: GenerationState = {
+  status: "idle",
+  progress: 0,
+};
+
+const defaultDocumentGenerationState: DocumentGenerationState = {
+  questions: { ...defaultGenerationState },
+  notes: { ...defaultGenerationState },
+};
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   documents: [],
@@ -26,47 +66,93 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   isLoading: false,
   uploadStatus: "idle",
   error: null,
+  generationStates: {},
 
   fetchDocuments: async () => {
     set({ isLoading: true, error: null });
     try {
       const result = await documentsService.getDocuments();
       if (result.success) {
-        set({ documents: result.data, isLoading: false });
+        set({ documents: result.data || [], isLoading: false });
       } else {
         set({
           error: result.message || "Failed to fetch documents",
           isLoading: false,
+          documents: [],
         });
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      set({ error: errorMessage, isLoading: false });
+      set({ error: errorMessage, isLoading: false, documents: [] });
     }
   },
 
-  uploadDocument: async (file: File | Blob, title: string, type: string) => {
+  uploadDocument: async (file, title, type, options) => {
     set({ uploadStatus: "uploading", error: null });
     try {
       const result = await documentsService.uploadDocument(file, title, type);
-      if (result.success) {
+      if (result.success && result.data) {
         set({ uploadStatus: "success" });
-        // Refresh documents list
         await get().fetchDocuments();
-        // Reset status after a delay
+
+        const documentId = result.data.$id;
+
+        // Check OCR status and warn user if needed
+        const ocrStatus = (result as any).ocrStatus;
+        if (ocrStatus) {
+          console.log("📊 [Store] OCR Status:", ocrStatus);
+
+          // Store OCR warning for later display
+          if (!ocrStatus.extracted || ocrStatus.textLength < 50) {
+            set((state) => ({
+              generationStates: {
+                ...state.generationStates,
+                [documentId]: {
+                  questions: {
+                    status: "error",
+                    progress: 0,
+                    error: "Text extraction failed. Cannot generate questions.",
+                  },
+                  notes: {
+                    status: "error",
+                    progress: 0,
+                    error: "Text extraction failed. Cannot generate notes.",
+                  },
+                },
+              },
+            }));
+          }
+        }
+
+        // Auto-generate if options provided and OCR succeeded
+        if (
+          options?.generateQuestions &&
+          ocrStatus?.extracted &&
+          ocrStatus?.textLength >= 50
+        ) {
+          get().generateQuestions(documentId, options.questionSettings);
+        }
+        if (
+          options?.generateNotes &&
+          ocrStatus?.extracted &&
+          ocrStatus?.textLength >= 50
+        ) {
+          get().generateNotes(documentId, options.noteSettings);
+        }
+
         setTimeout(() => set({ uploadStatus: "idle" }), 2000);
-        return true;
+        return documentId;
       } else {
         set({
           uploadStatus: "error",
           error: result.message || "Upload failed",
         });
-        return false;
+        return null;
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       set({ uploadStatus: "error", error: errorMessage });
-      return false;
+      return null;
     }
   },
 
@@ -93,10 +179,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     try {
       const result = await documentsService.deleteDocument(id);
       if (result.success) {
-        // Remove from local state
         set((state) => ({
           documents: state.documents.filter((doc) => doc.$id !== id),
           isLoading: false,
+          generationStates: Object.fromEntries(
+            Object.entries(state.generationStates).filter(([key]) => key !== id)
+          ),
         }));
         return true;
       } else {
@@ -113,4 +201,304 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   setCurrentDocument: (document: Document | null) => {
     set({ currentDocument: document });
   },
+
+  getGenerationState: (documentId: string) => {
+    const state = get().generationStates[documentId];
+    return state || { ...defaultDocumentGenerationState };
+  },
+
+  resetGenerationState: (documentId: string, type: "questions" | "notes") => {
+    set((state) => ({
+      generationStates: {
+        ...state.generationStates,
+        [documentId]: {
+          ...state.generationStates[documentId],
+          [type]: { ...defaultGenerationState },
+        },
+      },
+    }));
+  },
+
+  generateQuestions: async (documentId, settings) => {
+    const document = get().documents.find((d) => d.$id === documentId);
+    if (!document) return null;
+
+    console.log("🎯 [Store] Starting question generation for:", documentId);
+    console.log("📄 [Store] Document:", {
+      id: document.$id,
+      title: document.title,
+      hasOcrText: !!document.ocrText,
+      ocrTextLength: document.ocrText?.length || 0,
+    });
+
+    // Update state to generating
+    set((state) => ({
+      generationStates: {
+        ...state.generationStates,
+        [documentId]: {
+          ...(state.generationStates[documentId] ||
+            defaultDocumentGenerationState),
+          questions: { status: "generating", progress: 10 },
+        },
+      },
+    }));
+
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        set((state) => {
+          const current =
+            state.generationStates[documentId]?.questions?.progress || 10;
+          if (current < 90) {
+            return {
+              generationStates: {
+                ...state.generationStates,
+                [documentId]: {
+                  ...state.generationStates[documentId],
+                  questions: {
+                    ...state.generationStates[documentId]?.questions,
+                    progress: current + 15,
+                  },
+                },
+              },
+            };
+          }
+          return state;
+        });
+      }, 800);
+
+      const result = await documentsService.generateQuestions(
+        document,
+        settings?.difficulty || "easy",
+        settings?.count || 5
+      );
+
+      clearInterval(progressInterval);
+
+      console.log("✅ [Store] Generation result:", {
+        success: result.success,
+        hasData: !!result.data,
+        dataLength: Array.isArray(result.data) ? result.data.length : 0,
+      });
+
+      if (result.success) {
+        // Save questions to AsyncStorage
+        const questions = result.data || [];
+        if (questions.length > 0) {
+          try {
+            // Infer subject from document title
+            const subject = inferSubject(document.title);
+            await saveQuestionsToStorage(questions, {
+              subject,
+              topic: document.title,
+              difficulty: settings?.difficulty || "easy",
+              questionCount: questions.length,
+            });
+          } catch (err) {
+            console.error("Failed to save questions to storage:", err);
+          }
+        }
+
+        set((state) => ({
+          generationStates: {
+            ...state.generationStates,
+            [documentId]: {
+              ...state.generationStates[documentId],
+              questions: {
+                status: "success",
+                progress: 100,
+                data: result.data,
+              },
+            },
+          },
+        }));
+        return result.data;
+      } else {
+        set((state) => ({
+          generationStates: {
+            ...state.generationStates,
+            [documentId]: {
+              ...state.generationStates[documentId],
+              questions: {
+                status: "error",
+                progress: 0,
+                error: result.message,
+              },
+            },
+          },
+        }));
+        return null;
+      }
+    } catch (err) {
+      set((state) => ({
+        generationStates: {
+          ...state.generationStates,
+          [documentId]: {
+            ...state.generationStates[documentId],
+            questions: {
+              status: "error",
+              progress: 0,
+              error: err instanceof Error ? err.message : "Generation failed",
+            },
+          },
+        },
+      }));
+      return null;
+    }
+  },
+
+  generateNotes: async (documentId, settings) => {
+    const document = get().documents.find((d) => d.$id === documentId);
+    if (!document) return null;
+
+    set((state) => ({
+      generationStates: {
+        ...state.generationStates,
+        [documentId]: {
+          ...(state.generationStates[documentId] ||
+            defaultDocumentGenerationState),
+          notes: { status: "generating", progress: 10 },
+        },
+      },
+    }));
+
+    try {
+      const progressInterval = setInterval(() => {
+        set((state) => {
+          const current =
+            state.generationStates[documentId]?.notes?.progress || 10;
+          if (current < 90) {
+            return {
+              generationStates: {
+                ...state.generationStates,
+                [documentId]: {
+                  ...state.generationStates[documentId],
+                  notes: {
+                    ...state.generationStates[documentId]?.notes,
+                    progress: current + 15,
+                  },
+                },
+              },
+            };
+          }
+          return state;
+        });
+      }, 800);
+
+      const result = await documentsService.generateNotes(
+        document,
+        settings?.length || "brief"
+      );
+
+      clearInterval(progressInterval);
+
+      if (result.success) {
+        // Save notes to AsyncStorage
+        const notesData = result.data?.content || result.data;
+        if (notesData) {
+          try {
+            const subject = inferSubject(document.title);
+            const content = formatNotesContent(notesData);
+
+            const note = new Note(
+              `doc-${documentId}-${Date.now()}`,
+              document.title,
+              subject,
+              content,
+              new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            );
+
+            await saveNoteToStorage(note, {
+              subject,
+              topic: document.title,
+              noteLength: settings?.length || "brief",
+            });
+          } catch (err) {
+            console.error("Failed to save notes to storage:", err);
+          }
+        }
+
+        set((state) => ({
+          generationStates: {
+            ...state.generationStates,
+            [documentId]: {
+              ...state.generationStates[documentId],
+              notes: { status: "success", progress: 100, data: result.data },
+            },
+          },
+        }));
+        return result.data;
+      } else {
+        set((state) => ({
+          generationStates: {
+            ...state.generationStates,
+            [documentId]: {
+              ...state.generationStates[documentId],
+              notes: { status: "error", progress: 0, error: result.message },
+            },
+          },
+        }));
+        return null;
+      }
+    } catch (err) {
+      set((state) => ({
+        generationStates: {
+          ...state.generationStates,
+          [documentId]: {
+            ...state.generationStates[documentId],
+            notes: {
+              status: "error",
+              progress: 0,
+              error: err instanceof Error ? err.message : "Generation failed",
+            },
+          },
+        },
+      }));
+      return null;
+    }
+  },
 }));
+
+// Helper to infer subject from document title
+function inferSubject(title: string): string {
+  const titleLower = title.toLowerCase();
+
+  if (
+    titleLower.includes("physics") ||
+    titleLower.includes("motion") ||
+    titleLower.includes("force") ||
+    titleLower.includes("energy")
+  ) {
+    return "physics";
+  }
+  if (
+    titleLower.includes("chemistry") ||
+    titleLower.includes("chemical") ||
+    titleLower.includes("atom") ||
+    titleLower.includes("molecule")
+  ) {
+    return "chemistry";
+  }
+  if (
+    titleLower.includes("biology") ||
+    titleLower.includes("cell") ||
+    titleLower.includes("organism") ||
+    titleLower.includes("life")
+  ) {
+    return "biology";
+  }
+  if (
+    titleLower.includes("math") ||
+    titleLower.includes("algebra") ||
+    titleLower.includes("calculus") ||
+    titleLower.includes("geometry")
+  ) {
+    return "mathematics";
+  }
+
+  return "general";
+}

@@ -34,6 +34,7 @@ import {
   validateDoubtToNoteContext,
   validateDocumentContext,
 } from "@/utils/contextValidation";
+import { formatNotesContent } from "@/utils/formatters";
 
 // Motivational messages for loading state
 const motivationalMessages = [
@@ -230,6 +231,44 @@ export default function NotesScreen() {
       }
     }
   }, [params.documentContext, setGenerateConfig, setIsModalVisible]);
+
+  // Handle viewing already generated notes from document
+  useEffect(() => {
+    if (params.viewGeneratedNotes) {
+      try {
+        const parsedData = JSON.parse(params.viewGeneratedNotes as string);
+
+        if (parsedData.notes) {
+          // Reload notes list to include the newly saved note
+          loadNotes();
+
+          // Create a note object from the generated data
+          const generatedNote = {
+            id: `doc-${parsedData.documentId}-${Date.now()}`,
+            title: parsedData.topic || "Document Notes",
+            subject: parsedData.subject || "general",
+            content:
+              typeof parsedData.notes === "string"
+                ? parsedData.notes
+                : formatNotesContent(
+                    parsedData.notes?.content || parsedData.notes
+                  ),
+            date: new Date().toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+          };
+
+          // Open the note viewer directly
+          setSelectedNote(generatedNote as any);
+          setIsViewModalVisible(true);
+        }
+      } catch (err) {
+        console.error("Error parsing generated notes:", err);
+      }
+    }
+  }, [params.viewGeneratedNotes]);
 
   return (
     <SafeAreaView

@@ -160,6 +160,31 @@ export default function GenerateQuestionsScreen() {
     }
   }, [params.documentContext, setTopic]);
 
+  // Handle viewing already generated questions from document
+  useEffect(() => {
+    if (params.viewGeneratedQuestions) {
+      try {
+        const parsedData = JSON.parse(params.viewGeneratedQuestions as string);
+
+        if (parsedData.questions && Array.isArray(parsedData.questions)) {
+          // Reload question sets to include the newly saved questions
+          loadSets();
+
+          // Load the generated questions directly into view mode
+          loadFromParams({
+            questions: parsedData.questions,
+            subject: parsedData.subject || "general",
+            topic: parsedData.topic || "Document Questions",
+            difficulty: "easy",
+            questionCount: parsedData.questions.length.toString(),
+          });
+        }
+      } catch (err) {
+        console.error("Error parsing generated questions:", err);
+      }
+    }
+  }, [params.viewGeneratedQuestions]);
+
   const loadSets = async () => {
     setLoadingSets(true);
     const sets = await loadQuestionsFromStorage();

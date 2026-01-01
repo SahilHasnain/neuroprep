@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useDocumentStore } from "@/store/documentStore";
 import DocumentViewer from "@/components/documents/DocumentViewer";
-import DocumentActionSheet from "@/components/documents/DocumentActionSheet";
 import { COLORS } from "@/constants/theme";
 
 export default function DocumentViewerScreen() {
@@ -16,16 +15,16 @@ export default function DocumentViewerScreen() {
     getDocumentById,
     deleteDocument,
     setCurrentDocument,
+    generateQuestions,
+    generateNotes,
+    getGenerationState,
   } = useDocumentStore();
-
-  const [actionSheetVisible, setActionSheetVisible] = useState(false);
 
   useEffect(() => {
     if (id) {
       getDocumentById(id);
     }
 
-    // Cleanup on unmount
     return () => {
       setCurrentDocument(null);
     };
@@ -58,50 +57,166 @@ export default function DocumentViewerScreen() {
     }
   };
 
-  const handleAIAction = () => {
-    setActionSheetVisible(true);
-  };
+  const handleGenerateQuestions = async () => {
+    if (!id || !currentDocument) return;
 
-  const handleActionSelect = (
-    action: "generate-questions" | "ask-doubt" | "create-notes"
-  ) => {
-    // Navigate to the appropriate screen with document context
-    if (!currentDocument) return;
+    // Show immediate feedback
+    Alert.alert(
+      "Generating Questions",
+      "AI is generating 5 practice questions from your document. This may take a moment...",
+      [{ text: "OK" }]
+    );
 
-    const documentContext = {
-      documentId: currentDocument.$id,
-      documentTitle: currentDocument.title,
-      documentType: currentDocument.type,
-      ocrText: currentDocument.ocrText || "",
-    };
+    const result = await generateQuestions(id, {
+      difficulty: "easy",
+      count: 5,
+    });
 
-    switch (action) {
-      case "generate-questions":
-        router.push({
-          pathname: "/(tabs)/generate-questions",
-          params: {
-            documentContext: JSON.stringify(documentContext),
-          },
-        });
-        break;
-      case "ask-doubt":
-        router.push({
-          pathname: "/(tabs)/ask-doubt",
-          params: {
-            documentContext: JSON.stringify(documentContext),
-          },
-        });
-        break;
-      case "create-notes":
-        router.push({
-          pathname: "/(tabs)/notes",
-          params: {
-            documentContext: JSON.stringify(documentContext),
-          },
-        });
-        break;
+    if (result) {
+      Alert.alert(
+        "Success!",
+        "Questions generated successfully! You can view them below or in the Questions tab.",
+        [{ text: "Got it" }]
+      );
+    } else {
+      Alert.alert(
+        "Generation Failed",
+        "Failed to generate questions. Please try again.",
+        [{ text: "OK" }]
+      );
     }
   };
+
+  const handleGenerateNotes = async () => {
+    if (!id || !currentDocument) return;
+
+    // Show immediate feedback
+    Alert.alert(
+      "Generating Notes",
+      "AI is creating study notes from your document. This may take a moment...",
+      [{ text: "OK" }]
+    );
+
+    const result = await generateNotes(id, { length: "brief" });
+
+    if (result) {
+      Alert.alert(
+        "Success!",
+        "Notes generated successfully! You can view them below or in the Notes tab.",
+        [{ text: "Got it" }]
+      );
+    } else {
+      Alert.alert(
+        "Generation Failed",
+        "Failed to generate notes. Please try again.",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
+  const handleViewQuestions = () => {
+    if (!currentDocument) return;
+
+    const genState = generationState?.questions;
+
+    // If we have generated questions data, pass it to view directly
+    if (genState?.status === "success" && genState.data) {
+      router.push({
+        pathname: "/(tabs)/generate-questions",
+        params: {
+          viewGeneratedQuestions: JSON.stringify({
+            questions: genState.data,
+            subject: inferSubjectFromTitle(currentDocument.title),
+            topic: currentDocument.title,
+            documentId: currentDocument.$id,
+          }),
+        },
+      });
+    } else {
+      // Fallback to document context for new generation
+      const documentContext = {
+        documentId: currentDocument.$id,
+        documentTitle: currentDocument.title,
+        documentType: currentDocument.type,
+        ocrText: currentDocument.ocrText || "",
+      };
+
+      router.push({
+        pathname: "/(tabs)/generate-questions",
+        params: {
+          documentContext: JSON.stringify(documentContext),
+        },
+      });
+    }
+  };
+
+  const handleViewNotes = () => {
+    if (!currentDocument) return;
+
+    const genState = generationState?.notes;
+
+    // If we have generated notes data, pass it to view directly
+    if (genState?.status === "success" && genState.data) {
+      router.push({
+        pathname: "/(tabs)/notes",
+        params: {
+          viewGeneratedNotes: JSON.stringify({
+            notes: genState.data,
+            subject: inferSubjectFromTitle(currentDocument.title),
+            topic: currentDocument.title,
+            documentId: currentDocument.$id,
+          }),
+        },
+      });
+    } else {
+      // Fallback to document context for new generation
+      const documentContext = {
+        documentId: currentDocument.$id,
+        documentTitle: currentDocument.title,
+        documentType: currentDocument.type,
+        ocrText: currentDocument.ocrText || "",
+      };
+
+      router.push({
+        pathname: "/(tabs)/notes",
+        params: {
+          documentContext: JSON.stringify(documentContext),
+        },
+      });
+    }
+  };
+
+  // Helper to infer subject from document title
+  const inferSubjectFromTitle = (title: string): string => {
+    const titleLower = title.toLowerCase();
+    if (
+      titleLower.includes("physics") ||
+      titleLower.includes("motion") ||
+      titleLower.includes("force")
+    )
+      return "physics";
+    if (
+      titleLower.includes("chemistry") ||
+      titleLower.includes("chemical") ||
+      titleLower.includes("atom")
+    )
+      return "chemistry";
+    if (
+      titleLower.includes("biology") ||
+      titleLower.includes("cell") ||
+      titleLower.includes("organism")
+    )
+      return "biology";
+    if (
+      titleLower.includes("math") ||
+      titleLower.includes("algebra") ||
+      titleLower.includes("calculus")
+    )
+      return "mathematics";
+    return "general";
+  };
+
+  const generationState = id ? getGenerationState(id) : undefined;
 
   if (!currentDocument && !isLoading) {
     return <View style={styles.container} />;
@@ -114,16 +229,14 @@ export default function DocumentViewerScreen() {
           document={currentDocument}
           onBack={handleBack}
           onDelete={handleDelete}
-          onAIAction={handleAIAction}
+          onGenerateQuestions={handleGenerateQuestions}
+          onGenerateNotes={handleGenerateNotes}
+          onViewQuestions={handleViewQuestions}
+          onViewNotes={handleViewNotes}
+          generationState={generationState}
           isLoading={isLoading}
         />
       )}
-
-      <DocumentActionSheet
-        visible={actionSheetVisible}
-        onClose={() => setActionSheetVisible(false)}
-        onActionSelect={handleActionSelect}
-      />
     </View>
   );
 }

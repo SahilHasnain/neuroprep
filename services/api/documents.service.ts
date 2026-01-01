@@ -6,31 +6,56 @@ import { getIdentity } from "@/utils/identity";
 
 export const documentsService = {
   async uploadDocument(
-    file: File | Blob,
+    file: File | Blob | { uri: string; name: string; type: string },
     title: string,
     type: string
   ): Promise<ApiResponse<Document>> {
     try {
       const identity = await getIdentity();
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", title);
-      formData.append("type", type);
+
+      const fileName = "uri" in file ? file.name : (file as File).name;
+      const fileType = "uri" in file ? file.type : (file as File).type;
+      const fileBlob = "uri" in file ? file : (file as Blob);
 
       const response = await fetch(API_ENDPOINTS.DOCUMENTS_UPLOAD, {
         method: "POST",
         headers: {
+          "Content-Type": fileType,
           "x-identity-type": identity.type,
           "x-identity-id": identity.id,
+          "x-file-name": fileName,
+          "x-file-title": title,
+          "x-file-type": type,
         },
-        body: formData,
+        body: fileBlob as any,
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+
+      // Log OCR status
+      if (data.ocrStatus) {
+        console.log("📊 OCR Status:", data.ocrStatus);
+        if (!data.ocrStatus.extracted) {
+          console.warn("⚠️ Text extraction failed during upload");
+        } else if (data.ocrStatus.textLength < 50) {
+          console.warn(
+            "⚠️ Very little text extracted:",
+            data.ocrStatus.textLength,
+            "chars"
+          );
+        } else if (data.ocrStatus.wasTruncated) {
+          console.log(
+            "✂️ Text was truncated for cost optimization:",
+            data.ocrStatus.truncationInfo
+          );
+        }
+      }
+
       return data;
     } catch (error) {
       console.error("Upload Error:", error);
@@ -43,23 +68,28 @@ export const documentsService = {
   },
 
   async getDocuments(): Promise<ApiResponse<Document[]>> {
-    return apiClient.get<Document[]>(API_ENDPOINTS.DOCUMENTS);
+    return apiClient.get<Document[]>(API_ENDPOINTS.DOCUMENTS_GET_ALL);
   },
 
   async getDocumentById(id: string): Promise<ApiResponse<Document>> {
-    return apiClient.get<Document>(`${API_ENDPOINTS.DOCUMENTS}/${id}`);
+    return apiClient.get<Document>(
+      `${API_ENDPOINTS.DOCUMENTS_GET_DETAIL}?id=${id}`
+    );
   },
 
   async deleteDocument(id: string): Promise<ApiResponse<{ message: string }>> {
     try {
       const identity = await getIdentity();
-      const response = await fetch(`${API_ENDPOINTS.DOCUMENTS}/${id}`, {
-        method: "DELETE",
-        headers: {
-          "x-identity-type": identity.type,
-          "x-identity-id": identity.id,
-        },
-      });
+      const response = await fetch(
+        `${API_ENDPOINTS.DOCUMENTS_DELETE}?id=${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-identity-type": identity.type,
+            "x-identity-id": identity.id,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Delete failed: ${response.status}`);
@@ -75,5 +105,149 @@ export const documentsService = {
         message: error instanceof Error ? error.message : "Delete failed",
       };
     }
+  },
+
+  // Generate questions from document
+  async generateQuestions(
+    document: Document,
+    difficulty: string = "easy",
+    count: number = 5
+  ): Promise<ApiResponse<any>> {
+    console.log("🔍 [generateQuestions] Starting generation");
+    console.log("📄 Document ID:", document.$id);
+    console.log("📝 Document Title:", document.title);
+    console.log("📋 Document Type:", document.type);
+    console.log("📊 OCR Text Length:", document.ocrText?.length || 0);
+    console.log(
+      "📖 OCR Text Preview:",
+      document.ocrText?.substring(0, 200) || "NO TEXT"
+    );
+
+    // Check if document has OCR text
+    if (!document.ocrText || document.ocrText.trim().length === 0) {
+      console.error("❌ [generateQuestions] No OCR text available");
+      return {
+        success: false,
+        data: null,
+        message:
+          "Unable to generate questions. The document text could not be extracted. Please try uploading a clearer image or a text-based PDF.",
+      };
+    }
+
+    // Check if OCR text is too short
+    if (document.ocrText.length < 50) {
+      console.warn("⚠️ [generateQuestions] OCR text is very short");
+      return {
+        success: false,
+        data: null,
+        message:
+          "The document text is too short to generate meaningful questions. Please upload a document with more content.",
+      };
+    }
+
+    const documentContext = {
+      documentId: document.$id,
+      documentTitle: document.title,
+      documentType: document.type,
+      ocrText: document.ocrText,
+    };
+
+    console.log("📦 Document Context:", {
+      documentId: documentContext.documentId,
+      documentTitle: documentContext.documentTitle,
+      ocrTextLength: documentContext.ocrText.length,
+      ocrTextPreview: documentContext.ocrText.substring(0, 100),
+    });
+
+    // For document-based generation, use generic subject/topic
+    // The AI will infer actual subject from document content
+    const payload = {
+      subject: "Document Content",
+      topic: document.title,
+      difficulty,
+      questionCount: count.toString(),
+      documentContext,
+    };
+
+    console.log("🚀 Sending to API:", {
+      ...payload,
+      documentContext: {
+        ...payload.documentContext,
+        ocrText: `${payload.documentContext.ocrText.length} characters`,
+      },
+    });
+
+    return apiClient.post<any>(API_ENDPOINTS.GENERATE_QUESTIONS, payload);
+  },
+
+  // Generate notes from document
+  async generateNotes(
+    document: Document,
+    noteLength: string = "brief"
+  ): Promise<ApiResponse<any>> {
+    console.log("🔍 [generateNotes] Starting generation");
+    console.log("📄 Document ID:", document.$id);
+    console.log("📝 Document Title:", document.title);
+    console.log("📋 Document Type:", document.type);
+    console.log("📊 OCR Text Length:", document.ocrText?.length || 0);
+    console.log(
+      "📖 OCR Text Preview:",
+      document.ocrText?.substring(0, 200) || "NO TEXT"
+    );
+
+    // Check if document has OCR text
+    if (!document.ocrText || document.ocrText.trim().length === 0) {
+      console.error("❌ [generateNotes] No OCR text available");
+      return {
+        success: false,
+        data: null,
+        message:
+          "Unable to generate notes. The document text could not be extracted. Please try uploading a clearer image or a text-based PDF.",
+      };
+    }
+
+    // Check if OCR text is too short
+    if (document.ocrText.length < 50) {
+      console.warn("⚠️ [generateNotes] OCR text is very short");
+      return {
+        success: false,
+        data: null,
+        message:
+          "The document text is too short to generate meaningful notes. Please upload a document with more content.",
+      };
+    }
+
+    const documentContext = {
+      documentId: document.$id,
+      documentTitle: document.title,
+      documentType: document.type,
+      ocrText: document.ocrText,
+    };
+
+    console.log("📦 Document Context:", {
+      documentId: documentContext.documentId,
+      documentTitle: documentContext.documentTitle,
+      ocrTextLength: documentContext.ocrText.length,
+      ocrTextPreview: documentContext.ocrText.substring(0, 100),
+    });
+
+    // For document-based generation, use generic subject/topic
+    // The AI will infer actual subject from document content
+    const payload = {
+      subject: "Document Content",
+      topic: document.title,
+      noteLength,
+      documentContext,
+    };
+
+    console.log("🚀 Sending to API:", {
+      ...payload,
+      documentContext: {
+        ...payload.documentContext,
+        ocrText: `${payload.documentContext.ocrText.length} characters`,
+      },
+    });
+
+    return apiClient.post<any>(API_ENDPOINTS.NOTES, payload);
   },
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,9 @@ import {
   TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Plus, FileText, Image as ImageIcon } from "lucide-react-native";
+import { Plus, FileText } from "lucide-react-native";
 import { useDocumentStore } from "@/store/documentStore";
-import type { Document } from "@/types/document";
+import type { Document, UploadOptions } from "@/types/document";
 import DocumentCard from "@/components/documents/DocumentCard";
 import DocumentUploadModal from "@/components/documents/DocumentUploadModal";
 import { COLORS } from "@/constants/theme";
@@ -25,6 +25,7 @@ export default function DocumentsScreen() {
     isLoading,
     error,
     uploadStatus,
+    generationStates,
     fetchDocuments,
     uploadDocument,
   } = useDocumentStore();
@@ -37,11 +38,14 @@ export default function DocumentsScreen() {
     type: string;
     mimeType: string;
   } | null>(null);
+  const [uploadOptions, setUploadOptions] = useState<UploadOptions | null>(
+    null
+  );
   const [documentTitle, setDocumentTitle] = useState("");
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -49,22 +53,28 @@ export default function DocumentsScreen() {
     setRefreshing(false);
   };
 
-  const handleDocumentPress = (document: Document) => {
-    router.push(`/document/${document.$id}`);
-  };
+  const handleDocumentPress = useCallback(
+    (document: Document) => {
+      router.push(`/document/${document.$id}`);
+    },
+    [router]
+  );
 
   const handleAddPress = () => {
     setUploadModalVisible(true);
   };
 
-  const handleFileSelected = (file: {
-    uri: string;
-    name: string;
-    type: string;
-    mimeType: string;
-  }) => {
+  const handleFileSelected = (
+    file: {
+      uri: string;
+      name: string;
+      type: string;
+      mimeType: string;
+    },
+    options: UploadOptions
+  ) => {
     setSelectedFile(file);
-    // Pre-fill title with filename without extension
+    setUploadOptions(options);
     const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
     setDocumentTitle(nameWithoutExt);
     setTitleModalVisible(true);
@@ -79,20 +89,54 @@ export default function DocumentsScreen() {
     setTitleModalVisible(false);
 
     try {
-      // Convert URI to Blob for upload
-      const response = await fetch(selectedFile.uri);
-      const blob = await response.blob();
+      const fileToUpload = {
+        uri: selectedFile.uri,
+        name: selectedFile.name,
+        type: selectedFile.mimeType || selectedFile.type,
+      };
 
-      const success = await uploadDocument(
-        blob,
+      const documentId = await uploadDocument(
+        fileToUpload,
         documentTitle.trim(),
-        selectedFile.type
+        selectedFile.type,
+        uploadOptions || undefined
       );
 
-      if (success) {
-        Alert.alert("Success", "Document uploaded successfully!");
+      if (documentId) {
+        const hasAutoGenerate =
+          uploadOptions?.generateQuestions || uploadOptions?.generateNotes;
+
+        // Check if the uploaded document has OCR text
+        const uploadedDoc = documents.find((d) => d.$id === documentId);
+        const hasNoText =
+          !uploadedDoc?.ocrText || uploadedDoc.ocrText.trim().length === 0;
+        const hasShortText =
+          uploadedDoc?.ocrText && uploadedDoc.ocrText.length < 50;
+
+        if (hasNoText) {
+          Alert.alert(
+            "Upload Successful - Text Extraction Failed",
+            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image or a text-based PDF.",
+            [{ text: "OK" }]
+          );
+        } else if (hasShortText) {
+          Alert.alert(
+            "Upload Successful - Limited Text",
+            "Your document was uploaded, but very little text was extracted. AI-generated content may be limited.\n\nTip: Ensure the document has clear, readable text.",
+            [{ text: "OK" }]
+          );
+        } else if (hasAutoGenerate) {
+          Alert.alert(
+            "Success",
+            "Document uploaded! AI is generating your study materials..."
+          );
+        } else {
+          Alert.alert("Success", "Document uploaded successfully!");
+        }
+
         setSelectedFile(null);
         setDocumentTitle("");
+        setUploadOptions(null);
       } else {
         Alert.alert("Error", "Failed to upload document. Please try again.");
       }
@@ -106,11 +150,22 @@ export default function DocumentsScreen() {
     setTitleModalVisible(false);
     setSelectedFile(null);
     setDocumentTitle("");
+    setUploadOptions(null);
   };
 
-  const renderDocumentCard = ({ item }: { item: Document }) => {
-    return <DocumentCard document={item} onPress={handleDocumentPress} />;
-  };
+  const renderDocumentCard = useCallback(
+    ({ item }: { item: Document }) => {
+      const genState = generationStates[item.$id];
+      return (
+        <DocumentCard
+          document={item}
+          onPress={handleDocumentPress}
+          generationState={genState}
+        />
+      );
+    },
+    [generationStates, handleDocumentPress]
+  );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -138,7 +193,7 @@ export default function DocumentsScreen() {
     </View>
   );
 
-  if (isLoading && documents.length === 0) {
+  if (isLoading && (!documents || documents.length === 0)) {
     return renderLoadingSkeleton();
   }
 
@@ -207,6 +262,25 @@ export default function DocumentsScreen() {
               placeholderTextColor={COLORS.text.tertiary}
               autoFocus
             />
+
+            {/* Show what will be generated */}
+            {(uploadOptions?.generateQuestions ||
+              uploadOptions?.generateNotes) && (
+              <View style={styles.generationInfo}>
+                <Text style={styles.generationInfoTitle}>
+                  Will auto-generate:
+                </Text>
+                {uploadOptions?.generateQuestions && (
+                  <Text style={styles.generationInfoItem}>
+                    • 5 Easy Questions
+                  </Text>
+                )}
+                {uploadOptions?.generateNotes && (
+                  <Text style={styles.generationInfoItem}>• Brief Notes</Text>
+                )}
+              </View>
+            )}
+
             <View style={styles.titleModalButtons}>
               <TouchableOpacity
                 style={[styles.titleModalButton, styles.cancelButton]}
@@ -226,19 +300,6 @@ export default function DocumentsScreen() {
       )}
     </View>
   );
-}
-
-function getRelativeDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
 const styles = StyleSheet.create({
@@ -295,36 +356,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border.default,
     overflow: "hidden",
-  },
-  cardContent: {
-    padding: 16,
-  },
-  thumbnail: {
-    width: "100%",
-    height: 120,
-    backgroundColor: COLORS.border.default,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  cardInfo: {
-    gap: 8,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-    lineHeight: 22,
-  },
-  cardMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  cardDate: {
-    fontSize: 12,
-    color: COLORS.text.tertiary,
   },
   skeletonCard: {
     height: 200,
@@ -414,7 +445,26 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: COLORS.text.primary,
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  generationInfo: {
+    backgroundColor: COLORS.background.card,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border.blue,
+  },
+  generationInfoTitle: {
+    fontSize: 13,
+    color: COLORS.primary.blue,
+    fontWeight: "500",
+    marginBottom: 6,
+  },
+  generationInfoItem: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    marginLeft: 4,
   },
   titleModalButtons: {
     flexDirection: "row",
