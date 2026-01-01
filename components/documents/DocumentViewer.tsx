@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { View, Text, ActivityIndicator, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Alert,
+  Share,
+  StyleSheet,
+} from "react-native";
+import * as Haptics from "expo-haptics";
 import { COLORS } from "@/constants/theme";
 import type { Document, DocumentGenerationState } from "@/types/document";
 import DocumentHeader from "./DocumentHeader";
@@ -9,6 +17,7 @@ import DocumentContent from "./DocumentContent";
 import StatusBanners from "./StatusBanners";
 import ActionButtons from "./ActionButtons";
 import GenerationStatusCard from "./GenerationStatusCard";
+import Toast, { ToastType } from "@/components/shared/Toast";
 
 interface DocumentViewerProps {
   document: Document;
@@ -21,6 +30,22 @@ interface DocumentViewerProps {
   generationState?: DocumentGenerationState;
   isLoading?: boolean;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.background.primary,
+  },
+  progressBanner: {
+    backgroundColor: COLORS.primary.blue,
+  },
+  textPrimary: {
+    color: COLORS.text.primary,
+  },
+  bottomPanel: {
+    backgroundColor: COLORS.background.secondary,
+    borderTopColor: COLORS.border.default,
+  },
+});
 
 export default function DocumentViewer({
   document,
@@ -35,6 +60,15 @@ export default function DocumentViewer({
 }: DocumentViewerProps) {
   const [showDocInfo, setShowDocInfo] = useState(false);
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: ToastType;
+  }>({
+    visible: false,
+    message: "",
+    type: "info",
+  });
 
   const isPDF = document.type === "pdf";
 
@@ -43,6 +77,27 @@ export default function DocumentViewer({
     progress: 0,
   };
   const notesState = generationState?.notes || { status: "idle", progress: 0 };
+
+  // Show toast on generation success
+  useEffect(() => {
+    if (questionsState.status === "success") {
+      showToast("Questions generated successfully! 🎉", "success");
+    } else if (questionsState.status === "error") {
+      showToast("Failed to generate questions. Please try again.", "error");
+    }
+  }, [questionsState.status]);
+
+  useEffect(() => {
+    if (notesState.status === "success") {
+      showToast("Notes generated successfully! 📝", "success");
+    } else if (notesState.status === "error") {
+      showToast("Failed to generate notes. Please try again.", "error");
+    }
+  }, [notesState.status]);
+
+  const showToast = (message: string, type: ToastType) => {
+    setToast({ visible: true, message, type });
+  };
 
   // Check OCR status
   const isOcrPending = document.ocrStatus === "pending";
@@ -54,6 +109,7 @@ export default function DocumentViewer({
   // Handlers
   const handleDelete = () => {
     setFabMenuOpen(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       "Delete Document",
       "Are you sure you want to delete this document? This action cannot be undone.",
@@ -62,29 +118,44 @@ export default function DocumentViewer({
         {
           text: "Delete",
           style: "destructive",
-          onPress: onDelete,
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            onDelete();
+          },
         },
       ]
     );
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     setFabMenuOpen(false);
-    Alert.alert("Coming Soon", "Share functionality will be available soon!");
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    try {
+      const result = await Share.share({
+        message: `Check out this ${isPDF ? "PDF" : "image"}: ${document.title}`,
+        url: document.fileUrl,
+        title: document.title,
+      });
+
+      if (result.action === Share.sharedAction) {
+        showToast("Document shared successfully!", "success");
+      }
+    } catch (error) {
+      showToast("Failed to share document", "error");
+    }
   };
 
   const handleInfo = () => {
     setFabMenuOpen(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowDocInfo(!showDocInfo);
   };
 
   // Loading state
   if (isLoading) {
     return (
-      <View
-        className="flex-1"
-        style={{ backgroundColor: COLORS.background.primary }}
-      >
+      <View className="flex-1" style={styles.container}>
         <DocumentHeader
           title="Loading..."
           isPDF={isPDF}
@@ -99,10 +170,7 @@ export default function DocumentViewer({
   }
 
   return (
-    <View
-      className="flex-1"
-      style={{ backgroundColor: COLORS.background.primary }}
-    >
+    <View className="flex-1" style={styles.container}>
       {/* Header */}
       <DocumentHeader
         title={document.title}
@@ -116,12 +184,12 @@ export default function DocumentViewer({
         notesState.status === "generating") && (
         <View
           className="flex-row items-center gap-3 px-4 py-3"
-          style={{ backgroundColor: COLORS.primary.blue }}
+          style={styles.progressBanner}
         >
           <ActivityIndicator size="small" color={COLORS.text.primary} />
           <Text
             className="flex-1 text-sm font-medium"
-            style={{ color: COLORS.text.primary }}
+            style={styles.textPrimary}
           >
             {questionsState.status === "generating" &&
             notesState.status === "generating"
@@ -145,14 +213,16 @@ export default function DocumentViewer({
         onDelete={handleDelete}
       />
 
+      {/* Toast Notifications */}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() => setToast({ ...toast, visible: false })}
+      />
+
       {/* Bottom Panel */}
-      <View
-        className="p-4 pb-8 border-t"
-        style={{
-          backgroundColor: COLORS.background.secondary,
-          borderTopColor: COLORS.border.default,
-        }}
-      >
+      <View className="p-4 pb-8 border-t" style={styles.bottomPanel}>
         {/* Document Info Panel */}
         {showDocInfo && (
           <DocumentInfoPanel
