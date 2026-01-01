@@ -59,10 +59,13 @@ export default function DocumentViewer({
   };
   const notesState = generationState?.notes || { status: "idle", progress: 0 };
 
+  // Check if OCR is still processing
+  const isOcrPending = document.ocrStatus === "pending";
+  const isOcrFailed = document.ocrStatus === "failed";
   // Check if document has no OCR text
   const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
   const hasShortText = document.ocrText && document.ocrText.length < 50;
-  const canGenerate = !hasNoText && !hasShortText;
+  const canGenerate = !isOcrPending && !hasNoText && !hasShortText;
 
   const handleDelete = () => {
     setMenuVisible(false);
@@ -208,8 +211,22 @@ export default function DocumentViewer({
 
       {/* Bottom Action Panel */}
       <View style={styles.bottomPanel}>
-        {/* No Text Warning */}
-        {hasNoText && (
+        {/* OCR Processing Banner */}
+        {isOcrPending && (
+          <View style={styles.processingBanner}>
+            <ActivityIndicator size="small" color={COLORS.primary.blue} />
+            <Text style={styles.processingTitle}>
+              ✨ Extracting text from document...
+            </Text>
+            <Text style={styles.processingText}>
+              This happens in the background. You can view other documents while
+              we process this one. Actions will be available once complete.
+            </Text>
+          </View>
+        )}
+
+        {/* No Text Warning (only on OCR failure) */}
+        {isOcrFailed && hasNoText && (
           <View style={styles.warningBanner}>
             <Text style={styles.warningTitle}>⚠️ Text Extraction Failed</Text>
             <Text style={styles.warningText}>
@@ -494,6 +511,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: COLORS.status.warning + "40",
+  },
+  processingBanner: {
+    backgroundColor: COLORS.primary.blue + "15",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.primary.blue + "30",
+    gap: 8,
+  },
+  processingTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.primary.blue,
+    marginTop: 4,
+  },
+  processingText: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    lineHeight: 18,
   },
   warningTitle: {
     fontSize: 14,

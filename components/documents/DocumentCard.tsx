@@ -36,6 +36,7 @@ export default function DocumentCard({
   const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
   const hasShortText = document.ocrText && document.ocrText.length < 50;
   const isPendingOcr = document.ocrStatus === "pending";
+  const isOcrFailed = document.ocrStatus === "failed";
 
   if (isLoading) {
     return (
@@ -186,15 +187,17 @@ export default function DocumentCard({
             </View>
           )}
 
-          {/* No Text / Pending OCR Warnings */}
+          {/* OCR State Indicators */}
           {isPendingOcr ? (
-            <View style={styles.pendingBadge}>
-              <Loader size={12} color={COLORS.text.primary} />
-              <Text style={styles.pendingText}>Processing PDF text</Text>
+            <View style={styles.processingBadge}>
+              <Loader size={12} color={COLORS.primary.blue} />
+              <Text style={styles.processingText}>
+                ✨ Extracting text from PDF...
+              </Text>
             </View>
           ) : (
             <>
-              {hasNoText && (
+              {isOcrFailed && (
                 <View style={styles.warningBadge}>
                   <Text style={styles.warningText}>⚠️ No text extracted</Text>
                 </View>
@@ -261,26 +264,28 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    pendingBadge: {
-      marginTop: 8,
-      paddingVertical: 6,
-      paddingHorizontal: 10,
-      backgroundColor: "#E0ECFF",
-      borderRadius: 8,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-    },
-    pendingText: {
-      color: COLORS.text.primary,
-      fontSize: 12,
-      fontWeight: "600",
-    },
     gap: 2,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 10,
     backgroundColor: COLORS.border.default,
+  },
+  processingBadge: {
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.primary.blue + "15",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary.blue + "30",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  processingText: {
+    color: COLORS.primary.blue,
+    fontSize: 12,
+    fontWeight: "600",
   },
   badgeGenerating: {
     backgroundColor: COLORS.primary.blue,

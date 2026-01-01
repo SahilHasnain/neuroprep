@@ -5,3 +5,4 @@
 
 export const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1";
 export const APPWRITE_PROJECT_ID = "693e5d70002253bb1cb7";
+export const APPWRITE_STORAGE_BUCKET_ID = "documents";
