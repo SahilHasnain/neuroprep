@@ -4,11 +4,12 @@ import {
   View,
   Text,
   Pressable,
-  StyleSheet,
   Alert,
   Platform,
-  Switch,
   ScrollView,
+  ActivityIndicator,
+  TextInput,
+  Keyboard,
 } from "react-native";
 import {
   X,
@@ -18,6 +19,9 @@ import {
   Sparkles,
   FileQuestion,
   NotebookPen,
+  CheckCircle2,
+  ArrowLeft,
+  Upload,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
@@ -27,13 +31,14 @@ import type { UploadOptions } from "@/types/document";
 interface DocumentUploadModalProps {
   visible: boolean;
   onClose: () => void;
-  onFileSelected: (
+  onUpload: (
     file: {
       uri: string;
       name: string;
       type: string;
       mimeType: string;
     },
+    title: string,
     options: UploadOptions
   ) => void;
 }
@@ -41,26 +46,30 @@ interface DocumentUploadModalProps {
 export default function DocumentUploadModal({
   visible,
   onClose,
-  onFileSelected,
+  onUpload,
 }: DocumentUploadModalProps) {
   const [requesting, setRequesting] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
+  const [currentStep, setCurrentStep] = useState<"select" | "review" | "title">(
+    "select"
+  );
   const [pendingFile, setPendingFile] = useState<{
     uri: string;
     name: string;
     type: string;
     mimeType: string;
   } | null>(null);
+  const [documentTitle, setDocumentTitle] = useState("");
 
-  // Auto-generation options
-  const [generateQuestions, setGenerateQuestions] = useState(true);
-  const [generateNotes, setGenerateNotes] = useState(true);
+  // Auto-generation options - disabled during upload
+  const [generateQuestions, setGenerateQuestions] = useState(false);
+  const [generateNotes, setGenerateNotes] = useState(false);
 
   const resetState = () => {
-    setShowOptions(false);
+    setCurrentStep("select");
     setPendingFile(null);
-    setGenerateQuestions(true);
-    setGenerateNotes(true);
+    setDocumentTitle("");
+    setGenerateQuestions(false);
+    setGenerateNotes(false);
   };
 
   const handleClose = () => {
@@ -99,11 +108,25 @@ export default function DocumentUploadModal({
     mimeType: string;
   }) => {
     setPendingFile(file);
-    setShowOptions(true);
+    // Auto-fill title from filename (without extension)
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+    setDocumentTitle(nameWithoutExt);
+    setCurrentStep("title");
   };
 
-  const handleConfirm = () => {
-    if (!pendingFile) return;
+  const handleBack = () => {
+    if (currentStep === "title") {
+      setCurrentStep("select");
+      setPendingFile(null);
+      setDocumentTitle("");
+    }
+  };
+
+  const handleUpload = () => {
+    if (!pendingFile || !documentTitle.trim()) {
+      Alert.alert("Error", "Please enter a document title");
+      return;
+    }
 
     const options: UploadOptions = {
       generateQuestions,
@@ -112,7 +135,7 @@ export default function DocumentUploadModal({
       noteSettings: { length: "brief" },
     };
 
-    onFileSelected(pendingFile, options);
+    onUpload(pendingFile, documentTitle.trim(), options);
     handleClose();
   };
 
@@ -220,186 +243,286 @@ export default function DocumentUploadModal({
       transparent
       onRequestClose={handleClose}
     >
-      <Pressable style={styles.overlay} onPress={handleClose}>
+      <Pressable
+        className="flex-1 bg-black/80 justify-end"
+        onPress={handleClose}
+      >
         <Pressable
-          style={styles.modalContent}
+          className="bg-[#1e1e1e] rounded-t-3xl max-h-[85%]"
+          style={{ paddingBottom: Platform.OS === "ios" ? 40 : 20 }}
           onPress={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {showOptions ? "Upload Options" : "Upload Document"}
-            </Text>
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <X size={24} color={COLORS.text.secondary} />
+          {/* Enhanced Header */}
+          <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-700">
+            <View className="flex-row items-center gap-3">
+              {currentStep !== "select" && (
+                <Pressable
+                  className="w-8 h-8 items-center justify-center rounded-full bg-gray-800 active:scale-90"
+                  onPress={handleBack}
+                >
+                  <ArrowLeft size={18} color={COLORS.text.secondary} />
+                </Pressable>
+              )}
+              <View>
+                <Text className="text-xl font-bold text-white">
+                  {currentStep === "select" && "Upload Document"}
+                  {currentStep === "title" && "Name Your Document"}
+                </Text>
+                {currentStep === "select" && (
+                  <Text className="text-xs text-gray-400 mt-0.5">
+                    Choose a source for your document
+                  </Text>
+                )}
+                {currentStep === "title" && (
+                  <Text className="text-xs text-gray-400 mt-0.5">
+                    Give it a memorable name
+                  </Text>
+                )}
+              </View>
+            </View>
+            <Pressable
+              className="w-9 h-9 items-center justify-center rounded-full bg-gray-800 active:scale-90"
+              onPress={handleClose}
+            >
+              <X size={20} color={COLORS.text.secondary} />
             </Pressable>
           </View>
 
-          {!showOptions ? (
+          {currentStep === "select" ? (
             <>
-              {/* File Source Options */}
-              <View style={styles.options}>
+              {/* Enhanced File Source Options */}
+              <View className="p-5 gap-3">
                 <Pressable
-                  style={styles.option}
+                  className={`flex-row items-center p-4 bg-[#121212] rounded-2xl border border-gray-700 ${
+                    requesting ? "opacity-50" : "active:scale-[0.98]"
+                  }`}
                   onPress={handleCamera}
                   disabled={requesting}
                 >
-                  <View style={styles.iconContainer}>
-                    <Camera size={32} color={COLORS.primary.blue} />
+                  <View className="w-14 h-14 rounded-full bg-blue-600/20 items-center justify-center mr-4">
+                    <Camera size={28} color={COLORS.primary.blue} />
                   </View>
-                  <View style={styles.optionText}>
-                    <Text style={styles.optionTitle}>Camera</Text>
-                    <Text style={styles.optionDescription}>
+                  <View className="flex-1">
+                    <Text className="text-base font-semibold text-white mb-1">
+                      Camera
+                    </Text>
+                    <Text className="text-sm text-gray-400">
                       Take a photo of your document
                     </Text>
                   </View>
+                  {requesting && (
+                    <ActivityIndicator
+                      size="small"
+                      color={COLORS.primary.blue}
+                    />
+                  )}
                 </Pressable>
 
                 <Pressable
-                  style={styles.option}
+                  className={`flex-row items-center p-4 bg-[#121212] rounded-2xl border border-gray-700 ${
+                    requesting ? "opacity-50" : "active:scale-[0.98]"
+                  }`}
                   onPress={handleGallery}
                   disabled={requesting}
                 >
-                  <View style={styles.iconContainer}>
-                    <ImageIcon size={32} color={COLORS.primary.blue} />
+                  <View className="w-14 h-14 rounded-full bg-purple-600/20 items-center justify-center mr-4">
+                    <ImageIcon size={28} color="#9333ea" />
                   </View>
-                  <View style={styles.optionText}>
-                    <Text style={styles.optionTitle}>Gallery</Text>
-                    <Text style={styles.optionDescription}>
-                      Choose an image from your gallery
+                  <View className="flex-1">
+                    <Text className="text-base font-semibold text-white mb-1">
+                      Gallery
+                    </Text>
+                    <Text className="text-sm text-gray-400">
+                      Choose from your photo library
                     </Text>
                   </View>
+                  {requesting && (
+                    <ActivityIndicator size="small" color="#9333ea" />
+                  )}
                 </Pressable>
 
                 <Pressable
-                  style={styles.option}
+                  className={`flex-row items-center p-4 bg-[#121212] rounded-2xl border border-gray-700 ${
+                    requesting ? "opacity-50" : "active:scale-[0.98]"
+                  }`}
                   onPress={handlePDF}
                   disabled={requesting}
                 >
-                  <View style={styles.iconContainer}>
-                    <FileText size={32} color={COLORS.primary.blue} />
+                  <View className="w-14 h-14 rounded-full bg-amber-500/20 items-center justify-center mr-4">
+                    <FileText size={28} color={COLORS.accent.gold} />
                   </View>
-                  <View style={styles.optionText}>
-                    <Text style={styles.optionTitle}>PDF Document</Text>
-                    <Text style={styles.optionDescription}>
+                  <View className="flex-1">
+                    <Text className="text-base font-semibold text-white mb-1">
+                      PDF Document
+                    </Text>
+                    <Text className="text-sm text-gray-400">
                       Select a PDF file from your device
                     </Text>
                   </View>
+                  {requesting && (
+                    <ActivityIndicator
+                      size="small"
+                      color={COLORS.accent.gold}
+                    />
+                  )}
                 </Pressable>
+              </View>
+
+              {/* Enhanced Tips Section */}
+              <View className="mx-5 mb-5 p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <Sparkles size={16} color={COLORS.primary.blue} />
+                  <Text className="text-sm font-semibold text-blue-400">
+                    Pro Tips
+                  </Text>
+                </View>
+                <Text className="text-xs text-gray-300 leading-5">
+                  • Ensure good lighting for photos{"\n"}• Keep text clear and
+                  readable{"\n"}• PDFs work best for multi-page documents
+                </Text>
               </View>
             </>
           ) : (
-            <ScrollView style={styles.optionsScroll}>
-              {/* Selected File Info */}
-              <View style={styles.selectedFile}>
-                <FileText size={24} color={COLORS.primary.blue} />
-                <Text style={styles.selectedFileName} numberOfLines={1}>
-                  {pendingFile?.name}
-                </Text>
+            <ScrollView className="p-5" keyboardShouldPersistTaps="handled">
+              {/* Enhanced Selected File Card */}
+              <View className="flex-row items-center p-4 bg-[#121212] rounded-2xl border border-blue-600/50 mb-4 shadow-lg shadow-blue-600/20">
+                <View className="w-12 h-12 rounded-xl bg-blue-600/20 items-center justify-center mr-3">
+                  <FileText size={24} color={COLORS.primary.blue} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs text-gray-400 mb-1">
+                    Selected File
+                  </Text>
+                  <Text
+                    className="text-sm font-semibold text-white"
+                    numberOfLines={1}
+                  >
+                    {pendingFile?.name}
+                  </Text>
+                </View>
+                <CheckCircle2 size={20} color={COLORS.status.success} />
               </View>
 
+              {/* Title Input Section */}
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-white mb-2">
+                  Document Title
+                </Text>
+                <TextInput
+                  className="bg-[#121212] border border-gray-700 rounded-xl p-4 text-base text-white"
+                  value={documentTitle}
+                  onChangeText={setDocumentTitle}
+                  placeholder="Enter document title"
+                  placeholderTextColor={COLORS.text.tertiary}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+
+              {/* PDF Processing Info */}
               {pendingFile?.type === "pdf" && (
-                <View style={styles.infoBanner}>
-                  <Text style={styles.infoBannerTitle}>PDF processing</Text>
-                  <Text style={styles.infoBannerText}>
-                    We’ll upload instantly, then process the PDF text in the
-                    background. AI generation will start once processing
-                    finishes.
+                <View className="p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl mb-4">
+                  <View className="flex-row items-center gap-2 mb-2">
+                    <Sparkles size={16} color={COLORS.primary.blue} />
+                    <Text className="text-sm font-bold text-white">
+                      PDF Processing
+                    </Text>
+                  </View>
+                  <Text className="text-sm text-gray-300 leading-5">
+                    We'll upload your PDF instantly, then extract text in the
+                    background. You'll be notified when it's ready for AI
+                    generation.
                   </Text>
                 </View>
               )}
 
-              {/* AI Generation Options */}
-              <View style={styles.aiSection}>
-                <View style={styles.aiHeader}>
-                  <Sparkles size={20} color={COLORS.accent.gold} />
-                  <Text style={styles.aiTitle}>Auto-Generate with AI</Text>
-                </View>
-                <Text style={styles.aiDescription}>
-                  Let AI create study materials from your document automatically
+              {/* What Happens Next Section */}
+              <View className="p-4 bg-[#121212] border border-gray-700 rounded-xl mb-4">
+                <Text className="text-sm font-bold text-white mb-3">
+                  What happens next?
                 </Text>
-
-                {/* Generate Questions Toggle */}
-                <View style={styles.toggleRow}>
-                  <View style={styles.toggleInfo}>
-                    <View
-                      style={[
-                        styles.toggleIcon,
-                        { backgroundColor: COLORS.primary.blue + "20" },
-                      ]}
-                    >
-                      <FileQuestion size={18} color={COLORS.primary.blue} />
+                <View className="gap-3">
+                  <View className="flex-row items-start gap-3">
+                    <View className="w-6 h-6 rounded-full bg-blue-600 items-center justify-center mt-0.5">
+                      <Text className="text-xs font-bold text-white">1</Text>
                     </View>
-                    <View>
-                      <Text style={styles.toggleTitle}>Generate Questions</Text>
-                      <Text style={styles.toggleDescription}>
-                        5 easy questions from document
+                    <View className="flex-1">
+                      <Text className="text-sm font-medium text-white mb-1">
+                        Upload & Process
+                      </Text>
+                      <Text className="text-xs text-gray-400 leading-4">
+                        Your document will be uploaded and text will be
+                        extracted
                       </Text>
                     </View>
                   </View>
-                  <Switch
-                    value={generateQuestions}
-                    onValueChange={setGenerateQuestions}
-                    trackColor={{
-                      false: COLORS.border.default,
-                      true: COLORS.primary.blue,
-                    }}
-                    thumbColor={COLORS.text.primary}
-                  />
-                </View>
-
-                {/* Generate Notes Toggle */}
-                <View style={styles.toggleRow}>
-                  <View style={styles.toggleInfo}>
-                    <View
-                      style={[
-                        styles.toggleIcon,
-                        { backgroundColor: COLORS.accent.gold + "20" },
-                      ]}
-                    >
-                      <NotebookPen size={18} color={COLORS.accent.gold} />
+                  <View className="flex-row items-start gap-3">
+                    <View className="w-6 h-6 rounded-full bg-green-500 items-center justify-center mt-0.5">
+                      <CheckCircle2 size={14} color="#fff" />
                     </View>
-                    <View>
-                      <Text style={styles.toggleTitle}>Generate Notes</Text>
-                      <Text style={styles.toggleDescription}>
-                        Brief summary notes
+                    <View className="flex-1">
+                      <Text className="text-sm font-medium text-white mb-1">
+                        Title Added
+                      </Text>
+                      <Text className="text-xs text-gray-400 leading-4">
+                        Your document has a memorable name
                       </Text>
                     </View>
                   </View>
-                  <Switch
-                    value={generateNotes}
-                    onValueChange={setGenerateNotes}
-                    trackColor={{
-                      false: COLORS.border.default,
-                      true: COLORS.accent.gold,
-                    }}
-                    thumbColor={COLORS.text.primary}
-                  />
+                  <View className="flex-row items-start gap-3">
+                    <View className="w-6 h-6 rounded-full bg-gray-700 items-center justify-center mt-0.5">
+                      <Text className="text-xs font-bold text-white">3</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm font-medium text-white mb-1">
+                        Generate Content
+                      </Text>
+                      <Text className="text-xs text-gray-400 leading-4">
+                        Create questions and notes from your document
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </View>
 
-              {/* Action Buttons */}
-              <View style={styles.actionButtons}>
+              {/* Enhanced Action Buttons */}
+              <View className="flex-row gap-3 mt-2">
                 <Pressable
-                  style={styles.backButton}
-                  onPress={() => setShowOptions(false)}
+                  className="flex-1 p-4 bg-[#121212] border border-gray-700 rounded-xl items-center active:scale-95"
+                  onPress={handleBack}
                 >
-                  <Text style={styles.backButtonText}>Back</Text>
+                  <Text className="text-base font-semibold text-gray-300">
+                    Back
+                  </Text>
                 </Pressable>
-                <Pressable style={styles.confirmButton} onPress={handleConfirm}>
-                  <Text style={styles.confirmButtonText}>
-                    {pendingFile?.type === "pdf" ? "Upload PDF" : "Upload"}
-                    {(generateQuestions || generateNotes) && " & Generate"}
+                <Pressable
+                  className={`flex-[2] p-4 rounded-xl items-center flex-row justify-center gap-2 shadow-lg active:scale-95 ${
+                    documentTitle.trim()
+                      ? "bg-blue-600 shadow-blue-600/30"
+                      : "bg-gray-700 opacity-50"
+                  }`}
+                  onPress={handleUpload}
+                  disabled={!documentTitle.trim()}
+                >
+                  <Upload size={20} color="#fff" />
+                  <Text className="text-base font-bold text-white">
+                    Upload Now
                   </Text>
                 </Pressable>
               </View>
             </ScrollView>
           )}
 
-          {/* Cancel Button */}
-          {!showOptions && (
-            <Pressable style={styles.cancelButton} onPress={handleClose}>
-              <Text style={styles.cancelText}>Cancel</Text>
+          {/* Enhanced Cancel Button */}
+          {currentStep === "select" && (
+            <Pressable
+              className="mx-5 mb-2 p-4 bg-[#121212] border border-gray-700 rounded-xl items-center active:scale-95"
+              onPress={handleClose}
+            >
+              <Text className="text-base font-semibold text-gray-300">
+                Cancel
+              </Text>
             </Pressable>
           )}
         </Pressable>
@@ -408,206 +531,4 @@ export default function DocumentUploadModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: COLORS.background.secondary,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
-    maxHeight: "85%",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.default,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.text.primary,
-  },
-  closeButton: {
-    padding: 4,
-  },
-  options: {
-    padding: 20,
-    gap: 16,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.border.default,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  optionText: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-    marginBottom: 4,
-  },
-  optionDescription: {
-    fontSize: 14,
-    color: COLORS.text.tertiary,
-  },
-  cancelButton: {
-    marginHorizontal: 20,
-    padding: 16,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-    alignItems: "center",
-  },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.secondary,
-  },
-  // Options screen styles
-  optionsScroll: {
-    padding: 20,
-  },
-  selectedFile: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-    marginBottom: 20,
-  },
-  selectedFileName: {
-    flex: 1,
-    fontSize: 15,
-    color: COLORS.text.primary,
-    fontWeight: "500",
-  },
-  infoBanner: {
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: COLORS.background.card,
-    borderWidth: 1,
-    borderColor: COLORS.border.blue,
-    marginBottom: 16,
-  },
-  infoBannerTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.text.primary,
-    marginBottom: 4,
-  },
-  infoBannerText: {
-    fontSize: 13,
-    color: COLORS.text.secondary,
-    lineHeight: 18,
-  },
-  aiSection: {
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border.blue,
-    marginBottom: 20,
-  },
-  aiHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  aiTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-  },
-  aiDescription: {
-    fontSize: 13,
-    color: COLORS.text.tertiary,
-    marginBottom: 16,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.default,
-  },
-  toggleInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  toggleIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  toggleTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.text.primary,
-  },
-  toggleDescription: {
-    fontSize: 12,
-    color: COLORS.text.tertiary,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  backButton: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-    alignItems: "center",
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.secondary,
-  },
-  confirmButton: {
-    flex: 2,
-    padding: 16,
-    backgroundColor: COLORS.primary.blue,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text.primary,
-  },
-});
+// Styles removed - using Tailwind classes

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,21 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  StyleSheet,
   Alert,
   TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Plus, FileText } from "lucide-react-native";
+import {
+  Plus,
+  FileText,
+  Search,
+  SlidersHorizontal,
+  X,
+  ArrowUpDown,
+  Calendar,
+  FileType,
+  CheckCircle2,
+} from "lucide-react-native";
 import { useDocumentStore } from "@/store/documentStore";
 import type { Document, UploadOptions } from "@/types/document";
 import DocumentCard from "@/components/documents/DocumentCard";
@@ -53,17 +62,13 @@ export default function DocumentsScreen() {
   } = useDocumentStore();
   const [refreshing, setRefreshing] = useState(false);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [titleModalVisible, setTitleModalVisible] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<{
-    uri: string;
-    name: string;
-    type: string;
-    mimeType: string;
-  } | null>(null);
-  const [uploadOptions, setUploadOptions] = useState<UploadOptions | null>(
-    null
-  );
-  const [documentTitle, setDocumentTitle] = useState("");
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"date" | "name">("date");
+  const [filterType, setFilterType] = useState<"all" | "pdf" | "image">("all");
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -86,20 +91,134 @@ export default function DocumentsScreen() {
     setUploadModalVisible(true);
   };
 
-  const handleFileSelected = (
+  // Filter and sort documents
+  const filteredAndSortedDocuments = useMemo(() => {
+    let filtered = [...documents];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((doc) =>
+        doc.title.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply type filter
+    if (filterType !== "all") {
+      filtered = filtered.filter((doc) => doc.type === filterType);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      if (sortBy === "date") {
+        return (
+          new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime()
+        );
+      } else {
+        return a.title.localeCompare(b.title);
+      }
+    });
+
+    return filtered;
+  }, [documents, searchQuery, filterType, sortBy]);
+
+  const handleFileSelected = async (
     file: {
       uri: string;
       name: string;
       type: string;
       mimeType: string;
     },
+    title: string,
     options: UploadOptions
   ) => {
-    setSelectedFile(file);
-    setUploadOptions(options);
-    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-    setDocumentTitle(nameWithoutExt);
-    setTitleModalVisible(true);
+    try {
+      const fileToUpload = {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType || file.type,
+      };
+
+      const { documentId, ocrStatus } = await uploadDocument(
+        fileToUpload,
+        title,
+        file.type,
+        options || undefined
+      );
+
+      if (documentId) {
+        const hasAutoGenerate =
+          options?.generateQuestions || options?.generateNotes;
+
+        // Check if the uploaded document has OCR text
+        const uploadedDoc = documents.find((d) => d.$id === documentId);
+        const hasNoText =
+          !uploadedDoc?.ocrText || uploadedDoc.ocrText.trim().length === 0;
+        const hasShortText =
+          uploadedDoc?.ocrText && uploadedDoc.ocrText.length < 50;
+
+        const isPendingOcr =
+          (ocrStatus?.status === "pending" || file.type === "pdf") && hasNoText;
+
+        if (isPendingOcr) {
+          Alert.alert(
+            "Upload received",
+            "PDF saved. We're processing its text in the background. You can start generation once processing finishes."
+          );
+        } else if (hasNoText) {
+          Alert.alert(
+            "Upload Successful - Text Extraction Failed",
+            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image or a text-based PDF.",
+            [{ text: "OK" }]
+          );
+        } else if (hasShortText) {
+          Alert.alert(
+            "Upload Successful - Limited Text",
+            "Your document was uploaded, but very little text was extracted. AI-generated content may be limited.\n\nTip: Ensure the document has clear, readable text.",
+            [{ text: "OK" }]
+          );
+        } else if (hasAutoGenerate) {
+          Alert.alert(
+            "Success",
+            "Document uploaded! AI is generating your study materials..."
+          );
+        } else {
+          Alert.alert("Success", "Document uploaded successfully!");
+        }
+      } else {
+        // Upload failed - show retry option
+        Alert.alert(
+          "Upload Failed",
+          "Failed to upload document. Would you like to try again?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Retry",
+              onPress: () => setUploadModalVisible(true),
+            },
+          ]
+        );
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      Alert.alert(
+        "Upload Error",
+        "An error occurred during upload. Would you like to try again?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Retry",
+            onPress: () => setUploadModalVisible(true),
+          },
+        ]
+      );
+    }
   };
 
   const handleUpload = async () => {
@@ -242,25 +361,66 @@ export default function DocumentsScreen() {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <FileText size={64} color="#6b7280" />
-      <Text style={styles.emptyTitle}>No Documents Yet</Text>
-      <Text style={styles.emptyText}>
-        Upload your first document to get started
+    <View className="flex-1 justify-center items-center py-20 px-8">
+      <View className="bg-gray-800/30 rounded-full p-8 mb-6">
+        <FileText size={64} color="#6b7280" />
+      </View>
+      <Text className="text-2xl font-bold text-white mb-3">
+        No Documents Yet
       </Text>
-      <TouchableOpacity style={styles.emptyButton} onPress={handleAddPress}>
+      <Text className="text-base text-gray-400 text-center mb-8 leading-6">
+        Upload your first document to get started with AI-powered study
+        materials
+      </Text>
+      <TouchableOpacity
+        className="flex-row items-center gap-2 bg-blue-600 px-6 py-3.5 rounded-xl shadow-lg shadow-blue-600/30 active:scale-95"
+        onPress={handleAddPress}
+      >
         <Plus size={20} color="#fff" />
-        <Text style={styles.emptyButtonText}>Upload Document</Text>
+        <Text className="text-white text-base font-semibold">
+          Upload Document
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderNoResults = () => (
+    <View className="flex-1 justify-center items-center py-20 px-8">
+      <View className="bg-gray-800/30 rounded-full p-8 mb-6">
+        <Search size={64} color="#6b7280" />
+      </View>
+      <Text className="text-2xl font-bold text-white mb-3">
+        No Results Found
+      </Text>
+      <Text className="text-base text-gray-400 text-center mb-8 leading-6">
+        {searchQuery
+          ? `No documents match "${searchQuery}"`
+          : `No ${filterType} documents found`}
+      </Text>
+      <TouchableOpacity
+        className="flex-row items-center gap-2 bg-gray-800 border border-gray-700 px-6 py-3.5 rounded-xl active:scale-95"
+        onPress={() => {
+          setSearchQuery("");
+          setFilterType("all");
+        }}
+      >
+        <X size={20} color="#fff" />
+        <Text className="text-white text-base font-semibold">
+          Clear Filters
+        </Text>
       </TouchableOpacity>
     </View>
   );
 
   const renderLoadingSkeleton = () => (
-    <View style={styles.container}>
-      <View style={styles.grid}>
+    <View className="flex-1 bg-[#121212]">
+      <View className="p-4 pb-24">
         {[1, 2, 3, 4].map((i) => (
-          <View key={i} style={[styles.card, styles.skeletonCard]}>
-            <View style={styles.skeleton} />
+          <View
+            key={i}
+            className="flex-1 m-2 bg-[#1e1e1e] rounded-2xl border border-gray-700 overflow-hidden h-52"
+          >
+            <View className="flex-1 bg-gray-700/30 rounded-xl animate-pulse" />
           </View>
         ))}
       </View>
@@ -272,47 +432,201 @@ export default function DocumentsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Documents</Text>
+    <View className="flex-1 bg-[#121212]">
+      {/* Enhanced Header with search */}
+      <View className="px-5 pt-16 pb-4 bg-[#1e1e1e] border-b border-gray-700">
+        <View className="flex-row items-center justify-between mb-3">
+          <View>
+            <Text className="text-3xl font-bold text-white tracking-tight">
+              Documents
+            </Text>
+            <Text className="text-sm text-gray-400 mt-1">
+              {filteredAndSortedDocuments.length}{" "}
+              {filteredAndSortedDocuments.length === 1
+                ? "document"
+                : "documents"}
+              {searchQuery && " found"}
+            </Text>
+          </View>
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center active:scale-90"
+            onPress={() => setShowSortMenu(!showSortMenu)}
+          >
+            <ArrowUpDown size={20} color={COLORS.text.secondary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar */}
+        <View className="flex-row items-center gap-2">
+          <View className="flex-1 flex-row items-center bg-[#121212] border border-gray-700 rounded-xl px-4 py-3">
+            <Search size={18} color={COLORS.text.tertiary} />
+            <TextInput
+              className="flex-1 ml-2 text-white text-base"
+              placeholder="Search documents..."
+              placeholderTextColor={COLORS.text.tertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setSearchQuery("")}
+                className="active:scale-90"
+              >
+                <X size={18} color={COLORS.text.tertiary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            className={`w-12 h-12 rounded-xl items-center justify-center active:scale-90 ${
+              filterType !== "all"
+                ? "bg-blue-600"
+                : "bg-gray-800 border border-gray-700"
+            }`}
+            onPress={() => setShowFilters(!showFilters)}
+          >
+            <SlidersHorizontal
+              size={20}
+              color={filterType !== "all" ? "#fff" : COLORS.text.secondary}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Sort Menu */}
+        {showSortMenu && (
+          <View className="mt-3 bg-[#121212] border border-gray-700 rounded-xl overflow-hidden">
+            <TouchableOpacity
+              className={`flex-row items-center justify-between p-3 ${
+                sortBy === "date" ? "bg-blue-600/20" : ""
+              }`}
+              onPress={() => {
+                setSortBy("date");
+                setShowSortMenu(false);
+              }}
+            >
+              <View className="flex-row items-center gap-2">
+                <Calendar size={18} color={COLORS.text.secondary} />
+                <Text className="text-white text-sm font-medium">
+                  Sort by Date
+                </Text>
+              </View>
+              {sortBy === "date" && (
+                <CheckCircle2 size={18} color={COLORS.primary.blue} />
+              )}
+            </TouchableOpacity>
+            <View className="h-px bg-gray-700" />
+            <TouchableOpacity
+              className={`flex-row items-center justify-between p-3 ${
+                sortBy === "name" ? "bg-blue-600/20" : ""
+              }`}
+              onPress={() => {
+                setSortBy("name");
+                setShowSortMenu(false);
+              }}
+            >
+              <View className="flex-row items-center gap-2">
+                <FileType size={18} color={COLORS.text.secondary} />
+                <Text className="text-white text-sm font-medium">
+                  Sort by Name
+                </Text>
+              </View>
+              {sortBy === "name" && (
+                <CheckCircle2 size={18} color={COLORS.primary.blue} />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Filter Chips */}
+        {showFilters && (
+          <View className="flex-row gap-2 mt-3">
+            <TouchableOpacity
+              className={`px-4 py-2 rounded-full border active:scale-95 ${
+                filterType === "all"
+                  ? "bg-blue-600 border-blue-600"
+                  : "bg-[#121212] border-gray-700"
+              }`}
+              onPress={() => setFilterType("all")}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  filterType === "all" ? "text-white" : "text-gray-400"
+                }`}
+              >
+                All
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`px-4 py-2 rounded-full border active:scale-95 ${
+                filterType === "pdf"
+                  ? "bg-blue-600 border-blue-600"
+                  : "bg-[#121212] border-gray-700"
+              }`}
+              onPress={() => setFilterType("pdf")}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  filterType === "pdf" ? "text-white" : "text-gray-400"
+                }`}
+              >
+                PDFs
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`px-4 py-2 rounded-full border active:scale-95 ${
+                filterType === "image"
+                  ? "bg-blue-600 border-blue-600"
+                  : "bg-[#121212] border-gray-700"
+              }`}
+              onPress={() => setFilterType("image")}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  filterType === "image" ? "text-white" : "text-gray-400"
+                }`}
+              >
+                Images
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
+      {/* Error Banner */}
       {error && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
+        <View className="bg-red-500/90 p-3 mx-4 mt-4 rounded-xl shadow-lg">
+          <Text className="text-white text-center font-medium">{error}</Text>
         </View>
       )}
 
+      {/* Upload Progress Banner */}
       {uploadStatus === "uploading" && uploadProgress && (
-        <View style={styles.uploadingBanner}>
-          <View style={styles.uploadingContent}>
-            <View style={styles.uploadingHeader}>
+        <View className="bg-blue-600 p-4 mx-4 mt-4 rounded-xl shadow-lg shadow-blue-600/30">
+          <View className="flex-1">
+            <View className="flex-row items-center justify-center gap-3 mb-2">
               <ActivityIndicator size="small" color="#fff" />
-              <Text style={styles.uploadingText}>
+              <Text className="text-white text-sm font-semibold">
                 Uploading document... {uploadProgress.percentage}%
               </Text>
             </View>
 
-            {/* Progress Bar */}
-            <View style={styles.progressBarContainer}>
+            {/* Enhanced Progress Bar */}
+            <View className="h-2 bg-white/20 rounded-full overflow-hidden mb-2">
               <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${uploadProgress.percentage}%` },
-                ]}
+                className="h-full bg-white rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress.percentage}%` }}
               />
             </View>
 
             {/* Upload Stats */}
-            <View style={styles.uploadStats}>
+            <View className="flex-row justify-center gap-4">
               {uploadProgress.speed && uploadProgress.speed > 0 && (
-                <Text style={styles.uploadStatsText}>
+                <Text className="text-white/90 text-xs">
                   {formatSpeed(uploadProgress.speed)}
                 </Text>
               )}
               {uploadProgress.estimatedTimeRemaining &&
                 uploadProgress.estimatedTimeRemaining > 0 && (
-                  <Text style={styles.uploadStatsText}>
+                  <Text className="text-white/90 text-xs">
                     {formatTime(uploadProgress.estimatedTimeRemaining)}{" "}
                     remaining
                   </Text>
@@ -323,19 +637,26 @@ export default function DocumentsScreen() {
       )}
 
       {uploadStatus === "processing" && (
-        <View style={styles.uploadingBanner}>
+        <View className="bg-blue-600 p-3 mx-4 mt-4 rounded-xl flex-row items-center justify-center gap-3 shadow-lg shadow-blue-600/30">
           <ActivityIndicator size="small" color="#fff" />
-          <Text style={styles.uploadingText}>Processing document...</Text>
+          <Text className="text-white text-sm font-semibold">
+            Processing document...
+          </Text>
         </View>
       )}
 
+      {/* Documents Grid */}
       <FlatList
-        data={documents}
+        data={filteredAndSortedDocuments}
         renderItem={renderDocumentCard}
         keyExtractor={(item) => item.$id}
         numColumns={2}
-        contentContainerStyle={styles.grid}
-        ListEmptyComponent={renderEmptyState}
+        contentContainerClassName="p-4 pb-24"
+        ListEmptyComponent={
+          searchQuery || filterType !== "all"
+            ? renderNoResults
+            : renderEmptyState
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -345,291 +666,21 @@ export default function DocumentsScreen() {
         }
       />
 
-      <TouchableOpacity style={styles.fab} onPress={handleAddPress}>
-        <Plus size={24} color="#fff" />
+      {/* Enhanced FAB with shadow and scale animation */}
+      <TouchableOpacity
+        className="absolute right-5 bottom-24 w-16 h-16 rounded-full bg-blue-600 justify-center items-center shadow-2xl shadow-blue-600/50 active:scale-90"
+        onPress={handleAddPress}
+      >
+        <Plus size={28} color="#fff" strokeWidth={2.5} />
       </TouchableOpacity>
 
       <DocumentUploadModal
         visible={uploadModalVisible}
         onClose={() => setUploadModalVisible(false)}
-        onFileSelected={handleFileSelected}
+        onUpload={handleFileSelected}
       />
-
-      {/* Title Input Modal */}
-      {titleModalVisible && (
-        <View style={styles.titleModalOverlay}>
-          <View style={styles.titleModal}>
-            <Text style={styles.titleModalTitle}>Document Title</Text>
-            <TextInput
-              style={styles.titleInput}
-              value={documentTitle}
-              onChangeText={setDocumentTitle}
-              placeholder="Enter document title"
-              placeholderTextColor={COLORS.text.tertiary}
-              autoFocus
-            />
-
-            {/* Show what will be generated */}
-            {(uploadOptions?.generateQuestions ||
-              uploadOptions?.generateNotes) && (
-              <View style={styles.generationInfo}>
-                <Text style={styles.generationInfoTitle}>
-                  Will auto-generate:
-                </Text>
-                {uploadOptions?.generateQuestions && (
-                  <Text style={styles.generationInfoItem}>
-                    • 5 Easy Questions
-                  </Text>
-                )}
-                {uploadOptions?.generateNotes && (
-                  <Text style={styles.generationInfoItem}>• Brief Notes</Text>
-                )}
-              </View>
-            )}
-
-            <View style={styles.titleModalButtons}>
-              <TouchableOpacity
-                style={[styles.titleModalButton, styles.cancelButton]}
-                onPress={handleCancelUpload}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.titleModalButton, styles.uploadButton]}
-                onPress={handleUpload}
-              >
-                <Text style={styles.uploadButtonText}>Upload</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background.primary,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: COLORS.background.secondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.default,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.text.primary,
-  },
-  errorBanner: {
-    backgroundColor: COLORS.status.error,
-    padding: 12,
-    margin: 16,
-    borderRadius: 8,
-  },
-  errorText: {
-    color: COLORS.text.primary,
-    textAlign: "center",
-  },
-  uploadingBanner: {
-    backgroundColor: COLORS.primary.blue,
-    padding: 12,
-    margin: 16,
-    borderRadius: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  uploadingContent: {
-    flex: 1,
-  },
-  uploadingHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-  uploadingText: {
-    color: COLORS.text.primary,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  progressBarContainer: {
-    height: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 3,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 3,
-  },
-  uploadStats: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 16,
-  },
-  uploadStatsText: {
-    color: "rgba(255, 255, 255, 0.9)",
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  grid: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  card: {
-    flex: 1,
-    margin: 8,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-    overflow: "hidden",
-  },
-  skeletonCard: {
-    height: 200,
-  },
-  skeleton: {
-    flex: 1,
-    backgroundColor: COLORS.border.default,
-    borderRadius: 8,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 80,
-    gap: 16,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.text.primary,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.text.tertiary,
-    textAlign: "center",
-    paddingHorizontal: 40,
-  },
-  emptyButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: COLORS.primary.blue,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  emptyButtonText: {
-    color: COLORS.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 90,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary.blue,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  titleModalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  titleModal: {
-    backgroundColor: COLORS.background.secondary,
-    borderRadius: 16,
-    padding: 24,
-    width: "85%",
-    maxWidth: 400,
-  },
-  titleModalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.text.primary,
-    marginBottom: 16,
-  },
-  titleInput: {
-    backgroundColor: COLORS.background.card,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: COLORS.text.primary,
-    marginBottom: 16,
-  },
-  generationInfo: {
-    backgroundColor: COLORS.background.card,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border.blue,
-  },
-  generationInfoTitle: {
-    fontSize: 13,
-    color: COLORS.primary.blue,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  generationInfoItem: {
-    fontSize: 13,
-    color: COLORS.text.secondary,
-    marginLeft: 4,
-  },
-  titleModalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  titleModalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: COLORS.background.card,
-    borderWidth: 1,
-    borderColor: COLORS.border.default,
-  },
-  cancelButtonText: {
-    color: COLORS.text.secondary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  uploadButton: {
-    backgroundColor: COLORS.primary.blue,
-  },
-  uploadButtonText: {
-    color: COLORS.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
+// Styles removed - using Tailwind classes
