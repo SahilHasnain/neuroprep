@@ -413,23 +413,13 @@ export default function DocumentsScreen() {
   );
 
   const renderLoadingSkeleton = () => (
-    <View className="flex-1 bg-[#121212]">
-      <View className="p-4 pb-24">
-        {[1, 2, 3, 4].map((i) => (
-          <View
-            key={i}
-            className="flex-1 m-2 bg-[#1e1e1e] rounded-2xl border border-gray-700 overflow-hidden h-52"
-          >
-            <View className="flex-1 bg-gray-700/30 rounded-xl animate-pulse" />
-          </View>
-        ))}
-      </View>
+    <View className="flex-1 items-center justify-center py-24">
+      <ActivityIndicator size="large" color={COLORS.primary.blue} />
+      <Text className="text-sm text-gray-400 mt-3">Loading documents...</Text>
     </View>
   );
 
-  if (isLoading && (!documents || documents.length === 0)) {
-    return renderLoadingSkeleton();
-  }
+  // Always render the screen so header appears instantly; show loading as list empty state
 
   return (
     <View className="flex-1 bg-[#121212]">
@@ -652,11 +642,17 @@ export default function DocumentsScreen() {
         keyExtractor={(item) => item.$id}
         numColumns={2}
         contentContainerClassName="p-4 pb-24"
-        ListEmptyComponent={
-          searchQuery || filterType !== "all"
-            ? renderNoResults
-            : renderEmptyState
-        }
+        initialNumToRender={6}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        removeClippedSubviews
+        updateCellsBatchingPeriod={50}
+        scrollEventThrottle={16}
+        ListEmptyComponent={() => {
+          if (isLoading) return renderLoadingSkeleton();
+          if (searchQuery || filterType !== "all") return renderNoResults();
+          return renderEmptyState();
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

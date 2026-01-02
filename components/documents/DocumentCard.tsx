@@ -20,7 +20,7 @@ interface DocumentCardProps {
   generationState?: DocumentGenerationState;
 }
 
-export default function DocumentCard({
+function DocumentCard({
   document,
   onPress,
   isLoading = false,
@@ -53,7 +53,7 @@ export default function DocumentCard({
 
   return (
     <TouchableOpacity
-      className="flex-1 m-2 bg-[#1e1e1e] rounded-2xl border border-gray-700 overflow-hidden shadow-lg shadow-black/20 active:scale-[0.98]"
+      className="flex-1 m-2 bg-[#1e1e1e] rounded-2xl border border-gray-700 overflow-hidden active:scale-[0.98]"
       onPress={() => onPress(document)}
       activeOpacity={0.9}
     >
@@ -246,3 +246,32 @@ function getRelativeDate(dateString: string): string {
 }
 
 // Styles removed - using Tailwind classes
+
+export default React.memo(DocumentCard, (prev, next) => {
+  const d1 = prev.document;
+  const d2 = next.document;
+  const g1 = prev.generationState;
+  const g2 = next.generationState;
+
+  const docEqual =
+    d1.$id === d2.$id &&
+    d1.title === d2.title &&
+    d1.thumbnailUrl === d2.thumbnailUrl &&
+    d1.$createdAt === d2.$createdAt &&
+    d1.ocrStatus === d2.ocrStatus &&
+    (d1.ocrText?.length || 0) === (d2.ocrText?.length || 0) &&
+    d1.type === d2.type;
+
+  const genEqual =
+    (g1?.questions?.status ?? "idle") === (g2?.questions?.status ?? "idle") &&
+    (g1?.questions?.progress ?? 0) === (g2?.questions?.progress ?? 0) &&
+    (g1?.notes?.status ?? "idle") === (g2?.notes?.status ?? "idle") &&
+    (g1?.notes?.progress ?? 0) === (g2?.notes?.progress ?? 0);
+
+  return (
+    docEqual &&
+    genEqual &&
+    prev.isLoading === next.isLoading &&
+    prev.onPress === next.onPress
+  );
+});
