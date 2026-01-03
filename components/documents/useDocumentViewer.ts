@@ -27,8 +27,6 @@ export function useDocumentViewer({
     type: "info",
   });
 
-  const isPDF = document.type === "pdf";
-
   const questionsState = generationState?.questions || {
     status: "idle" as const,
     progress: 0,
@@ -104,7 +102,7 @@ export function useDocumentViewer({
 
     try {
       const result = await Share.share({
-        message: `Check out this ${isPDF ? "PDF" : "image"}: ${document.title}`,
+        message: `Check out this image: ${document.title}`,
         url: document.fileUrl,
         title: document.title,
       });
@@ -150,7 +148,6 @@ export function useDocumentViewer({
     hideToast,
 
     // derived
-    isPDF,
     questionsState,
     notesState,
     isOcrPending,

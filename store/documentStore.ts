@@ -271,10 +271,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     if (!document) return null;
 
     // Check if OCR is pending
-    if (
-      document.ocrStatus === "pending" ||
-      (!document.ocrText && document.type === "pdf")
-    ) {
+    if (document.ocrStatus === "pending" || !document.ocrText) {
       console.log("⏳ [Store] OCR pending, processing first...");
       // Update state to processing OCR
       set((state) => ({
@@ -439,10 +436,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     if (!document) return null;
 
     // Check if OCR is pending
-    if (
-      document.ocrStatus === "pending" ||
-      (!document.ocrText && document.type === "pdf")
-    ) {
+    if (document.ocrStatus === "pending" || !document.ocrText) {
       console.log("⏳ [Store] OCR pending, processing first...");
       set((state) => ({
         generationStates: {

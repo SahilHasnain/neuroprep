@@ -3,7 +3,6 @@
  */
 
 export enum DocumentType {
-  PDF = "pdf",
   IMAGE = "image",
 }
 
@@ -24,7 +23,7 @@ export interface ProcessingMetadata {
 export interface Document {
   $id: string;
   title: string;
-  type: "pdf" | "image";
+  type: "image";
   fileUrl: string;
   thumbnailUrl?: string;
   ocrText?: string;

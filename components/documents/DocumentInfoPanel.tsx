@@ -6,13 +6,11 @@ import type { Document } from "@/types/document";
 
 interface DocumentInfoPanelProps {
   document: Document;
-  isPDF: boolean;
   onClose: () => void;
 }
 
 export default function DocumentInfoPanel({
   document,
-  isPDF,
   onClose,
 }: DocumentInfoPanelProps) {
   const formatFileSize = (bytes?: number) => {
@@ -83,7 +81,7 @@ export default function DocumentInfoPanel({
             className="text-sm font-medium"
             style={{ color: COLORS.text.primary }}
           >
-            {isPDF ? "PDF Document" : "Image"}
+            Image
           </Text>
         </View>
 

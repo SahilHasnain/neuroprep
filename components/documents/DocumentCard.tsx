@@ -205,7 +205,7 @@ function DocumentCard({
             <View className="mt-2 py-2 px-2.5 bg-blue-600/15 border border-blue-600/30 rounded-lg flex-row items-center gap-1.5">
               <Sparkles size={12} color={COLORS.primary.blue} />
               <Text className="text-xs text-blue-400 font-medium flex-1">
-                Processing PDF...
+                Processing document...
               </Text>
             </View>
           ) : (

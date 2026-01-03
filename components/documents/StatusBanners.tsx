@@ -63,8 +63,7 @@ export default function StatusBanners({
             style={{ color: COLORS.text.secondary }}
           >
             Unable to extract text from this document. AI features like question
-            and note generation won&apos;t work. Try uploading a clearer image
-            or a text-based PDF.
+            and note generation won&apos;t work. Try uploading a clearer image.
           </Text>
         </View>
       )}

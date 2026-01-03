@@ -38,8 +38,7 @@ export const documentsService = {
       const identity = await getIdentity();
 
       // Determine MIME type based on file type hint
-      const mimeType =
-        file.type || (type === "pdf" ? "application/pdf" : "image/jpeg");
+      const mimeType = file.type || "image/jpeg";
 
       // Normalize file (ensure size and valid URI)
       const normalizedFile = await normalizeFile(file, mimeType);
@@ -151,7 +150,7 @@ export const documentsService = {
         success: false,
         data: null,
         message:
-          "Unable to generate questions. The document text could not be extracted. Please try uploading a clearer image or a text-based PDF.",
+          "Unable to generate questions. The document text could not be extracted. Please try uploading a clearer image.",
       };
     }
 
@@ -223,7 +222,7 @@ export const documentsService = {
         success: false,
         data: null,
         message:
-          "Unable to generate notes. The document text could not be extracted. Please try uploading a clearer image or a text-based PDF.",
+          "Unable to generate notes. The document text could not be extracted. Please try uploading a clearer image.",
       };
     }
 

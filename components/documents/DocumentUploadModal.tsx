@@ -24,7 +24,6 @@ import {
   Upload,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as DocumentPicker from "expo-document-picker";
 import { COLORS } from "@/constants/theme";
 import type { UploadOptions } from "@/types/document";
 
@@ -209,33 +208,6 @@ export default function DocumentUploadModal({
     }
   };
 
-  const handlePDF = async () => {
-    if (requesting) return;
-    setRequesting(true);
-
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
-        copyToCacheDirectory: true,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        proceedWithFile({
-          uri: asset.uri,
-          name: asset.name,
-          type: "pdf",
-          mimeType: asset.mimeType || "application/pdf",
-        });
-      }
-    } catch (error) {
-      console.error("PDF picker error:", error);
-      Alert.alert("Error", "Failed to select PDF");
-    } finally {
-      setRequesting(false);
-    }
-  };
-
   return (
     <Modal
       visible={visible}
@@ -340,32 +312,6 @@ export default function DocumentUploadModal({
                     <ActivityIndicator size="small" color="#9333ea" />
                   )}
                 </Pressable>
-
-                <Pressable
-                  className={`flex-row items-center p-4 bg-[#121212] rounded-2xl border border-gray-700 ${
-                    requesting ? "opacity-50" : "active:scale-[0.98]"
-                  }`}
-                  onPress={handlePDF}
-                  disabled={requesting}
-                >
-                  <View className="items-center justify-center mr-4 rounded-full w-14 h-14 bg-amber-500/20">
-                    <FileText size={28} color={COLORS.accent.gold} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="mb-1 text-base font-semibold text-white">
-                      PDF Document
-                    </Text>
-                    <Text className="text-sm text-gray-400">
-                      Select a PDF file from your device
-                    </Text>
-                  </View>
-                  {requesting && (
-                    <ActivityIndicator
-                      size="small"
-                      color={COLORS.accent.gold}
-                    />
-                  )}
-                </Pressable>
               </View>
 
               {/* Enhanced Tips Section */}
@@ -378,7 +324,7 @@ export default function DocumentUploadModal({
                 </View>
                 <Text className="text-xs leading-5 text-gray-300">
                   • Ensure good lighting for photos{"\n"}• Keep text clear and
-                  readable{"\n"}• PDFs work best for multi-page documents
+                  readable{"\n"}• Use high-quality images for best results
                 </Text>
               </View>
             </>
@@ -419,23 +365,6 @@ export default function DocumentUploadModal({
                   onSubmitEditing={Keyboard.dismiss}
                 />
               </View>
-
-              {/* PDF Processing Info */}
-              {pendingFile?.type === "pdf" && (
-                <View className="p-4 mb-4 border bg-blue-600/10 border-blue-600/30 rounded-xl">
-                  <View className="flex-row items-center gap-2 mb-2">
-                    <Sparkles size={16} color={COLORS.primary.blue} />
-                    <Text className="text-sm font-bold text-white">
-                      PDF Processing
-                    </Text>
-                  </View>
-                  <Text className="text-sm leading-5 text-gray-300">
-                    We&apos;ll upload your PDF instantly, then extract text in the
-                    background. You&apos;ll be notified when it&apos;s ready for AI
-                    generation.
-                  </Text>
-                </View>
-              )}
 
               {/* What Happens Next Section */}
               <View className="p-4 bg-[#121212] border border-gray-700 rounded-xl mb-4">

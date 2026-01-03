@@ -67,7 +67,7 @@ export default function DocumentsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
-  const [filterType, setFilterType] = useState<"all" | "pdf" | "image">("all");
+  const [filterType, setFilterType] = useState<"all" | "image">("all");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
   useEffect(() => {
@@ -157,18 +157,17 @@ export default function DocumentsScreen() {
         const hasShortText =
           uploadedDoc?.ocrText && uploadedDoc.ocrText.length < 50;
 
-        const isPendingOcr =
-          (ocrStatus?.status === "pending" || file.type === "pdf") && hasNoText;
+        const isPendingOcr = ocrStatus?.status === "pending" && hasNoText;
 
         if (isPendingOcr) {
           Alert.alert(
             "Upload received",
-            "PDF saved. We're processing its text in the background. You can start generation once processing finishes."
+            "Document saved. We're processing its text in the background. You can start generation once processing finishes."
           );
         } else if (hasNoText) {
           Alert.alert(
             "Upload Successful - Text Extraction Failed",
-            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image or a text-based PDF.",
+            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image.",
             [{ text: "OK" }]
           );
         } else if (hasShortText) {
@@ -254,19 +253,17 @@ export default function DocumentsScreen() {
         const hasShortText =
           uploadedDoc?.ocrText && uploadedDoc.ocrText.length < 50;
 
-        const isPendingOcr =
-          (ocrStatus?.status === "pending" || selectedFile.type === "pdf") &&
-          hasNoText;
+        const isPendingOcr = ocrStatus?.status === "pending" && hasNoText;
 
         if (isPendingOcr) {
           Alert.alert(
             "Upload received",
-            "PDF saved. We’re processing its text in the background. You can start generation once processing finishes."
+            "Document saved. We’re processing its text in the background. You can start generation once processing finishes."
           );
         } else if (hasNoText) {
           Alert.alert(
             "Upload Successful - Text Extraction Failed",
-            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image or a text-based PDF.",
+            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image.",
             [{ text: "OK" }]
           );
         } else if (hasShortText) {
@@ -543,22 +540,6 @@ export default function DocumentsScreen() {
                 }`}
               >
                 All
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`px-4 py-2 rounded-full border active:scale-95 ${
-                filterType === "pdf"
-                  ? "bg-blue-600 border-blue-600"
-                  : "bg-[#121212] border-gray-700"
-              }`}
-              onPress={() => setFilterType("pdf")}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  filterType === "pdf" ? "text-white" : "text-gray-400"
-                }`}
-              >
-                PDFs
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

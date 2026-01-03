@@ -61,7 +61,6 @@ export default function DocumentViewer({
     hideToast,
 
     // derived
-    isPDF,
     questionsState,
     notesState,
     isOcrPending,
@@ -84,7 +83,6 @@ export default function DocumentViewer({
       <View className="flex-1" style={styles.container}>
         <DocumentHeader
           title="Loading..."
-          isPDF={isPDF}
           createdAt={document.$createdAt}
           onBack={onBack}
         />
@@ -100,7 +98,6 @@ export default function DocumentViewer({
       {/* Header */}
       <DocumentHeader
         title={document.title}
-        isPDF={isPDF}
         createdAt={document.$createdAt}
         onBack={onBack}
       />
@@ -122,7 +119,7 @@ export default function DocumentViewer({
       )}
 
       {/* Document Content */}
-      <DocumentContent fileUrl={document.fileUrl} isPDF={isPDF} />
+      <DocumentContent fileUrl={document.fileUrl} />
 
       {/* Floating Action Menu */}
       <FloatingActionMenu
@@ -147,7 +144,6 @@ export default function DocumentViewer({
         {showDocInfo && (
           <DocumentInfoPanel
             document={document}
-            isPDF={isPDF}
             onClose={() => setShowDocInfo(false)}
           />
         )}

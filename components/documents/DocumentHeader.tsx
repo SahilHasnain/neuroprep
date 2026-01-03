@@ -5,14 +5,12 @@ import { COLORS } from "@/constants/theme";
 
 interface DocumentHeaderProps {
   title: string;
-  isPDF: boolean;
   createdAt: string;
   onBack: () => void;
 }
 
 export default function DocumentHeader({
   title,
-  isPDF,
   createdAt,
   onBack,
 }: DocumentHeaderProps) {
@@ -38,22 +36,6 @@ export default function DocumentHeader({
         >
           <ArrowLeft size={20} color={COLORS.text.primary} />
         </TouchableOpacity>
-
-        {/* Document Type Badge */}
-        <View
-          className="px-3 py-1 border rounded-full"
-          style={{
-            backgroundColor: COLORS.primary.blue + "33",
-            borderColor: COLORS.primary.blue + "4D",
-          }}
-        >
-          <Text
-            className="text-xs font-medium"
-            style={{ color: COLORS.primary.blue }}
-          >
-            {isPDF ? "PDF" : "IMAGE"}
-          </Text>
-        </View>
 
         {/* Spacer for symmetry */}
         <View className="w-10" />
