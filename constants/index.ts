@@ -12,13 +12,18 @@ export const API_ENDPOINTS = {
   CANCEL_SUBSCRIPTION: "https://6947acaf0021f3fbd316.fra.appwrite.run",
   // Documents endpoints (separate functions)
   DOCUMENTS_UPLOAD: "https://69541719002fc4f32810.fra.appwrite.run",
-  DOCUMENTS_CHUNKED_UPLOAD:
-    "https://69564444002726a42e94.fra.appwrite.run", // Update after deployment
+  DOCUMENTS_CHUNKED_UPLOAD: "https://69564444002726a42e94.fra.appwrite.run", // Update after deployment
   DOCUMENTS_GET_ALL: "https://6954179700045dd890d4.fra.appwrite.run",
   DOCUMENTS_GET_DETAIL: "https://695417e2001d46e74d6b.fra.appwrite.run",
   DOCUMENTS_DELETE: "https://69541808000216397dc9.fra.appwrite.run",
   PROCESS_OCR: "https://695607f20031b594e614.fra.appwrite.run", // Update this after deployment
-  PROCESS_THUMBNAIL: "https://695644b4001690e61503.fra.appwrite.run"
+  PROCESS_THUMBNAIL: "https://695644b4001690e61503.fra.appwrite.run",
+  // Flashcards endpoints
+  FLASHCARDS_GENERATE:
+    "https://placeholder-generate-flashcards.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_LIST_DECKS: "https://placeholder-list-decks.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_GET_DECK: "https://placeholder-get-deck.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_DELETE_DECK: "https://placeholder-delete-deck.fra.appwrite.run", // Update after deployment
 };
 
 // Subjects

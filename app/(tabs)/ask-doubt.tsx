@@ -3,9 +3,17 @@ import AuthModal from "@/components/ui/AuthModal";
 import LimitReachedModal from "@/components/ui/LimitReachedModal";
 import { useAuthStore } from "@/store/authStore";
 import { useDoubts } from "@/hooks/useDoubts";
+import { useFlashcardsStore } from "@/store/flashcardsStore";
 import { LAUNCH_V1_BYPASS } from "@/constants";
 import { useState, useEffect } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { THEME } from "@/constants/theme";
@@ -160,6 +168,49 @@ Correct Answer: ${parsedContext.correctAnswer}
         doubtContext: JSON.stringify(context),
       },
     });
+  };
+
+  const handleSaveAsFlashcard = async (
+    doubtText: string,
+    resolution: string,
+    subject: string,
+    topic: string
+  ) => {
+    try {
+      // Create a single-card deck directly
+      const result = await useFlashcardsStore.getState().generateFlashcards({
+        deckName: `Doubt: ${doubtText.substring(0, 50)}${doubtText.length > 50 ? "..." : ""}`,
+        subject: subject,
+        topic: topic,
+        cardCount: 1,
+        doubtContext: {
+          doubtId: Date.now().toString(), // Generate temporary ID
+          doubtText: doubtText,
+          resolution: resolution,
+          subject: subject,
+          topic: topic,
+        },
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success!",
+          "Flashcard saved successfully! You can view it in the Flashcards tab.",
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Failed",
+          result.error || "Failed to save flashcard. Please try again.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error("Error saving flashcard:", error);
+      Alert.alert("Error", "An error occurred while saving the flashcard.", [
+        { text: "OK" },
+      ]);
+    }
   };
 
   // MVP_BYPASS: Removed plan-related logic
@@ -319,6 +370,7 @@ Correct Answer: ${parsedContext.correctAnswer}
             }
             onGenerateQuestions={handleGenerateQuestions}
             onGenerateNotes={handleGenerateNotes}
+            onSaveAsFlashcard={handleSaveAsFlashcard}
           />
         ))}
       </ScrollView>

@@ -8,7 +8,12 @@ import {
   StyleSheet,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { FileQuestion, NotebookPen, CheckCircle2 } from "lucide-react-native";
+import {
+  FileQuestion,
+  NotebookPen,
+  CheckCircle2,
+  BookMarked,
+} from "lucide-react-native";
 import { COLORS } from "@/constants/theme";
 import type { GenerationState } from "@/types/document";
 
@@ -18,6 +23,7 @@ interface ActionButtonsProps {
   notesState: GenerationState;
   onGenerateQuestions: () => void;
   onGenerateNotes: () => void;
+  onGenerateFlashcards?: () => void;
 }
 
 const styles = StyleSheet.create({
@@ -44,6 +50,7 @@ export default function ActionButtons({
   notesState,
   onGenerateQuestions,
   onGenerateNotes,
+  onGenerateFlashcards,
 }: ActionButtonsProps) {
   const questionsScale = useRef(new Animated.Value(1)).current;
   const notesScale = useRef(new Animated.Value(1)).current;
@@ -98,6 +105,11 @@ export default function ActionButtons({
   const handleNotesPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onGenerateNotes();
+  };
+
+  const handleFlashcardsPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onGenerateFlashcards?.();
   };
 
   return (
@@ -203,6 +215,45 @@ export default function ActionButtons({
           </View>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Generate Flashcards Button */}
+      {onGenerateFlashcards && (
+        <TouchableOpacity
+          className="p-4 border rounded-2xl active:scale-95"
+          style={[
+            canGenerate
+              ? {
+                  backgroundColor: COLORS.accent.purple,
+                  borderColor: COLORS.accent.purple,
+                  shadowColor: COLORS.accent.purple,
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 5,
+                }
+              : styles.buttonDisabled,
+          ]}
+          onPress={handleFlashcardsPress}
+          disabled={!canGenerate}
+          activeOpacity={0.8}
+        >
+          <View className="flex-row items-center gap-3">
+            <View
+              className="items-center justify-center w-12 h-12 rounded-full"
+              style={styles.iconContainer}
+            >
+              <BookMarked size={24} color={COLORS.text.primary} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-bold" style={styles.textPrimary}>
+                Generate Flashcards
+              </Text>
+              <Text className="text-xs mt-0.5" style={styles.textPrimaryOpaque}>
+                Create study cards
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

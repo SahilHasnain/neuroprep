@@ -10,6 +10,12 @@ interface ChatBubbleProps {
   doubtContext?: DoubtContext;
   onGenerateQuestions?: (context: DoubtContext) => void;
   onGenerateNotes?: (context: DoubtToNoteContext) => void;
+  onSaveAsFlashcard?: (
+    doubtText: string,
+    resolution: string,
+    subject: string,
+    topic: string
+  ) => void;
 }
 
 export default function ChatBubble({
@@ -19,10 +25,13 @@ export default function ChatBubble({
   doubtContext,
   onGenerateQuestions,
   onGenerateNotes,
+  onSaveAsFlashcard,
 }: ChatBubbleProps) {
   const showGenerateQuestionsButton =
     !isUser && doubtContext && onGenerateQuestions;
   const showGenerateNotesButton = !isUser && doubtContext && onGenerateNotes;
+  const showSaveAsFlashcardButton =
+    !isUser && doubtContext && onSaveAsFlashcard;
 
   const handleGenerateNotes = () => {
     if (doubtContext && onGenerateNotes) {
@@ -33,6 +42,17 @@ export default function ChatBubble({
         topic: doubtContext.topic,
       };
       onGenerateNotes(noteContext);
+    }
+  };
+
+  const handleSaveAsFlashcard = () => {
+    if (doubtContext && onSaveAsFlashcard) {
+      onSaveAsFlashcard(
+        doubtContext.doubtText,
+        message,
+        doubtContext.subject,
+        doubtContext.topic
+      );
     }
   };
 
@@ -112,6 +132,23 @@ export default function ChatBubble({
               </Text>
               <Text className="text-success-text font-medium text-sm">
                 Generate Notes on this topic
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {showSaveAsFlashcardButton && (
+          <TouchableOpacity
+            onPress={handleSaveAsFlashcard}
+            className="mt-2"
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center justify-center py-2 px-3 bg-purple-500/10 rounded-lg border border-purple-500/30">
+              <Text className="text-purple-300 font-medium text-sm mr-1">
+                🗂️
+              </Text>
+              <Text className="text-purple-300 font-medium text-sm">
+                Save as Flashcard
               </Text>
             </View>
           </TouchableOpacity>

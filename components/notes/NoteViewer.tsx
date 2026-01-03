@@ -1,10 +1,16 @@
 import { View, Text, ScrollView, Pressable, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { X, FileQuestion, MessageCircleQuestion } from "lucide-react-native";
+import {
+  X,
+  FileQuestion,
+  MessageCircleQuestion,
+  BookMarked,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { THEME } from "@/constants/theme";
 import { useState } from "react";
 import { SUBJECTS } from "@/constants";
+import { useRouter } from "expo-router";
 import QuickSummary from "./QuickSummary";
 import NoteSection from "./NoteSection";
 import FormulaCard from "./FormulaCard";
@@ -56,6 +62,7 @@ export default function NoteViewer({
 }: NoteViewerProps) {
   const [doubtModalVisible, setDoubtModalVisible] = useState(false);
   const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
+  const router = useRouter();
 
   if (!note) return null;
 
@@ -69,6 +76,25 @@ export default function NoteViewer({
         noteLength: "medium", // Default value
       };
       onGenerateQuestions(context);
+    }
+  };
+
+  const handleCreateFlashcards = () => {
+    if (note) {
+      const noteContext = {
+        noteId: note.id,
+        subject: note.subject,
+        topic: note.title,
+        content: note.content,
+      };
+
+      // Navigate to flashcards tab with note context
+      router.push({
+        pathname: "/(tabs)/flashcards",
+        params: {
+          noteContext: JSON.stringify(noteContext),
+        },
+      });
     }
   };
 
@@ -375,7 +401,7 @@ export default function NoteViewer({
               style={{ backgroundColor: THEME.colors.background.secondary }}
               className="px-6 py-4 border-t-2 border-gray-700"
             >
-              <View className="flex-row gap-3">
+              <View className="flex-row gap-3 mb-3">
                 <Pressable
                   onPress={handleGenerateQuestions}
                   className="flex-1 rounded-xl overflow-hidden active:opacity-80"
@@ -402,6 +428,22 @@ export default function NoteViewer({
                   </Text>
                 </Pressable>
               </View>
+              <Pressable
+                onPress={handleCreateFlashcards}
+                className="rounded-xl overflow-hidden active:opacity-80"
+              >
+                <LinearGradient
+                  colors={["#9333ea", "#7e22ce"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="flex-row items-center justify-center px-4 py-3"
+                >
+                  <BookMarked size={20} color="#fff" />
+                  <Text className="ml-2 font-semibold text-white">
+                    Create Flashcards
+                  </Text>
+                </LinearGradient>
+              </Pressable>
             </View>
           )}
         </SafeAreaView>

@@ -186,6 +186,23 @@ export default function DocumentViewerScreen() {
     }
   };
 
+  const handleGenerateFlashcards = () => {
+    if (!currentDocument) return;
+
+    const documentContext = {
+      documentId: currentDocument.$id,
+      documentTitle: currentDocument.title,
+      ocrText: currentDocument.ocrText || "",
+    };
+
+    router.push({
+      pathname: "/(tabs)/flashcards",
+      params: {
+        documentContext: JSON.stringify(documentContext),
+      },
+    });
+  };
+
   // Helper to infer subject from document title
   const inferSubjectFromTitle = (title: string): string => {
     const titleLower = title.toLowerCase();
@@ -231,6 +248,7 @@ export default function DocumentViewerScreen() {
           onDelete={handleDelete}
           onGenerateQuestions={handleGenerateQuestions}
           onGenerateNotes={handleGenerateNotes}
+          onGenerateFlashcards={handleGenerateFlashcards}
           onViewQuestions={handleViewQuestions}
           onViewNotes={handleViewNotes}
           generationState={generationState}

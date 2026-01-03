@@ -18,6 +18,7 @@ interface DocumentViewerProps {
   onDelete: () => void;
   onGenerateQuestions: () => void;
   onGenerateNotes: () => void;
+  onGenerateFlashcards?: () => void;
   onViewQuestions?: () => void;
   onViewNotes?: () => void;
   generationState?: DocumentGenerationState;
@@ -46,6 +47,7 @@ export default function DocumentViewer({
   onDelete,
   onGenerateQuestions,
   onGenerateNotes,
+  onGenerateFlashcards,
   onViewQuestions,
   onViewNotes,
   generationState,
@@ -187,6 +189,7 @@ export default function DocumentViewer({
           notesState={notesState}
           onGenerateQuestions={onGenerateQuestions}
           onGenerateNotes={onGenerateNotes}
+          onGenerateFlashcards={onGenerateFlashcards}
         />
       </View>
     </View>

@@ -6,6 +6,7 @@ import {
   PencilRuler,
   Crown,
   FolderOpen,
+  Layers,
 } from "lucide-react-native";
 import { isMVPBypassMode } from "@/config/featureFlags";
 
@@ -63,6 +64,15 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <FileText size={size} color={color} />
           ),
+        }}
+      />
+
+      {/* Flashcards Tab */}
+      <Tabs.Screen
+        name="flashcards"
+        options={{
+          title: "Flashcards",
+          tabBarIcon: ({ color, size }) => <Layers size={size} color={color} />,
         }}
       />
 
