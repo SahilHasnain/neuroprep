@@ -17,8 +17,12 @@ export default function DocumentViewerScreen() {
     setCurrentDocument,
     generateQuestions,
     generateNotes,
-    getGenerationState,
   } = useDocumentStore();
+
+  // Subscribe directly to generation state so UI reacts to updates
+  const generationState = useDocumentStore((s) =>
+    typeof id === "string" && id ? s.generationStates[id] : undefined
+  );
 
   useEffect(() => {
     if (id) {
@@ -28,7 +32,7 @@ export default function DocumentViewerScreen() {
     return () => {
       setCurrentDocument(null);
     };
-  }, [id]);
+  }, [id, getDocumentById, setCurrentDocument]);
 
   useEffect(() => {
     if (error) {
@@ -39,7 +43,7 @@ export default function DocumentViewerScreen() {
         },
       ]);
     }
-  }, [error]);
+  }, [error, router]);
 
   const handleBack = () => {
     router.back();
@@ -60,58 +64,16 @@ export default function DocumentViewerScreen() {
   const handleGenerateQuestions = async () => {
     if (!id || !currentDocument) return;
 
-    // Show immediate feedback
-    Alert.alert(
-      "Generating Questions",
-      "AI is generating 5 practice questions from your document. This may take a moment...",
-      [{ text: "OK" }]
-    );
-
-    const result = await generateQuestions(id, {
+    await generateQuestions(id, {
       difficulty: "easy",
       count: 5,
     });
-
-    if (result) {
-      Alert.alert(
-        "Success!",
-        "Questions generated successfully! You can view them below or in the Questions tab.",
-        [{ text: "Got it" }]
-      );
-    } else {
-      Alert.alert(
-        "Generation Failed",
-        "Failed to generate questions. Please try again.",
-        [{ text: "OK" }]
-      );
-    }
   };
 
   const handleGenerateNotes = async () => {
     if (!id || !currentDocument) return;
 
-    // Show immediate feedback
-    Alert.alert(
-      "Generating Notes",
-      "AI is creating study notes from your document. This may take a moment...",
-      [{ text: "OK" }]
-    );
-
-    const result = await generateNotes(id, { length: "brief" });
-
-    if (result) {
-      Alert.alert(
-        "Success!",
-        "Notes generated successfully! You can view them below or in the Notes tab.",
-        [{ text: "Got it" }]
-      );
-    } else {
-      Alert.alert(
-        "Generation Failed",
-        "Failed to generate notes. Please try again.",
-        [{ text: "OK" }]
-      );
-    }
+    await generateNotes(id, { length: "brief" });
   };
 
   const handleViewQuestions = () => {
@@ -233,7 +195,7 @@ export default function DocumentViewerScreen() {
     return "general";
   };
 
-  const generationState = id ? getGenerationState(id) : undefined;
+  // generationState is selected above to ensure reactive updates
 
   if (!currentDocument && !isLoading) {
     return <View style={styles.container} />;
