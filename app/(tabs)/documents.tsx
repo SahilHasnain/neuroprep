@@ -27,27 +27,6 @@ import DocumentCard from "@/components/documents/DocumentCard";
 import DocumentUploadModal from "@/components/documents/DocumentUploadModal";
 import { COLORS } from "@/constants/theme";
 
-// Helper functions for formatting upload stats
-const formatSpeed = (bytesPerSecond: number): string => {
-  if (bytesPerSecond < 1024) {
-    return `${bytesPerSecond.toFixed(0)} B/s`;
-  } else if (bytesPerSecond < 1024 * 1024) {
-    return `${(bytesPerSecond / 1024).toFixed(1)} KB/s`;
-  } else {
-    return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
-  }
-};
-
-const formatTime = (seconds: number): string => {
-  if (seconds < 60) {
-    return `${Math.ceil(seconds)}s`;
-  } else {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.ceil(seconds % 60);
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-};
-
 export default function DocumentsScreen() {
   const router = useRouter();
   const {
@@ -55,7 +34,6 @@ export default function DocumentsScreen() {
     isLoading,
     error,
     uploadStatus,
-    uploadProgress,
     generationStates,
     fetchDocuments,
     uploadDocument,
@@ -220,129 +198,6 @@ export default function DocumentsScreen() {
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile || !documentTitle.trim()) {
-      Alert.alert("Error", "Please enter a document title");
-      return;
-    }
-
-    setTitleModalVisible(false);
-
-    try {
-      const fileToUpload = {
-        uri: selectedFile.uri,
-        name: selectedFile.name,
-        type: selectedFile.mimeType || selectedFile.type,
-      };
-
-      const { documentId, ocrStatus } = await uploadDocument(
-        fileToUpload,
-        documentTitle.trim(),
-        selectedFile.type,
-        uploadOptions || undefined
-      );
-
-      if (documentId) {
-        const hasAutoGenerate =
-          uploadOptions?.generateQuestions || uploadOptions?.generateNotes;
-
-        // Check if the uploaded document has OCR text
-        const uploadedDoc = documents.find((d) => d.$id === documentId);
-        const hasNoText =
-          !uploadedDoc?.ocrText || uploadedDoc.ocrText.trim().length === 0;
-        const hasShortText =
-          uploadedDoc?.ocrText && uploadedDoc.ocrText.length < 50;
-
-        const isPendingOcr = ocrStatus?.status === "pending" && hasNoText;
-
-        if (isPendingOcr) {
-          Alert.alert(
-            "Upload received",
-            "Document saved. We’re processing its text in the background. You can start generation once processing finishes."
-          );
-        } else if (hasNoText) {
-          Alert.alert(
-            "Upload Successful - Text Extraction Failed",
-            "Your document was uploaded, but we couldn't extract any text from it. You can view the document, but AI features (questions/notes generation) won't work.\n\nTip: Try uploading a clearer image.",
-            [{ text: "OK" }]
-          );
-        } else if (hasShortText) {
-          Alert.alert(
-            "Upload Successful - Limited Text",
-            "Your document was uploaded, but very little text was extracted. AI-generated content may be limited.\n\nTip: Ensure the document has clear, readable text.",
-            [{ text: "OK" }]
-          );
-        } else if (hasAutoGenerate) {
-          Alert.alert(
-            "Success",
-            "Document uploaded! AI is generating your study materials..."
-          );
-        } else {
-          Alert.alert("Success", "Document uploaded successfully!");
-        }
-
-        setSelectedFile(null);
-        setDocumentTitle("");
-        setUploadOptions(null);
-      } else {
-        // Upload failed - show retry option
-        Alert.alert(
-          "Upload Failed",
-          "Failed to upload document. Would you like to try again?",
-          [
-            {
-              text: "Cancel",
-              style: "cancel",
-              onPress: () => {
-                setSelectedFile(null);
-                setDocumentTitle("");
-                setUploadOptions(null);
-              },
-            },
-            {
-              text: "Retry",
-              onPress: () => {
-                // Reopen the title modal to retry
-                setTitleModalVisible(true);
-              },
-            },
-          ]
-        );
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      Alert.alert(
-        "Upload Error",
-        "An error occurred during upload. Would you like to try again?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => {
-              setSelectedFile(null);
-              setDocumentTitle("");
-              setUploadOptions(null);
-            },
-          },
-          {
-            text: "Retry",
-            onPress: () => {
-              // Reopen the title modal to retry
-              setTitleModalVisible(true);
-            },
-          },
-        ]
-      );
-    }
-  };
-
-  const handleCancelUpload = () => {
-    setTitleModalVisible(false);
-    setSelectedFile(null);
-    setDocumentTitle("");
-    setUploadOptions(null);
-  };
-
   const renderDocumentCard = useCallback(
     ({ item }: { item: Document }) => {
       const genState = generationStates[item.$id];
@@ -358,14 +213,14 @@ export default function DocumentsScreen() {
   );
 
   const renderEmptyState = () => (
-    <View className="flex-1 justify-center items-center py-20 px-8">
-      <View className="bg-gray-800/30 rounded-full p-8 mb-6">
+    <View className="items-center justify-center flex-1 px-8 py-20">
+      <View className="p-8 mb-6 rounded-full bg-gray-800/30">
         <FileText size={64} color="#6b7280" />
       </View>
-      <Text className="text-2xl font-bold text-white mb-3">
+      <Text className="mb-3 text-2xl font-bold text-white">
         No Documents Yet
       </Text>
-      <Text className="text-base text-gray-400 text-center mb-8 leading-6">
+      <Text className="mb-8 text-base leading-6 text-center text-gray-400">
         Upload your first document to get started with AI-powered study
         materials
       </Text>
@@ -374,7 +229,7 @@ export default function DocumentsScreen() {
         onPress={handleAddPress}
       >
         <Plus size={20} color="#fff" />
-        <Text className="text-white text-base font-semibold">
+        <Text className="text-base font-semibold text-white">
           Upload Document
         </Text>
       </TouchableOpacity>
@@ -382,14 +237,14 @@ export default function DocumentsScreen() {
   );
 
   const renderNoResults = () => (
-    <View className="flex-1 justify-center items-center py-20 px-8">
-      <View className="bg-gray-800/30 rounded-full p-8 mb-6">
+    <View className="items-center justify-center flex-1 px-8 py-20">
+      <View className="p-8 mb-6 rounded-full bg-gray-800/30">
         <Search size={64} color="#6b7280" />
       </View>
-      <Text className="text-2xl font-bold text-white mb-3">
+      <Text className="mb-3 text-2xl font-bold text-white">
         No Results Found
       </Text>
-      <Text className="text-base text-gray-400 text-center mb-8 leading-6">
+      <Text className="mb-8 text-base leading-6 text-center text-gray-400">
         {searchQuery
           ? `No documents match "${searchQuery}"`
           : `No ${filterType} documents found`}
@@ -402,7 +257,7 @@ export default function DocumentsScreen() {
         }}
       >
         <X size={20} color="#fff" />
-        <Text className="text-white text-base font-semibold">
+        <Text className="text-base font-semibold text-white">
           Clear Filters
         </Text>
       </TouchableOpacity>
@@ -410,9 +265,9 @@ export default function DocumentsScreen() {
   );
 
   const renderLoadingSkeleton = () => (
-    <View className="flex-1 items-center justify-center py-24">
+    <View className="items-center justify-center flex-1 py-24">
       <ActivityIndicator size="large" color={COLORS.primary.blue} />
-      <Text className="text-sm text-gray-400 mt-3">Loading documents...</Text>
+      <Text className="mt-3 text-sm text-gray-400">Loading documents...</Text>
     </View>
   );
 
@@ -424,10 +279,10 @@ export default function DocumentsScreen() {
       <View className="px-5 pt-16 pb-4 bg-[#1e1e1e] border-b border-gray-700">
         <View className="flex-row items-center justify-between mb-3">
           <View>
-            <Text className="text-3xl font-bold text-white tracking-tight">
+            <Text className="text-3xl font-bold tracking-tight text-white">
               Documents
             </Text>
-            <Text className="text-sm text-gray-400 mt-1">
+            <Text className="mt-1 text-sm text-gray-400">
               {filteredAndSortedDocuments.length}{" "}
               {filteredAndSortedDocuments.length === 1
                 ? "document"
@@ -436,7 +291,7 @@ export default function DocumentsScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center active:scale-90"
+            className="items-center justify-center w-10 h-10 bg-gray-800 rounded-full active:scale-90"
             onPress={() => setShowSortMenu(!showSortMenu)}
           >
             <ArrowUpDown size={20} color={COLORS.text.secondary} />
@@ -448,7 +303,7 @@ export default function DocumentsScreen() {
           <View className="flex-1 flex-row items-center bg-[#121212] border border-gray-700 rounded-xl px-4 py-3">
             <Search size={18} color={COLORS.text.tertiary} />
             <TextInput
-              className="flex-1 ml-2 text-white text-base"
+              className="flex-1 ml-2 text-base text-white"
               placeholder="Search documents..."
               placeholderTextColor={COLORS.text.tertiary}
               value={searchQuery}
@@ -492,7 +347,7 @@ export default function DocumentsScreen() {
             >
               <View className="flex-row items-center gap-2">
                 <Calendar size={18} color={COLORS.text.secondary} />
-                <Text className="text-white text-sm font-medium">
+                <Text className="text-sm font-medium text-white">
                   Sort by Date
                 </Text>
               </View>
@@ -512,7 +367,7 @@ export default function DocumentsScreen() {
             >
               <View className="flex-row items-center gap-2">
                 <FileType size={18} color={COLORS.text.secondary} />
-                <Text className="text-white text-sm font-medium">
+                <Text className="text-sm font-medium text-white">
                   Sort by Name
                 </Text>
               </View>
@@ -564,54 +419,19 @@ export default function DocumentsScreen() {
 
       {/* Error Banner */}
       {error && (
-        <View className="bg-red-500/90 p-3 mx-4 mt-4 rounded-xl shadow-lg">
-          <Text className="text-white text-center font-medium">{error}</Text>
+        <View className="p-3 mx-4 mt-4 shadow-lg bg-red-500/90 rounded-xl">
+          <Text className="font-medium text-center text-white">{error}</Text>
         </View>
       )}
 
-      {/* Upload Progress Banner */}
-      {uploadStatus === "uploading" && uploadProgress && (
-        <View className="bg-blue-600 p-4 mx-4 mt-4 rounded-xl shadow-lg shadow-blue-600/30">
-          <View className="flex-1">
-            <View className="flex-row items-center justify-center gap-3 mb-2">
-              <ActivityIndicator size="small" color="#fff" />
-              <Text className="text-white text-sm font-semibold">
-                Uploading document... {uploadProgress.percentage}%
-              </Text>
-            </View>
-
-            {/* Enhanced Progress Bar */}
-            <View className="h-2 bg-white/20 rounded-full overflow-hidden mb-2">
-              <View
-                className="h-full bg-white rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress.percentage}%` }}
-              />
-            </View>
-
-            {/* Upload Stats */}
-            <View className="flex-row justify-center gap-4">
-              {uploadProgress.speed && uploadProgress.speed > 0 && (
-                <Text className="text-white/90 text-xs">
-                  {formatSpeed(uploadProgress.speed)}
-                </Text>
-              )}
-              {uploadProgress.estimatedTimeRemaining &&
-                uploadProgress.estimatedTimeRemaining > 0 && (
-                  <Text className="text-white/90 text-xs">
-                    {formatTime(uploadProgress.estimatedTimeRemaining)}{" "}
-                    remaining
-                  </Text>
-                )}
-            </View>
-          </View>
-        </View>
-      )}
-
-      {uploadStatus === "processing" && (
-        <View className="bg-blue-600 p-3 mx-4 mt-4 rounded-xl flex-row items-center justify-center gap-3 shadow-lg shadow-blue-600/30">
+      {/* Simple Upload Loading Banner */}
+      {(uploadStatus === "uploading" || uploadStatus === "processing") && (
+        <View className="flex-row items-center justify-center gap-3 p-4 mx-4 mt-4 bg-blue-600 shadow-lg rounded-xl shadow-blue-600/30">
           <ActivityIndicator size="small" color="#fff" />
-          <Text className="text-white text-sm font-semibold">
-            Processing document...
+          <Text className="text-sm font-semibold text-white">
+            {uploadStatus === "uploading"
+              ? "Uploading document..."
+              : "Processing document..."}
           </Text>
         </View>
       )}
@@ -645,7 +465,7 @@ export default function DocumentsScreen() {
 
       {/* Enhanced FAB with shadow and scale animation */}
       <TouchableOpacity
-        className="absolute right-5 bottom-24 w-16 h-16 rounded-full bg-blue-600 justify-center items-center shadow-2xl shadow-blue-600/50 active:scale-90"
+        className="absolute items-center justify-center w-16 h-16 bg-blue-600 rounded-full shadow-2xl right-5 bottom-24 shadow-blue-600/50 active:scale-90"
         onPress={handleAddPress}
       >
         <Plus size={28} color="#fff" strokeWidth={2.5} />

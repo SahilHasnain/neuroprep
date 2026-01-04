@@ -166,22 +166,22 @@ export default function NoteViewer({
             colors={["#2563eb", "#9333ea"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="px-6 py-4 border-b-2 border-gray-700 rounded-t-3xl shadow-sm"
+            className="px-4 py-3 border-b border-gray-700 rounded-t-2xl"
           >
             <View className="flex-row items-center justify-between">
               <View className="flex-1 mr-3">
                 <View
-                  className={`self-start px-3 py-1.5 mb-2 rounded-full bg-white/20 shadow-sm`}
+                  className={`self-start px-2 py-1 mb-1 rounded-full bg-white/10`}
                 >
                   <Text
-                    className={`text-xs font-bold uppercase tracking-wide text-white`}
+                    className={`text-[11px] font-semibold uppercase tracking-wide text-white`}
                   >
                     {SUBJECTS.find((s) => s.value === note.subject)?.label ||
                       note.subject}
                   </Text>
                 </View>
                 <Text
-                  className="text-xl font-bold leading-tight text-white"
+                  className="text-lg font-bold leading-tight text-white"
                   numberOfLines={2}
                 >
                   {note.title}
@@ -189,9 +189,9 @@ export default function NoteViewer({
               </View>
               <Pressable
                 onPress={onClose}
-                className="p-2 rounded-full active:bg-white/10"
+                className="p-1 rounded-md active:bg-white/10"
               >
-                <X size={24} color="#ffffff" />
+                <X size={20} color="#ffffff" />
               </Pressable>
             </View>
           </LinearGradient>
@@ -401,47 +401,47 @@ export default function NoteViewer({
           {!parseError && (
             <View
               style={{ backgroundColor: THEME.colors.background.secondary }}
-              className="px-6 py-4 border-t-2 border-gray-700"
+              className="px-4 py-3 border-t border-gray-700"
             >
-              <View className="flex-row gap-3 mb-3">
+              <View className="flex-row gap-2 mb-2">
                 <Pressable
                   onPress={handleGenerateQuestions}
-                  className="flex-1 rounded-xl overflow-hidden active:opacity-80"
+                  className="flex-1 rounded-md overflow-hidden active:opacity-80"
                 >
                   <LinearGradient
                     colors={["#2563eb", "#1d4ed8"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    className="flex-row items-center justify-center px-4 py-3"
+                    className="flex-row items-center justify-center px-3 py-2"
                   >
-                    <FileQuestion size={20} color="#fff" />
-                    <Text className="ml-4 font-semibold text-white">
+                    <FileQuestion size={18} color="#fff" />
+                    <Text className="ml-2 text-sm font-semibold text-white">
                       Generate Questions
                     </Text>
                   </LinearGradient>
                 </Pressable>
                 <Pressable
                   onPress={handleAskDoubt}
-                  className="flex-1 flex-row items-center justify-center px-4 py-3 border-2 border-blue-500 rounded-xl bg-transparent active:bg-blue-500/10"
+                  className="flex-1 flex-row items-center justify-center px-3 py-2 border border-blue-500 rounded-md bg-transparent active:bg-blue-500/10"
                 >
-                  <MessageCircleQuestion size={20} color="#60a5fa" />
-                  <Text className="ml-2 font-semibold text-blue-400">
+                  <MessageCircleQuestion size={18} color="#60a5fa" />
+                  <Text className="ml-2 text-sm font-semibold text-blue-400">
                     Ask Doubt
                   </Text>
                 </Pressable>
               </View>
               <Pressable
                 onPress={handleCreateFlashcards}
-                className="rounded-xl overflow-hidden active:opacity-80"
+                className="rounded-md overflow-hidden active:opacity-80"
               >
                 <LinearGradient
                   colors={["#9333ea", "#7e22ce"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  className="flex-row items-center justify-center px-4 py-3"
+                  className="flex-row items-center justify-center px-3 py-2"
                 >
-                  <BookMarked size={20} color="#fff" />
-                  <Text className="ml-2 font-semibold text-white">
+                  <BookMarked size={18} color="#fff" />
+                  <Text className="ml-2 text-sm font-semibold text-white">
                     Create Flashcards
                   </Text>
                 </LinearGradient>

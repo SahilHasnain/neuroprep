@@ -40,15 +40,37 @@ export function useDocumentViewer({
     setToast({ visible: true, message, type });
   };
 
-  // Derivations for OCR
+  // Derivations for OCR with smart time-based logic
   const { isOcrPending, isOcrFailed, hasNoText, hasShortText, canGenerate } =
     useMemo(() => {
-      const isOcrPending = document.ocrStatus === "pending";
-      const isOcrFailed = document.ocrStatus === "failed";
+      const isProcessing =
+        document.ocrStatus === "pending" || document.ocrStatus === "processing";
+      const isCompleted = document.ocrStatus === "completed";
+      const isFailed = document.ocrStatus === "failed";
+
+      // Check if document is fresh (less than 5 minutes old)
+      const created = new Date(document.$createdAt);
+      const now = new Date();
+      const diffMinutes = (now.getTime() - created.getTime()) / (1000 * 60);
+      const isFresh = diffMinutes < 5;
+
       const hasNoText =
         !document.ocrText || document.ocrText.trim().length === 0;
       const hasShortText = !!document.ocrText && document.ocrText.length < 50;
-      const canGenerate = !isOcrPending && !hasNoText && !hasShortText;
+
+      // Only show OCR as pending if actively processing
+      const isOcrPending = isProcessing;
+
+      // Only show failure if not fresh and actually failed
+      const isOcrFailed = isFailed && !isFresh;
+
+      // Can generate if:
+      // - Not actively processing AND
+      // - Has meaningful text (not empty, not too short) OR
+      // - Completed successfully with some text
+      const canGenerate =
+        !isProcessing && !hasNoText && (!hasShortText || isCompleted);
+
       return {
         isOcrPending,
         isOcrFailed,
@@ -56,7 +78,7 @@ export function useDocumentViewer({
         hasShortText,
         canGenerate,
       };
-    }, [document.ocrStatus, document.ocrText]);
+    }, [document.ocrStatus, document.ocrText, document.$createdAt]);
 
   // React to generation status changes with toasts
   useEffect(() => {

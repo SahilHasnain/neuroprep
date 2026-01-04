@@ -33,11 +33,21 @@ function DocumentCard({
   const questionsStatus = generationState?.questions?.status;
   const notesStatus = generationState?.notes?.status;
 
-  // Check if document has no OCR text
+  // Check document freshness and OCR state
+  const isFresh = isFreshDocument(document.$createdAt);
   const hasNoText = !document.ocrText || document.ocrText.trim().length === 0;
   const hasShortText = document.ocrText && document.ocrText.length < 50;
-  const isPendingOcr = document.ocrStatus === "pending";
-  const isOcrFailed = document.ocrStatus === "failed";
+  const isProcessing =
+    document.ocrStatus === "pending" || document.ocrStatus === "processing";
+  const isOcrCompleted = document.ocrStatus === "completed";
+  const isOcrFailed = document.ocrStatus === "failed" && !isFresh; // Only show failure if not fresh
+
+  // Show processing indicator for fresh documents still being processed
+  const showProcessing = isProcessing && isFresh;
+  // Only show warnings for older documents with issues
+  const showWarning =
+    !isFresh &&
+    (isOcrFailed || (isOcrCompleted && (hasNoText || hasShortText)));
 
   if (isLoading) {
     return (
@@ -200,31 +210,21 @@ function DocumentCard({
             </View>
           )}
 
-          {/* OCR State Indicators */}
-          {isPendingOcr ? (
+          {/* Smart OCR State Indicators */}
+          {showProcessing && (
             <View className="mt-2 py-2 px-2.5 bg-blue-600/15 border border-blue-600/30 rounded-lg flex-row items-center gap-1.5">
               <Sparkles size={12} color={COLORS.primary.blue} />
               <Text className="text-xs text-blue-400 font-medium flex-1">
-                Processing document...
+                Processing...
               </Text>
             </View>
-          ) : (
-            <>
-              {isOcrFailed && (
-                <View className="mt-2 py-1.5 px-2 bg-amber-500/20 border border-amber-500/40 rounded-lg">
-                  <Text className="text-[11px] text-amber-400 font-medium">
-                    ⚠️ No text extracted
-                  </Text>
-                </View>
-              )}
-              {!hasNoText && hasShortText && (
-                <View className="mt-2 py-1.5 px-2 bg-amber-500/20 border border-amber-500/40 rounded-lg">
-                  <Text className="text-[11px] text-amber-400 font-medium">
-                    ⚠️ Limited text
-                  </Text>
-                </View>
-              )}
-            </>
+          )}
+          {showWarning && (
+            <View className="mt-2 py-1.5 px-2 bg-amber-500/20 border border-amber-500/40 rounded-lg">
+              <Text className="text-[11px] text-amber-400 font-medium">
+                {hasNoText ? "⚠️ No text found" : "⚠️ Limited text"}
+              </Text>
+            </View>
           )}
         </View>
       </View>
@@ -243,6 +243,14 @@ function getRelativeDate(dateString: string): string {
   if (diffDays < 7) return `${diffDays}d ago`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
   return `${Math.floor(diffDays / 30)}mo ago`;
+}
+
+// Check if document is fresh (less than 5 minutes old)
+function isFreshDocument(createdAt: string): boolean {
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffMinutes = (now.getTime() - created.getTime()) / (1000 * 60);
+  return diffMinutes < 5;
 }
 
 // Styles removed - using Tailwind classes

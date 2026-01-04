@@ -112,13 +112,23 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
         const documentId = result.data.$id;
 
-        // Check OCR status and warn user if needed
+        // Check OCR status and set generation state conservatively for better UX
         const ocrStatus = (result as any).ocrStatus;
         if (ocrStatus) {
           console.log("📊 [Store] OCR Status:", ocrStatus);
 
-          // Store OCR warning for later display
-          if (!ocrStatus.extracted || ocrStatus.textLength < 50) {
+          const status = ocrStatus.status as
+            | "pending"
+            | "processing"
+            | "completed"
+            | "failed";
+          const extracted = !!ocrStatus.extracted;
+          const textLength = Number(ocrStatus.textLength || 0);
+
+          // Do NOT mark generation as error while OCR is pending/processing.
+          // Only mark error on definitive failure. For completed with limited/no text,
+          // keep generation state idle and let UI show gentle warnings.
+          if (status === "failed") {
             set((state) => ({
               generationStates: {
                 ...state.generationStates,
@@ -142,6 +152,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         // Auto-generate if options provided and OCR succeeded
         if (
           options?.generateQuestions &&
+          ocrStatus?.status === "completed" &&
           ocrStatus?.extracted &&
           ocrStatus?.textLength >= 50
         ) {
@@ -149,6 +160,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         }
         if (
           options?.generateNotes &&
+          ocrStatus?.status === "completed" &&
           ocrStatus?.extracted &&
           ocrStatus?.textLength >= 50
         ) {

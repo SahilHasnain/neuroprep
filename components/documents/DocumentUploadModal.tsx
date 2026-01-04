@@ -17,8 +17,6 @@ import {
   Image as ImageIcon,
   FileText,
   Sparkles,
-  FileQuestion,
-  NotebookPen,
   CheckCircle2,
   ArrowLeft,
   Upload,

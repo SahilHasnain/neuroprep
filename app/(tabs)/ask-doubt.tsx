@@ -261,7 +261,7 @@ Correct Answer: ${parsedContext.correctAnswer}
 
         {/* Context Indicators */}
         {noteContext && (
-          <View className="p-3 mb-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+          <View className="p-3 mb-3 border rounded-lg bg-blue-500/10 border-blue-500/30">
             <View className="flex-row items-center">
               <Info size={16} color="#60a5fa" />
               <Text className="ml-2 text-sm text-blue-300">
@@ -271,7 +271,7 @@ Correct Answer: ${parsedContext.correctAnswer}
           </View>
         )}
         {documentContext && (
-          <View className="p-3 mb-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+          <View className="p-3 mb-3 border rounded-lg bg-purple-500/10 border-purple-500/30">
             <View className="flex-row items-center">
               <Info size={16} color="#c084fc" />
               <Text className="ml-2 text-sm text-purple-300">
@@ -284,7 +284,7 @@ Correct Answer: ${parsedContext.correctAnswer}
         {/* Input Area */}
         <View
           style={{ backgroundColor: THEME.colors.background.secondary }}
-          className="flex-row items-end p-3 mb-3 rounded-2xl border border-gray-700"
+          className="flex-row items-end p-3 mb-3 border border-gray-700 rounded-2xl"
         >
           <TextInput
             value={inputText}
@@ -300,21 +300,24 @@ Correct Answer: ${parsedContext.correctAnswer}
           <Pressable
             onPress={handleSend}
             disabled={!inputText.trim() || loading}
-            className={`ml-3 p-2.5 rounded-full overflow-hidden ${
+            className={`ml-3 w-10 h-10 rounded-full overflow-hidden ${
               inputText.trim() && !loading ? "" : "bg-gray-700"
             }`}
+            style={{ alignSelf: "center" }}
           >
             {inputText.trim() && !loading ? (
               <LinearGradient
                 colors={["#2563eb", "#1d4ed8"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                className="p-2.5 absolute inset-0 items-center justify-center"
+                className="items-center justify-center w-full h-full rounded-full"
               >
                 <Send size={20} color="white" />
               </LinearGradient>
             ) : (
-              <Send size={20} color={THEME.colors.text.primary} />
+              <View className="items-center justify-center w-full h-full">
+                <Send size={20} color={THEME.colors.text.primary} />
+              </View>
             )}
           </Pressable>
         </View>

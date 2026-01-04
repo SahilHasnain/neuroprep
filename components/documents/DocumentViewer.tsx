@@ -156,6 +156,7 @@ export default function DocumentViewer({
           isOcrFailed={isOcrFailed}
           hasNoText={hasNoText}
           hasShortText={hasShortText}
+          documentCreatedAt={document.$createdAt}
         />
 
         {/* Generation Status Cards */}
