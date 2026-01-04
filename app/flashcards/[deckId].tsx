@@ -21,6 +21,7 @@ import { useFlashcardsStore } from "@/store/flashcardsStore";
 import FlashcardComponent from "@/components/flashcards/FlashcardComponent";
 import { COLORS } from "@/constants/theme";
 import type { Flashcard } from "@/types/flashcard";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DeckViewScreen() {
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
@@ -164,12 +165,12 @@ export default function DeckViewScreen() {
 
   if (isLoading || !currentDeck) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary.blue} />
           <Text style={styles.loadingText}>Loading deck...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -178,7 +179,7 @@ export default function DeckViewScreen() {
   const isLastCard = currentCardIndex === displayCards.length - 1;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -301,7 +302,7 @@ export default function DeckViewScreen() {
           <Text style={styles.controlButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 20,
     backgroundColor: "#1e1e1e",
     borderBottomWidth: 1,

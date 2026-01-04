@@ -27,6 +27,7 @@ import GenerateFlashcardsModal from "@/components/flashcards/GenerateFlashcardsM
 import { COLORS } from "@/constants/theme";
 import { SUBJECTS } from "@/constants";
 import { parseContextFromParams, hasContext } from "@/utils/flashcardContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FlashcardsScreen() {
   const router = useRouter();
@@ -160,14 +161,14 @@ export default function FlashcardsScreen() {
   );
 
   const renderEmptyState = () => (
-    <View className="flex-1 justify-center items-center py-20 px-8">
-      <View className="bg-gray-800/30 rounded-full p-8 mb-6">
+    <View className="items-center justify-center flex-1 px-8 py-20">
+      <View className="p-8 mb-6 rounded-full bg-gray-800/30">
         <Layers size={64} color="#6b7280" />
       </View>
-      <Text className="text-2xl font-bold text-white mb-3">
+      <Text className="mb-3 text-2xl font-bold text-white">
         No Flashcards Yet
       </Text>
-      <Text className="text-base text-gray-400 text-center mb-8 leading-6">
+      <Text className="mb-8 text-base leading-6 text-center text-gray-400">
         Create your first flashcard deck to start studying smarter
       </Text>
       <TouchableOpacity
@@ -175,7 +176,7 @@ export default function FlashcardsScreen() {
         onPress={handleAddPress}
       >
         <Plus size={20} color="#fff" />
-        <Text className="text-white text-base font-semibold">
+        <Text className="text-base font-semibold text-white">
           Create Flashcards
         </Text>
       </TouchableOpacity>
@@ -183,14 +184,14 @@ export default function FlashcardsScreen() {
   );
 
   const renderNoResults = () => (
-    <View className="flex-1 justify-center items-center py-20 px-8">
-      <View className="bg-gray-800/30 rounded-full p-8 mb-6">
+    <View className="items-center justify-center flex-1 px-8 py-20">
+      <View className="p-8 mb-6 rounded-full bg-gray-800/30">
         <Search size={64} color="#6b7280" />
       </View>
-      <Text className="text-2xl font-bold text-white mb-3">
+      <Text className="mb-3 text-2xl font-bold text-white">
         No Results Found
       </Text>
-      <Text className="text-base text-gray-400 text-center mb-8 leading-6">
+      <Text className="mb-8 text-base leading-6 text-center text-gray-400">
         {searchQuery
           ? `No decks match "${searchQuery}"`
           : `No ${filterSubject} decks found`}
@@ -203,7 +204,7 @@ export default function FlashcardsScreen() {
         }}
       >
         <X size={20} color="#fff" />
-        <Text className="text-white text-base font-semibold">
+        <Text className="text-base font-semibold text-white">
           Clear Filters
         </Text>
       </TouchableOpacity>
@@ -211,29 +212,29 @@ export default function FlashcardsScreen() {
   );
 
   const renderLoadingSkeleton = () => (
-    <View className="flex-1 items-center justify-center py-24">
+    <View className="items-center justify-center flex-1 py-24">
       <ActivityIndicator size="large" color={COLORS.primary.blue} />
-      <Text className="text-sm text-gray-400 mt-3">Loading flashcards...</Text>
+      <Text className="mt-3 text-sm text-gray-400">Loading flashcards...</Text>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-[#121212]">
+    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
       {/* Enhanced Header with search */}
-      <View className="px-5 pt-16 pb-4 bg-[#1e1e1e] border-b border-gray-700">
+      <View className="px-5 pt-4 pb-4 bg-[#1e1e1e] border-b border-gray-700">
         <View className="flex-row items-center justify-between mb-3">
           <View>
-            <Text className="text-3xl font-bold text-white tracking-tight">
+            <Text className="text-3xl font-bold tracking-tight text-white">
               Flashcards
             </Text>
-            <Text className="text-sm text-gray-400 mt-1">
+            <Text className="mt-1 text-sm text-gray-400">
               {filteredAndSortedDecks.length}{" "}
               {filteredAndSortedDecks.length === 1 ? "deck" : "decks"}
               {searchQuery && " found"}
             </Text>
           </View>
           <TouchableOpacity
-            className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center active:scale-90"
+            className="items-center justify-center w-10 h-10 bg-gray-800 rounded-full active:scale-90"
             onPress={() => setShowSortMenu(!showSortMenu)}
           >
             <ArrowUpDown size={20} color={COLORS.text.secondary} />
@@ -245,7 +246,7 @@ export default function FlashcardsScreen() {
           <View className="flex-1 flex-row items-center bg-[#121212] border border-gray-700 rounded-xl px-4 py-3">
             <Search size={18} color={COLORS.text.tertiary} />
             <TextInput
-              className="flex-1 ml-2 text-white text-base"
+              className="flex-1 ml-2 text-base text-white"
               placeholder="Search decks..."
               placeholderTextColor={COLORS.text.tertiary}
               value={searchQuery}
@@ -289,7 +290,7 @@ export default function FlashcardsScreen() {
             >
               <View className="flex-row items-center gap-2">
                 <Calendar size={18} color={COLORS.text.secondary} />
-                <Text className="text-white text-sm font-medium">
+                <Text className="text-sm font-medium text-white">
                   Sort by Date
                 </Text>
               </View>
@@ -309,7 +310,7 @@ export default function FlashcardsScreen() {
             >
               <View className="flex-row items-center gap-2">
                 <Layers size={18} color={COLORS.text.secondary} />
-                <Text className="text-white text-sm font-medium">
+                <Text className="text-sm font-medium text-white">
                   Sort by Name
                 </Text>
               </View>
@@ -367,9 +368,9 @@ export default function FlashcardsScreen() {
 
       {/* Error Banner */}
       {error && (
-        <View className="bg-red-500/90 p-3 mx-4 mt-4 rounded-xl shadow-lg">
+        <View className="p-3 mx-4 mt-4 shadow-lg bg-red-500/90 rounded-xl">
           <View className="flex-row items-center justify-between">
-            <Text className="text-white font-medium flex-1">{error}</Text>
+            <Text className="flex-1 font-medium text-white">{error}</Text>
             <TouchableOpacity onPress={clearError}>
               <X size={18} color="#fff" />
             </TouchableOpacity>
@@ -406,7 +407,7 @@ export default function FlashcardsScreen() {
 
       {/* Enhanced FAB with shadow and scale animation */}
       <TouchableOpacity
-        className="absolute right-5 bottom-24 w-16 h-16 rounded-full bg-blue-600 justify-center items-center shadow-2xl shadow-blue-600/50 active:scale-90"
+        className="absolute items-center justify-center w-16 h-16 bg-blue-600 rounded-full shadow-2xl right-5 bottom-24 shadow-blue-600/50 active:scale-90"
         onPress={handleAddPress}
       >
         <Plus size={28} color="#fff" strokeWidth={2.5} />
@@ -421,6 +422,6 @@ export default function FlashcardsScreen() {
         noteContext={noteContext}
         doubtContext={doubtContext}
       />
-    </View>
+    </SafeAreaView>
   );
 }
