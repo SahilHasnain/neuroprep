@@ -8,6 +8,7 @@ import {
   FileText,
 } from "lucide-react-native";
 import Button from "../ui/Button";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface ComingSoonModalProps {
   visible: boolean;
@@ -20,6 +21,7 @@ export default function ComingSoonModal({
   onClose,
   feature,
 }: ComingSoonModalProps) {
+  useModalVisibility("coming-soon-modal", visible);
   const featureConfig = {
     doubts: {
       icon: MessageCircle,

@@ -11,8 +11,12 @@ export const flashcardsService = {
   /**
    * List all flashcard decks for the current user
    */
-  async listDecks(): Promise<ApiResponse<FlashcardDeck[]>> {
-    return apiClient.get<FlashcardDeck[]>(API_ENDPOINTS.FLASHCARDS_LIST_DECKS);
+  async listDecks(): Promise<
+    ApiResponse<{ decks: FlashcardDeck[]; total: number }>
+  > {
+    return apiClient.get<{ decks: FlashcardDeck[]; total: number }>(
+      API_ENDPOINTS.FLASHCARDS_LIST_DECKS
+    );
   },
 
   /**
@@ -52,6 +56,29 @@ export const flashcardsService = {
       };
     }>
   > {
-    return apiClient.post(API_ENDPOINTS.FLASHCARDS_GENERATE, config);
+    const response = await apiClient.post<any>(
+      API_ENDPOINTS.FLASHCARDS_GENERATE,
+      config
+    );
+
+    // Backend returns data at root level, transform to match ApiResponse format
+    if (response.success && response.deckId) {
+      return {
+        success: true,
+        data: {
+          deckId: response.deckId,
+          flashcards: response.flashcards || [],
+          metadata: response.metadata || {
+            method: "ai",
+            cached: false,
+            responseTime: 0,
+          },
+        },
+        plan: response.plan,
+        quota: response.quota,
+      };
+    }
+
+    return response;
   },
 };

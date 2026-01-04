@@ -3,6 +3,7 @@ import { ChevronDown, Lock } from "lucide-react-native";
 import { useState } from "react";
 import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface DropdownProps {
   label: string;
@@ -27,6 +28,7 @@ export default function Dropdown({
   onLockedPress,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  useModalVisibility("dropdown-modal", isOpen);
 
   const selectedOption = options.find((opt) => opt.value === value);
 

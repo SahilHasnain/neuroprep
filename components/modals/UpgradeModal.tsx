@@ -13,6 +13,7 @@ import Button from "../ui/Button";
 import { usePlanStore } from "@/store/planStore";
 import { useAuthStore } from "@/store/authStore";
 import { getFeatureName, type FeatureType } from "@/utils/planHelpers";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface UpgradeModalProps {
   visible: boolean;
@@ -56,6 +57,7 @@ export default function UpgradeModal({
   feature,
   onUpgrade,
 }: UpgradeModalProps) {
+  useModalVisibility("upgrade-modal", visible);
   const { planType, createSubscription, initiatePayment, loading } =
     usePlanStore();
   const { user } = useAuthStore();

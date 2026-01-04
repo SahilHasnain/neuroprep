@@ -9,8 +9,11 @@ import {
   Layers,
 } from "lucide-react-native";
 import { isMVPBypassMode } from "@/config/featureFlags";
+import { useModalStore } from "@/store/modalStore";
 
 export default function TabsLayout() {
+  const isAnyModalOpen = useModalStore((state) => state.isAnyModalOpen());
+
   return (
     <Tabs
       screenOptions={{
@@ -23,6 +26,7 @@ export default function TabsLayout() {
           paddingTop: 6,
           backgroundColor: "#1e1e1e",
           borderTopColor: "#374151",
+          display: isAnyModalOpen ? "none" : "flex",
         },
       }}
     >

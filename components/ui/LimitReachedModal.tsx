@@ -1,6 +1,7 @@
 import { Modal, View, Text, Pressable } from "react-native";
 import { X, AlertCircle, Crown } from "lucide-react-native";
 import Button from "./Button";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface LimitReachedModalProps {
   visible: boolean;
@@ -17,6 +18,7 @@ export default function LimitReachedModal({
   onUpgrade,
   onClose,
 }: LimitReachedModalProps) {
+  useModalVisibility("limit-reached-modal", visible);
   const featureNames = {
     doubts: "Doubts",
     questions: "Question Sets",

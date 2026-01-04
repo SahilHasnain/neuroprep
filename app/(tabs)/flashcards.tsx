@@ -112,7 +112,7 @@ export default function FlashcardsScreen() {
 
   // Filter and sort decks
   const filteredAndSortedDecks = useMemo(() => {
-    let filtered = [...decks];
+    let filtered = Array.isArray(decks) ? [...decks] : [];
 
     // Apply search filter
     if (searchQuery.trim()) {
@@ -339,27 +339,28 @@ export default function FlashcardsScreen() {
                 All
               </Text>
             </TouchableOpacity>
-            {SUBJECTS.map((subject) => (
-              <TouchableOpacity
-                key={subject.value}
-                className={`px-4 py-2 rounded-full border active:scale-95 ${
-                  filterSubject === subject.value
-                    ? "bg-blue-600 border-blue-600"
-                    : "bg-[#121212] border-gray-700"
-                }`}
-                onPress={() => setFilterSubject(subject.value)}
-              >
-                <Text
-                  className={`text-sm font-medium ${
+            {Array.isArray(SUBJECTS) &&
+              SUBJECTS.map((subject) => (
+                <TouchableOpacity
+                  key={subject.value}
+                  className={`px-4 py-2 rounded-full border active:scale-95 ${
                     filterSubject === subject.value
-                      ? "text-white"
-                      : "text-gray-400"
+                      ? "bg-blue-600 border-blue-600"
+                      : "bg-[#121212] border-gray-700"
                   }`}
+                  onPress={() => setFilterSubject(subject.value)}
                 >
-                  {subject.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={`text-sm font-medium ${
+                      filterSubject === subject.value
+                        ? "text-white"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {subject.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
           </View>
         )}
       </View>

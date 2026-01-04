@@ -17,6 +17,7 @@ import type {
   DoubtToNoteContext,
 } from "@/lib/types";
 import type { Document } from "@/types/document";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface DocumentContext {
   documentId: string;
@@ -43,6 +44,7 @@ export default function AskDoubtModal({
   onGenerateQuestions,
   onGenerateNotes,
 }: AskDoubtModalProps) {
+  useModalVisibility("ask-doubt-modal", visible);
   const { messages, loading, askDoubt, currentDoubtContext } = useDoubts();
   const [inputText, setInputText] = useState("");
 

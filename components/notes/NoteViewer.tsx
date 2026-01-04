@@ -17,6 +17,7 @@ import FormulaCard from "./FormulaCard";
 import TipCard from "./TipCard";
 import MathMarkdown from "@/components/shared/MathMarkdown";
 import AskDoubtModal from "@/components/modals/AskDoubtModal";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 import type {
   NoteContext,
   DoubtContext,
@@ -63,6 +64,7 @@ export default function NoteViewer({
   const [doubtModalVisible, setDoubtModalVisible] = useState(false);
   const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
   const router = useRouter();
+  useModalVisibility("note-viewer-modal", visible);
 
   if (!note) return null;
 

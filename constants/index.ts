@@ -19,11 +19,10 @@ export const API_ENDPOINTS = {
   PROCESS_OCR: "https://695607f20031b594e614.fra.appwrite.run", // Update this after deployment
   PROCESS_THUMBNAIL: "https://695644b4001690e61503.fra.appwrite.run",
   // Flashcards endpoints
-  FLASHCARDS_GENERATE:
-    "https://placeholder-generate-flashcards.fra.appwrite.run", // Update after deployment
-  FLASHCARDS_LIST_DECKS: "https://placeholder-list-decks.fra.appwrite.run", // Update after deployment
-  FLASHCARDS_GET_DECK: "https://placeholder-get-deck.fra.appwrite.run", // Update after deployment
-  FLASHCARDS_DELETE_DECK: "https://placeholder-delete-deck.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_GENERATE: "https://6958e2e00003d1bf3640.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_LIST_DECKS: "https://695910e700324383538d.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_GET_DECK: "https://69590fa50022432db413.fra.appwrite.run", // Update after deployment
+  FLASHCARDS_DELETE_DECK: "https://6959101d002f227083bb.fra.appwrite.run", // Update after deployment
 };
 
 // Subjects

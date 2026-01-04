@@ -26,6 +26,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { COLORS } from "@/constants/theme";
 import type { UploadOptions } from "@/types/document";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface DocumentUploadModalProps {
   visible: boolean;
@@ -47,6 +48,7 @@ export default function DocumentUploadModal({
   onClose,
   onUpload,
 }: DocumentUploadModalProps) {
+  useModalVisibility("document-upload-modal", visible);
   const [requesting, setRequesting] = useState(false);
   const [currentStep, setCurrentStep] = useState<"select" | "review" | "title">(
     "select"

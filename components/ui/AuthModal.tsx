@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Button from "./Button";
 import { useAuthStore } from "@/store/authStore";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface AuthModalProps {
   visible: boolean;
@@ -19,6 +20,7 @@ interface AuthModalProps {
 // Real Appwrite authentication with signup/login toggle
 export default function AuthModal({ visible, onClose }: AuthModalProps) {
   const { login, signup } = useAuthStore();
+  useModalVisibility("auth-modal", visible);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

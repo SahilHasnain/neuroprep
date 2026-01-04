@@ -8,6 +8,7 @@ import Dropdown from "@/components/ui/Dropdown";
 import InputTopic from "@/components/ui/InputTopic";
 import { SUBJECTS, DIFFICULTY_LEVELS, QUESTION_COUNTS } from "@/constants";
 import type { DoubtContext, NoteContext } from "@/lib/types";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface DocumentContext {
   documentId: string;
@@ -57,6 +58,7 @@ export default function GenerateQuestionsModal({
   noteContext,
   documentContext,
 }: GenerateQuestionsModalProps) {
+  useModalVisibility("generate-questions-modal", visible);
   const difficultyOptions = DIFFICULTY_LEVELS.map((d) => ({
     ...d,
     locked: isDifficultyLocked(d.value),

@@ -22,6 +22,7 @@ import type {
   NoteContext,
   DoubtContext,
 } from "@/types/flashcard";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface GenerateFlashcardsModalProps {
   visible: boolean;
@@ -52,6 +53,7 @@ export default function GenerateFlashcardsModal({
   noteContext,
   doubtContext,
 }: GenerateFlashcardsModalProps) {
+  useModalVisibility("generate-flashcards-modal", visible);
   const [deckName, setDeckName] = useState("");
   const [subject, setSubject] = useState("");
   const [topic, setTopic] = useState("");

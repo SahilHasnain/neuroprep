@@ -13,6 +13,7 @@ import {
   NotebookPen,
 } from "lucide-react-native";
 import { COLORS } from "@/constants/theme";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface ActionSheetProps {
   visible: boolean;
@@ -27,6 +28,8 @@ export default function DocumentActionSheet({
   onClose,
   onActionSelect,
 }: ActionSheetProps) {
+  useModalVisibility("document-action-sheet-modal", visible);
+
   const handleActionPress = (
     action: "generate-questions" | "ask-doubt" | "create-notes"
   ) => {

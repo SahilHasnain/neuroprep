@@ -38,7 +38,9 @@ export const useFlashcardsStore = create<FlashcardsState>((set, get) => ({
     try {
       const result = await flashcardsService.listDecks();
       if (result.success) {
-        set({ decks: result.data || [], isLoading: false });
+        // Backend returns { data: { decks: [], total: number } }
+        const decks = result.data?.decks || [];
+        set({ decks, isLoading: false });
       } else {
         set({
           error: result.message || "Failed to fetch decks",

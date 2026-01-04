@@ -22,6 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { THEME } from "@/constants/theme";
 import { router, useLocalSearchParams } from "expo-router";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 import type {
   NoteContext,
   QuestionToNoteContext,
@@ -79,6 +80,8 @@ export default function NotesScreen() {
     showComingSoon,
     setShowComingSoon,
   } = useNotes();
+
+  useModalVisibility("notes-generate-modal", isModalVisible);
 
   const [questionContext, setQuestionContext] =
     useState<QuestionToNoteContext | null>(null);
