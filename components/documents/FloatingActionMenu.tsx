@@ -19,7 +19,7 @@ export default function FloatingActionMenu({
   onDelete,
 }: FloatingActionMenuProps) {
   return (
-    <View className="absolute z-50 bottom-6 right-6">
+    <View className="absolute z-50 right-6" style={{ bottom: 100 }}>
       {/* Menu Options (show when open) */}
       {isOpen && (
         <View className="gap-3 mb-3">

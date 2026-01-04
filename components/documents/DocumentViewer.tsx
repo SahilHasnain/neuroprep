@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "@/constants/theme";
 import type { Document, DocumentGenerationState } from "@/types/document";
 import DocumentHeader from "./DocumentHeader";
@@ -9,6 +10,7 @@ import DocumentContent from "./DocumentContent";
 import StatusBanners from "./StatusBanners";
 import ActionButtons from "./ActionButtons";
 import GenerationStatusCard from "./GenerationStatusCard";
+import DismissibleBottomSheet from "./DismissibleBottomSheet";
 import Toast from "@/components/shared/Toast";
 import { useDocumentViewer } from "./useDocumentViewer";
 
@@ -53,6 +55,8 @@ export default function DocumentViewer({
   generationState,
   isLoading = false,
 }: DocumentViewerProps) {
+  const [bottomSheetVisible, setBottomSheetVisible] = useState(true);
+
   const {
     // state
     showDocInfo,
@@ -82,7 +86,7 @@ export default function DocumentViewer({
   // Loading state
   if (isLoading) {
     return (
-      <View className="flex-1" style={styles.container}>
+      <SafeAreaView className="flex-1" style={styles.container}>
         <DocumentHeader
           title="Loading..."
           createdAt={document.$createdAt}
@@ -91,13 +95,13 @@ export default function DocumentViewer({
         <View className="items-center justify-center flex-1 gap-4">
           <ActivityIndicator size="large" color={COLORS.primary.blue} />
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View className="flex-1" style={styles.container}>
-      {/* Header */}
+    <SafeAreaView className="flex-1" style={styles.container}>
+      {/* Compact Header */}
       <DocumentHeader
         title={document.title}
         createdAt={document.$createdAt}
@@ -107,12 +111,12 @@ export default function DocumentViewer({
       {/* Generation Progress Banner */}
       {isGeneratingBannerVisible && (
         <View
-          className="flex-row items-center gap-3 px-4 py-3"
+          className="flex-row items-center gap-3 px-4 py-2"
           style={styles.progressBanner}
         >
           <ActivityIndicator size="small" color={COLORS.text.primary} />
           <Text
-            className="flex-1 text-sm font-medium"
+            className="flex-1 text-xs font-medium"
             style={styles.textPrimary}
           >
             {bannerText}
@@ -120,7 +124,7 @@ export default function DocumentViewer({
         </View>
       )}
 
-      {/* Document Content */}
+      {/* Document Content with inline controls */}
       <DocumentContent fileUrl={document.fileUrl} />
 
       {/* Floating Action Menu */}
@@ -140,8 +144,11 @@ export default function DocumentViewer({
         onHide={hideToast}
       />
 
-      {/* Bottom Panel */}
-      <View className="p-4 pb-8 border-t" style={styles.bottomPanel}>
+      {/* Dismissible Bottom Sheet */}
+      <DismissibleBottomSheet
+        isVisible={bottomSheetVisible}
+        onToggle={() => setBottomSheetVisible(!bottomSheetVisible)}
+      >
         {/* Document Info Panel */}
         {showDocInfo && (
           <DocumentInfoPanel
@@ -192,7 +199,7 @@ export default function DocumentViewer({
           onGenerateNotes={onGenerateNotes}
           onGenerateFlashcards={onGenerateFlashcards}
         />
-      </View>
-    </View>
+      </DismissibleBottomSheet>
+    </SafeAreaView>
   );
 }

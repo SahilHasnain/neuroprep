@@ -18,9 +18,6 @@ interface DocumentContentProps {
 }
 
 const styles = StyleSheet.create({
-  controlsContainer: {
-    paddingHorizontal: 16,
-  },
   controlButton: {
     backgroundColor: COLORS.background.card,
     borderColor: COLORS.border.default,
@@ -71,7 +68,7 @@ export default function DocumentContent({ fileUrl }: DocumentContentProps) {
       {/* Horizontal ScrollView (outer) - only active when zoomed */}
       <ScrollView
         horizontal
-        style={styles.scrollViewContainer}
+        style={[styles.scrollViewContainer, { maxHeight: SCREEN_HEIGHT * 0.6 }]}
         contentContainerStyle={
           imageZoom > 1
             ? {
@@ -130,15 +127,20 @@ export default function DocumentContent({ fileUrl }: DocumentContentProps) {
         </ScrollView>
       </ScrollView>
 
-      {/* Image Controls */}
-      <View
-        className="absolute left-0 right-0 flex-row items-center justify-center gap-2 bottom-4"
-        style={styles.controlsContainer}
-      >
+      {/* Image Controls - positioned below document, right aligned */}
+      <View className="flex-row items-center self-end gap-2 px-4 py-2">
         {/* Zoom Controls */}
         <View
-          className="flex-row items-center gap-2 px-3 py-2 border rounded-full"
-          style={styles.controlButton}
+          className="flex-row items-center gap-2 px-3 py-2 border rounded-full shadow-md"
+          style={[
+            styles.controlButton,
+            {
+              shadowColor: "#000",
+              shadowOpacity: 0.15,
+              shadowRadius: 4,
+              elevation: 3,
+            },
+          ]}
         >
           <TouchableOpacity
             onPress={handleZoomOut}
@@ -175,14 +177,19 @@ export default function DocumentContent({ fileUrl }: DocumentContentProps) {
         {/* Reset Zoom Button */}
         {imageZoom > 1 && (
           <TouchableOpacity
-            className="flex-row items-center gap-2 px-4 py-2 border rounded-full active:scale-90"
-            style={styles.resetButton}
+            className="items-center justify-center w-10 h-10 border rounded-full shadow-md active:scale-90"
+            style={[
+              styles.resetButton,
+              {
+                shadowColor: COLORS.primary.blue,
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 3,
+              },
+            ]}
             onPress={handleResetZoom}
           >
             <Maximize2 size={16} color={COLORS.text.primary} />
-            <Text className="text-xs font-medium" style={styles.textPrimary}>
-              Reset
-            </Text>
           </TouchableOpacity>
         )}
       </View>
