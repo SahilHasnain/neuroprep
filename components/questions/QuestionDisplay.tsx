@@ -1,25 +1,18 @@
 import { View, Text, ScrollView, Pressable } from "react-native";
-import {
-  HelpCircle,
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react-native";
+import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { THEME } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
+import { Alert } from "react-native";
 import Button from "@/components/ui/Button";
 import QuestionCard from "@/components/ui/QuestionCard";
-import AskDoubtModal from "@/components/modals/AskDoubtModal";
+import ConnectionPanel from "@/components/shared/ConnectionPanel";
 import ScoreCard from "@/components/questions/ScoreCard";
-import type {
-  Question,
-  QuestionContext,
-  QuestionToNoteContext,
-  DoubtContext,
-  DoubtToNoteContext,
-} from "@/lib/types";
+import { useConnectionContext } from "@/hooks/useConnectionContext";
+import { useFlashcardsStore } from "@/store/flashcardsStore";
+import type { ConnectionAction } from "@/hooks/useConnectionContext";
+import type { Question } from "@/lib/types";
 
 interface QuestionDisplayProps {
   questions: Question[];
@@ -42,16 +35,15 @@ export default function QuestionDisplay({
 }: QuestionDisplayProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showAllQuestions, setShowAllQuestions] = useState(false);
-  const [doubtModalVisible, setDoubtModalVisible] = useState(false);
-  const [selectedQuestionContext, setSelectedQuestionContext] =
-    useState<QuestionContext | null>(null);
   const [showScore, setShowScore] = useState(false);
+
+  // Connection Panel
+  const { isOpen, context, openPanel, closePanel } = useConnectionContext();
+  const [connectionLoading, setConnectionLoading] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const answeredCount = Object.keys(selectedAnswers).length;
   const progressPercentage = (answeredCount / questions.length) * 100;
-
-  // Calculate score
 
   // Calculate score
   const calculateScore = () => {
@@ -65,54 +57,82 @@ export default function QuestionDisplay({
     return correctCount;
   };
 
-  const handleAskDoubt = (question: Question) => {
-    const context: QuestionContext = {
-      questionId: question.id,
-      questionText: question.question,
-      options: question.options.map((opt) => opt.text),
-      correctAnswer: question.correctAnswer,
-      subject,
-      topic,
-      difficulty,
-    };
-
-    setSelectedQuestionContext(context);
-    setDoubtModalVisible(true);
-  };
-
-  const handleGenerateNotes = () => {
-    const context: QuestionToNoteContext = {
-      subject,
-      topic,
-      difficulty,
-    };
-
-    router.push({
-      pathname: "/(tabs)/notes",
-      params: {
-        questionContext: JSON.stringify(context),
+  // Open connection panel
+  const handleOpenConnectionPanel = () => {
+    openPanel({
+      source: "question",
+      subject: subject,
+      topic: topic,
+      metadata: {
+        difficulty,
+        questionCount: questions.length,
       },
     });
   };
 
-  const handleGenerateQuestionsFromDoubt = (context: DoubtContext) => {
-    setDoubtModalVisible(false);
-    router.push({
-      pathname: "/(tabs)/generate-questions",
-      params: {
-        doubtContext: JSON.stringify(context),
-      },
-    });
-  };
+  // Handle connection panel actions
+  const handleConnectionAction = async (action: ConnectionAction) => {
+    setConnectionLoading(true);
 
-  const handleGenerateNotesFromDoubt = (context: DoubtToNoteContext) => {
-    setDoubtModalVisible(false);
-    router.push({
-      pathname: "/(tabs)/notes",
-      params: {
-        doubtContext: JSON.stringify(context),
-      },
-    });
+    try {
+      switch (action) {
+        case "notes":
+          closePanel();
+          router.push({
+            pathname: "/(tabs)/notes",
+            params: {
+              questionContext: JSON.stringify({
+                subject,
+                topic,
+                difficulty,
+              }),
+            },
+          });
+          break;
+
+        case "flashcards":
+          const result = await useFlashcardsStore
+            .getState()
+            .generateFlashcards({
+              deckName: `${topic} - Practice Questions`,
+              subject: subject,
+              topic: topic,
+              cardCount: Math.min(questions.length, 10),
+            });
+
+          closePanel();
+
+          if (result.success) {
+            Alert.alert(
+              "Success!",
+              "Flashcards created! View them in the Flashcards tab.",
+              [{ text: "OK" }]
+            );
+          } else {
+            Alert.alert(
+              "Failed",
+              result.error || "Failed to create flashcards.",
+              [{ text: "OK" }]
+            );
+          }
+          break;
+
+        case "questions":
+          // Already in questions, just close
+          closePanel();
+          Alert.alert(
+            "Already Practicing",
+            "You're already working on questions! Try generating notes or flashcards instead.",
+            [{ text: "OK" }]
+          );
+          break;
+      }
+    } catch (error) {
+      console.error("Connection action error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setConnectionLoading(false);
+    }
   };
 
   const handleNext = () => {
@@ -162,10 +182,13 @@ export default function QuestionDisplay({
             </Text>
             <View className="flex-row gap-2">
               <Pressable
-                onPress={handleGenerateNotes}
-                className="px-3 py-1.5 rounded-lg bg-gray-800 active:bg-gray-700"
+                onPress={handleOpenConnectionPanel}
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 active:opacity-80 flex-row items-center"
               >
-                <BookOpen size={16} color="#9ca3af" />
+                <Sparkles size={14} color="#60a5fa" />
+                <Text className="text-xs font-medium text-blue-300 ml-1">
+                  Connect
+                </Text>
               </Pressable>
               <Pressable
                 onPress={onReset}
@@ -206,12 +229,12 @@ export default function QuestionDisplay({
           {/* Contextual Help - Only show after answering */}
           {selectedAnswers[currentQuestion.id] && (
             <Pressable
-              onPress={() => handleAskDoubt(currentQuestion)}
-              className="flex-row items-center justify-center px-4 py-3 mt-4 rounded-xl bg-blue-500/10 border-[1px] border-blue-500/30 active:bg-blue-500/20"
+              onPress={handleOpenConnectionPanel}
+              className="flex-row items-center justify-center px-4 py-3 mt-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-[1px] border-blue-500/40 active:opacity-80"
             >
-              <HelpCircle size={18} color="#60a5fa" />
-              <Text className="ml-2 text-sm font-medium text-blue-400">
-                Need help with this?
+              <Sparkles size={18} color="#60a5fa" />
+              <Text className="ml-2 text-sm font-semibold text-blue-300">
+                Create Notes or Flashcards
               </Text>
             </Pressable>
           )}
@@ -304,16 +327,14 @@ export default function QuestionDisplay({
           </View>
         </View>
 
-        {/* Ask Doubt Modal */}
-        {selectedQuestionContext && (
-          <AskDoubtModal
-            visible={doubtModalVisible}
-            onClose={() => setDoubtModalVisible(false)}
-            questionContext={selectedQuestionContext}
-            onGenerateQuestions={handleGenerateQuestionsFromDoubt}
-            onGenerateNotes={handleGenerateNotesFromDoubt}
-          />
-        )}
+        {/* Connection Panel */}
+        <ConnectionPanel
+          visible={isOpen}
+          context={context}
+          onClose={closePanel}
+          onActionSelect={handleConnectionAction}
+          loading={connectionLoading}
+        />
       </View>
     );
   }
@@ -427,25 +448,23 @@ export default function QuestionDisplay({
           />
         )}
         <Button
-          title="Generate Notes"
-          onPress={handleGenerateNotes}
+          title="Connect & Create"
+          onPress={handleOpenConnectionPanel}
           variant="outline"
-          icon={<BookOpen size={16} color="#3b82f6" />}
+          icon={<Sparkles size={16} color="#60a5fa" />}
           fullWidth
         />
         <Button title="Exit" onPress={onReset} variant="outline" fullWidth />
       </View>
 
-      {/* Ask Doubt Modal */}
-      {selectedQuestionContext && (
-        <AskDoubtModal
-          visible={doubtModalVisible}
-          onClose={() => setDoubtModalVisible(false)}
-          questionContext={selectedQuestionContext}
-          onGenerateQuestions={handleGenerateQuestionsFromDoubt}
-          onGenerateNotes={handleGenerateNotesFromDoubt}
-        />
-      )}
+      {/* Connection Panel */}
+      <ConnectionPanel
+        visible={isOpen}
+        context={context}
+        onClose={closePanel}
+        onActionSelect={handleConnectionAction}
+        loading={connectionLoading}
+      />
     </ScrollView>
   );
 }

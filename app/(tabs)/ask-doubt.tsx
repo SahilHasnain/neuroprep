@@ -1,9 +1,12 @@
 import ChatBubble from "@/components/shared/ChatBubble";
+import ConnectionPanel from "@/components/shared/ConnectionPanel";
 import AuthModal from "@/components/ui/AuthModal";
 import LimitReachedModal from "@/components/ui/LimitReachedModal";
 import { useAuthStore } from "@/store/authStore";
 import { useDoubts } from "@/hooks/useDoubts";
 import { useFlashcardsStore } from "@/store/flashcardsStore";
+import { useConnectionContext } from "@/hooks/useConnectionContext";
+import type { ConnectionAction } from "@/hooks/useConnectionContext";
 import { LAUNCH_V1_BYPASS } from "@/constants";
 import { useState, useEffect } from "react";
 import {
@@ -23,6 +26,7 @@ import type {
   QuestionContext,
   NoteContext,
   DocumentContext,
+  DoubtContext,
 } from "@/lib/types";
 import {
   validateQuestionContext,
@@ -41,6 +45,10 @@ export default function AskDoubtScreen() {
   const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
   const [documentContext, setDocumentContext] =
     useState<DocumentContext | null>(null);
+
+  // Connection Panel
+  const { isOpen, context, openPanel, closePanel } = useConnectionContext();
+  const [connectionLoading, setConnectionLoading] = useState(false);
 
   // Get route params
   const params = useLocalSearchParams();
@@ -146,70 +154,82 @@ Correct Answer: ${parsedContext.correctAnswer}
     setDocumentContext(null);
   };
 
-  const handleGenerateQuestions = (
-    context: import("@/lib/types").DoubtContext
-  ) => {
-    // Navigate to generate-questions tab with doubt context
-    router.push({
-      pathname: "/(tabs)/generate-questions",
-      params: {
-        doubtContext: JSON.stringify(context),
-      },
+  // Handle opening connection panel
+  const handleOpenConnectionPanel = (doubtContext: DoubtContext) => {
+    openPanel({
+      source: "doubt",
+      subject: doubtContext.subject,
+      topic: doubtContext.topic,
+      doubtContext: doubtContext,
     });
   };
 
-  const handleGenerateNotes = (
-    context: import("@/lib/types").DoubtToNoteContext
-  ) => {
-    // Navigate to notes tab with doubt context
-    router.push({
-      pathname: "/(tabs)/notes",
-      params: {
-        doubtContext: JSON.stringify(context),
-      },
-    });
-  };
+  // Handle connection panel actions
+  const handleConnectionAction = async (action: ConnectionAction) => {
+    if (!context?.doubtContext) return;
 
-  const handleSaveAsFlashcard = async (
-    doubtText: string,
-    resolution: string,
-    subject: string,
-    topic: string
-  ) => {
+    setConnectionLoading(true);
+
     try {
-      // Create a single-card deck directly
-      const result = await useFlashcardsStore.getState().generateFlashcards({
-        deckName: `Doubt: ${doubtText.substring(0, 50)}${doubtText.length > 50 ? "..." : ""}`,
-        subject: subject,
-        topic: topic,
-        cardCount: 1,
-        doubtContext: {
-          doubtId: Date.now().toString(), // Generate temporary ID
-          doubtText: doubtText,
-          resolution: resolution,
-          subject: subject,
-          topic: topic,
-        },
-      });
+      switch (action) {
+        case "questions":
+          closePanel();
+          router.push({
+            pathname: "/(tabs)/generate-questions",
+            params: {
+              doubtContext: JSON.stringify(context.doubtContext),
+            },
+          });
+          break;
 
-      if (result.success) {
-        Alert.alert(
-          "Success!",
-          "Flashcard saved successfully! You can view it in the Flashcards tab.",
-          [{ text: "OK" }]
-        );
-      } else {
-        Alert.alert(
-          "Failed",
-          result.error || "Failed to save flashcard. Please try again.",
-          [{ text: "OK" }]
-        );
+        case "notes":
+          closePanel();
+          router.push({
+            pathname: "/(tabs)/notes",
+            params: {
+              doubtContext: JSON.stringify({
+                doubtId: context.doubtContext.doubtId,
+                doubtText: context.doubtContext.doubtText,
+                subject: context.doubtContext.subject,
+                topic: context.doubtContext.topic,
+              }),
+            },
+          });
+          break;
+
+        case "flashcards":
+          const result = await useFlashcardsStore
+            .getState()
+            .generateFlashcards({
+              deckName: `Doubt: ${context.doubtContext.doubtText.substring(0, 50)}${context.doubtContext.doubtText.length > 50 ? "..." : ""}`,
+              subject: context.doubtContext.subject,
+              topic: context.doubtContext.topic,
+              cardCount: 1,
+              doubtContext: context.doubtContext,
+            });
+
+          closePanel();
+
+          if (result.success) {
+            Alert.alert(
+              "Success!",
+              "Flashcard created! View it in the Flashcards tab.",
+              [{ text: "OK" }]
+            );
+          } else {
+            Alert.alert(
+              "Failed",
+              result.error || "Failed to create flashcard.",
+              [{ text: "OK" }]
+            );
+          }
+          break;
       }
     } catch (error) {
-      console.error("Error saving flashcard:", error);
-      Alert.alert("Error", "An error occurred while saving the flashcard.", [
-        { text: "OK" },
-      ]);
+      console.error("Connection action error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setConnectionLoading(false);
     }
   };
 
@@ -371,9 +391,7 @@ Correct Answer: ${parsedContext.correctAnswer}
                 ? currentDoubtContext || undefined
                 : undefined
             }
-            onGenerateQuestions={handleGenerateQuestions}
-            onGenerateNotes={handleGenerateNotes}
-            onSaveAsFlashcard={handleSaveAsFlashcard}
+            onOpenConnectionPanel={handleOpenConnectionPanel}
           />
         ))}
       </ScrollView>
@@ -393,6 +411,15 @@ Correct Answer: ${parsedContext.correctAnswer}
           onClose={() => {}}
         />
       )}
+
+      {/* Connection Panel */}
+      <ConnectionPanel
+        visible={isOpen}
+        context={context}
+        onClose={closePanel}
+        onActionSelect={handleConnectionAction}
+        loading={connectionLoading}
+      />
     </SafeAreaView>
   );
 }

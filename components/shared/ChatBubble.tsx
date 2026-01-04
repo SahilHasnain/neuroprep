@@ -1,21 +1,15 @@
 import clsx from "clsx";
 import { Text, View, TouchableOpacity } from "react-native";
+import { Sparkles } from "lucide-react-native";
 import MathMarkdown from "@/components/shared/MathMarkdown";
-import type { DoubtContext, DoubtToNoteContext } from "@/lib/types";
+import type { DoubtContext } from "@/lib/types";
 
 interface ChatBubbleProps {
   message: string;
   isUser: boolean;
   timeStamp?: string;
   doubtContext?: DoubtContext;
-  onGenerateQuestions?: (context: DoubtContext) => void;
-  onGenerateNotes?: (context: DoubtToNoteContext) => void;
-  onSaveAsFlashcard?: (
-    doubtText: string,
-    resolution: string,
-    subject: string,
-    topic: string
-  ) => void;
+  onOpenConnectionPanel?: (context: DoubtContext) => void;
 }
 
 export default function ChatBubble({
@@ -23,38 +17,9 @@ export default function ChatBubble({
   isUser,
   timeStamp,
   doubtContext,
-  onGenerateQuestions,
-  onGenerateNotes,
-  onSaveAsFlashcard,
+  onOpenConnectionPanel,
 }: ChatBubbleProps) {
-  const showGenerateQuestionsButton =
-    !isUser && doubtContext && onGenerateQuestions;
-  const showGenerateNotesButton = !isUser && doubtContext && onGenerateNotes;
-  const showSaveAsFlashcardButton =
-    !isUser && doubtContext && onSaveAsFlashcard;
-
-  const handleGenerateNotes = () => {
-    if (doubtContext && onGenerateNotes) {
-      const noteContext: DoubtToNoteContext = {
-        doubtId: doubtContext.doubtId,
-        doubtText: doubtContext.doubtText,
-        subject: doubtContext.subject,
-        topic: doubtContext.topic,
-      };
-      onGenerateNotes(noteContext);
-    }
-  };
-
-  const handleSaveAsFlashcard = () => {
-    if (doubtContext && onSaveAsFlashcard) {
-      onSaveAsFlashcard(
-        doubtContext.doubtText,
-        message,
-        doubtContext.subject,
-        doubtContext.topic
-      );
-    }
-  };
+  const showConnectionPanel = !isUser && doubtContext && onOpenConnectionPanel;
 
   return (
     <View className={clsx("mb-4", isUser ? "items-end" : "items-start")}>
@@ -103,52 +68,17 @@ export default function ChatBubble({
           </MathMarkdown>
         )}
 
-        {showGenerateQuestionsButton && (
+        {/* Connection Panel Button */}
+        {showConnectionPanel && (
           <TouchableOpacity
-            onPress={() => onGenerateQuestions(doubtContext)}
+            onPress={() => onOpenConnectionPanel(doubtContext)}
             className="mt-3 pt-3 border-t border-dark-surface-300"
             activeOpacity={0.7}
           >
-            <View className="flex-row items-center justify-center py-2 px-3 bg-info-bg rounded-lg border border-info-border">
-              <Text className="text-info-text font-medium text-sm mr-1">
-                📝
-              </Text>
-              <Text className="text-info-text font-medium text-sm">
-                Generate Questions on this topic
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {showGenerateNotesButton && (
-          <TouchableOpacity
-            onPress={handleGenerateNotes}
-            className="mt-2"
-            activeOpacity={0.7}
-          >
-            <View className="flex-row items-center justify-center py-2 px-3 bg-success-bg rounded-lg border border-success-border">
-              <Text className="text-success-text font-medium text-sm mr-1">
-                📚
-              </Text>
-              <Text className="text-success-text font-medium text-sm">
-                Generate Notes on this topic
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {showSaveAsFlashcardButton && (
-          <TouchableOpacity
-            onPress={handleSaveAsFlashcard}
-            className="mt-2"
-            activeOpacity={0.7}
-          >
-            <View className="flex-row items-center justify-center py-2 px-3 bg-purple-500/10 rounded-lg border border-purple-500/30">
-              <Text className="text-purple-300 font-medium text-sm mr-1">
-                🗂️
-              </Text>
-              <Text className="text-purple-300 font-medium text-sm">
-                Save as Flashcard
+            <View className="flex-row items-center justify-center py-2.5 px-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/40">
+              <Sparkles size={16} color="#60a5fa" />
+              <Text className="text-blue-300 font-semibold text-sm ml-2">
+                Connect & Create More
               </Text>
             </View>
           </TouchableOpacity>

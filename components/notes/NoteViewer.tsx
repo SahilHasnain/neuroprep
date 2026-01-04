@@ -1,11 +1,6 @@
-import { View, Text, ScrollView, Pressable, Modal } from "react-native";
+import { View, Text, ScrollView, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  X,
-  FileQuestion,
-  MessageCircleQuestion,
-  BookMarked,
-} from "lucide-react-native";
+import { X, Sparkles } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { THEME } from "@/constants/theme";
 import { useState } from "react";
@@ -16,13 +11,12 @@ import NoteSection from "./NoteSection";
 import FormulaCard from "./FormulaCard";
 import TipCard from "./TipCard";
 import MathMarkdown from "@/components/shared/MathMarkdown";
-import AskDoubtModal from "@/components/modals/AskDoubtModal";
+import ConnectionPanel from "@/components/shared/ConnectionPanel";
+import { useConnectionContext } from "@/hooks/useConnectionContext";
+import { useFlashcardsStore } from "@/store/flashcardsStore";
 import { useModalVisibility } from "@/hooks/useModalVisibility";
-import type {
-  NoteContext,
-  DoubtContext,
-  DoubtToNoteContext,
-} from "@/lib/types/domain.types";
+import type { ConnectionAction } from "@/hooks/useConnectionContext";
+import type { NoteContext } from "@/lib/types/domain.types";
 
 interface NoteViewerProps {
   visible: boolean;
@@ -34,9 +28,6 @@ interface NoteViewerProps {
     date: string;
   } | null;
   onClose: () => void;
-  onGenerateQuestions?: (context: NoteContext) => void;
-  onGenerateQuestionsFromDoubt?: (context: DoubtContext) => void;
-  onGenerateNotesFromDoubt?: (context: DoubtToNoteContext) => void;
 }
 
 interface ParsedNote {
@@ -57,60 +48,101 @@ export default function NoteViewer({
   visible,
   note,
   onClose,
-  onGenerateQuestions,
-  onGenerateQuestionsFromDoubt,
-  onGenerateNotesFromDoubt,
 }: NoteViewerProps) {
-  const [doubtModalVisible, setDoubtModalVisible] = useState(false);
-  const [noteContext, setNoteContext] = useState<NoteContext | null>(null);
   const router = useRouter();
   useModalVisibility("note-viewer-modal", visible);
 
+  // Connection Panel
+  const { isOpen, context, openPanel, closePanel } = useConnectionContext();
+  const [connectionLoading, setConnectionLoading] = useState(false);
+
   if (!note) return null;
 
-  const handleGenerateQuestions = () => {
-    if (onGenerateQuestions && note) {
-      const context: NoteContext = {
+  // Open connection panel
+  const handleOpenConnectionPanel = () => {
+    openPanel({
+      source: "note",
+      subject: note.subject,
+      topic: note.title,
+      metadata: {
         noteId: note.id,
-        noteTitle: note.title,
-        subject: note.subject,
-        topic: note.title, // Using title as topic
-        noteLength: "medium", // Default value
-      };
-      onGenerateQuestions(context);
-    }
-  };
-
-  const handleCreateFlashcards = () => {
-    if (note) {
-      const noteContext = {
-        noteId: note.id,
-        subject: note.subject,
-        topic: note.title,
         content: note.content,
-      };
-
-      // Navigate to flashcards tab with note context
-      router.push({
-        pathname: "/(tabs)/flashcards",
-        params: {
-          noteContext: JSON.stringify(noteContext),
-        },
-      });
-    }
+      },
+    });
   };
 
-  const handleAskDoubt = () => {
-    if (note) {
-      const context: NoteContext = {
-        noteId: note.id,
-        noteTitle: note.title,
-        subject: note.subject,
-        topic: note.title, // Using title as topic
-        noteLength: "medium", // Default value
-      };
-      setNoteContext(context);
-      setDoubtModalVisible(true);
+  // Handle connection panel actions
+  const handleConnectionAction = async (action: ConnectionAction) => {
+    if (!note) return;
+
+    setConnectionLoading(true);
+
+    try {
+      switch (action) {
+        case "questions":
+          closePanel();
+          router.push({
+            pathname: "/(tabs)/generate-questions",
+            params: {
+              noteContext: JSON.stringify({
+                noteId: note.id,
+                noteTitle: note.title,
+                subject: note.subject,
+                topic: note.title,
+                noteLength: "medium",
+              }),
+            },
+          });
+          break;
+
+        case "flashcards":
+          const result = await useFlashcardsStore
+            .getState()
+            .generateFlashcards({
+              deckName: note.title,
+              subject: note.subject,
+              topic: note.title,
+              cardCount: 10,
+              noteContext: {
+                noteId: note.id,
+                subject: note.subject,
+                topic: note.title,
+                content: note.content,
+              },
+            });
+
+          closePanel();
+
+          if (result.success) {
+            Alert.alert(
+              "Success!",
+              "Flashcards created! View them in the Flashcards tab.",
+              [{ text: "OK" }]
+            );
+          } else {
+            Alert.alert(
+              "Failed",
+              result.error || "Failed to create flashcards.",
+              [{ text: "OK" }]
+            );
+          }
+          break;
+
+        case "notes":
+          // Already viewing notes
+          closePanel();
+          Alert.alert(
+            "Already Viewing",
+            "You're already viewing a note! Try generating questions or flashcards instead.",
+            [{ text: "OK" }]
+          );
+          break;
+      }
+    } catch (error) {
+      console.error("Connection action error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setConnectionLoading(false);
     }
   };
 
@@ -397,52 +429,25 @@ export default function NoteViewer({
             )}
           </ScrollView>
 
-          {/* Action Buttons Section */}
+          {/* Connection Panel Button */}
           {!parseError && (
             <View
               style={{ backgroundColor: THEME.colors.background.secondary }}
               className="px-4 py-3 border-t border-gray-700"
             >
-              <View className="flex-row gap-2 mb-2">
-                <Pressable
-                  onPress={handleGenerateQuestions}
-                  className="flex-1 rounded-md overflow-hidden active:opacity-80"
-                >
-                  <LinearGradient
-                    colors={["#2563eb", "#1d4ed8"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    className="flex-row items-center justify-center px-3 py-2"
-                  >
-                    <FileQuestion size={18} color="#fff" />
-                    <Text className="ml-2 text-sm font-semibold text-white">
-                      Generate Questions
-                    </Text>
-                  </LinearGradient>
-                </Pressable>
-                <Pressable
-                  onPress={handleAskDoubt}
-                  className="flex-1 flex-row items-center justify-center px-3 py-2 border border-blue-500 rounded-md bg-transparent active:bg-blue-500/10"
-                >
-                  <MessageCircleQuestion size={18} color="#60a5fa" />
-                  <Text className="ml-2 text-sm font-semibold text-blue-400">
-                    Ask Doubt
-                  </Text>
-                </Pressable>
-              </View>
               <Pressable
-                onPress={handleCreateFlashcards}
+                onPress={handleOpenConnectionPanel}
                 className="rounded-md overflow-hidden active:opacity-80"
               >
                 <LinearGradient
-                  colors={["#9333ea", "#7e22ce"]}
+                  colors={["#2563eb", "#9333ea"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  className="flex-row items-center justify-center px-3 py-2"
+                  className="flex-row items-center justify-center px-4 py-3"
                 >
-                  <BookMarked size={18} color="#fff" />
-                  <Text className="ml-2 text-sm font-semibold text-white">
-                    Create Flashcards
+                  <Sparkles size={20} color="#fff" />
+                  <Text className="ml-2 text-base font-semibold text-white">
+                    Connect & Create More
                   </Text>
                 </LinearGradient>
               </Pressable>
@@ -450,16 +455,14 @@ export default function NoteViewer({
           )}
         </SafeAreaView>
 
-        {/* Ask Doubt Modal */}
-        {noteContext && (
-          <AskDoubtModal
-            visible={doubtModalVisible}
-            onClose={() => setDoubtModalVisible(false)}
-            noteContext={noteContext}
-            onGenerateQuestions={onGenerateQuestionsFromDoubt}
-            onGenerateNotes={onGenerateNotesFromDoubt}
-          />
-        )}
+        {/* Connection Panel */}
+        <ConnectionPanel
+          visible={isOpen}
+          context={context}
+          onClose={closePanel}
+          onActionSelect={handleConnectionAction}
+          loading={connectionLoading}
+        />
       </View>
     </Modal>
   );
