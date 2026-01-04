@@ -137,6 +137,30 @@ export default function NoteViewer({
             [{ text: "OK" }]
           );
           break;
+
+        case "doubt":
+          closePanel();
+          // Navigate to Ask Doubt with note context
+          const doubtText = `I have a doubt about the note "${note.title}":
+
+${note.content.substring(0, 300)}${note.content.length > 300 ? "..." : ""}
+
+My question: `;
+
+          router.push({
+            pathname: "/(tabs)/ask-doubt",
+            params: {
+              noteContext: JSON.stringify({
+                noteId: note.id,
+                noteTitle: note.title,
+                subject: note.subject,
+                topic: note.title,
+                noteLength: "medium",
+                prefilledDoubt: doubtText,
+              }),
+            },
+          });
+          break;
       }
     } catch (error) {
       console.error("Connection action error:", error);

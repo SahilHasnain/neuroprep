@@ -126,6 +126,38 @@ export default function QuestionDisplay({
             [{ text: "OK" }]
           );
           break;
+
+        case "doubt":
+          closePanel();
+          // Navigate to Ask Doubt with question context
+          const currentQ = questions[currentQuestionIndex];
+          const doubtText = `I have a doubt about this question:
+
+Question: ${currentQ.question}
+
+Options:
+${currentQ.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt.text}`).join("\n")}
+
+Correct Answer: ${currentQ.correctAnswer}
+
+My question: `;
+
+          router.push({
+            pathname: "/(tabs)/ask-doubt",
+            params: {
+              questionContext: JSON.stringify({
+                questionId: currentQ.id,
+                questionText: currentQ.question,
+                options: currentQ.options.map((opt) => opt.text),
+                correctAnswer: currentQ.correctAnswer,
+                subject,
+                topic,
+                difficulty,
+                prefilledDoubt: doubtText,
+              }),
+            },
+          });
+          break;
       }
     } catch (error) {
       console.error("Connection action error:", error);

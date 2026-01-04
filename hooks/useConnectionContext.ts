@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { DoubtContext } from "@/lib/types";
 
-export type ConnectionAction = "questions" | "notes" | "flashcards";
+export type ConnectionAction = "questions" | "notes" | "flashcards" | "doubt";
 
 export interface ConnectionContextData {
   source: "doubt" | "question" | "note" | "document";

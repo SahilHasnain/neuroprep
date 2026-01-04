@@ -67,8 +67,12 @@ export default function AskDoubtScreen() {
         if (validateQuestionContext(parsedContext)) {
           setQuestionContext(parsedContext);
 
-          // Format question context into natural doubt query
-          const formattedDoubt = `I have a doubt about this question:
+          // Check if there's a prefilled doubt text
+          if (parsedContext.prefilledDoubt) {
+            setInputText(parsedContext.prefilledDoubt);
+          } else {
+            // Format question context into natural doubt query
+            const formattedDoubt = `I have a doubt about this question:
 
 Question: ${parsedContext.questionText}
 
@@ -78,7 +82,8 @@ ${parsedContext.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${o
 Correct Answer: ${parsedContext.correctAnswer}
 
 `;
-          setInputText(formattedDoubt);
+            setInputText(formattedDoubt);
+          }
         } else {
           console.error(
             "Invalid question context received, continuing without context"
@@ -101,10 +106,15 @@ Correct Answer: ${parsedContext.correctAnswer}
         if (validateNoteContext(parsedContext)) {
           setNoteContext(parsedContext);
 
-          // Pre-fill input with note reference
-          setInputText(
-            `I have a doubt about the note "${parsedContext.noteTitle}":\n\n`
-          );
+          // Check if there's a prefilled doubt text
+          if (parsedContext.prefilledDoubt) {
+            setInputText(parsedContext.prefilledDoubt);
+          } else {
+            // Pre-fill input with note reference
+            setInputText(
+              `I have a doubt about the note "${parsedContext.noteTitle}":\n\n`
+            );
+          }
         } else {
           console.error(
             "Invalid note context received, continuing without context"
@@ -223,6 +233,16 @@ Correct Answer: ${parsedContext.correctAnswer}
               [{ text: "OK" }]
             );
           }
+          break;
+
+        case "doubt":
+          // Already in Ask Doubt screen
+          closePanel();
+          Alert.alert(
+            "Already Here",
+            "You're already in the Ask Doubt screen! Just type your question above.",
+            [{ text: "OK" }]
+          );
           break;
       }
     } catch (error) {

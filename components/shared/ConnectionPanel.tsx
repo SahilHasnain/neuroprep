@@ -16,6 +16,7 @@ import {
   Layers,
   Sparkles,
   ChevronRight,
+  MessageCircleQuestion,
 } from "lucide-react-native";
 import { THEME } from "@/constants/theme";
 import type {
@@ -88,6 +89,14 @@ export default function ConnectionPanel({
       icon: Layers,
       gradient: ["#9333ea", "#7e22ce"],
       iconColor: "#c084fc",
+    },
+    {
+      id: "doubt" as ConnectionAction,
+      title: "Ask a Doubt",
+      description: "Get AI help with your questions",
+      icon: MessageCircleQuestion,
+      gradient: ["#dc2626", "#b91c1c"],
+      iconColor: "#f87171",
     },
   ];
 
