@@ -4,6 +4,8 @@ import {
   FileQuestion,
   FileText,
   MessageCircleQuestion,
+  Layers,
+  FolderOpen,
 } from "lucide-react-native";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -36,6 +38,22 @@ export default function HomeScreen() {
       onPress: () => router.push("/notes"),
       bgColor: "bg-purple-100",
       iconColor: "#a855f7",
+    },
+    {
+      icon: Layers,
+      label: "Flashcards",
+      description: "Study efficiently",
+      onPress: () => router.push("/flashcards"),
+      bgColor: "bg-red-100",
+      iconColor: "#ef4444",
+    },
+    {
+      icon: FolderOpen,
+      label: "Documents",
+      description: "Process documents with AI",
+      onPress: () => router.push("/documents"),
+      bgColor: "bg-orange-100",
+      iconColor: "#f97316",
     },
   ];
 

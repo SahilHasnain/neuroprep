@@ -8,12 +8,14 @@ import {
   FolderOpen,
   Layers,
 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isMVPBypassMode } from "@/config/featureFlags";
 import { useModalStore } from "@/store/modalStore";
 
 export default function TabsLayout() {
   // Select directly from state to ensure reactivity on modal open/close
   const isAnyModalOpen = useModalStore((state) => state.openModals.size > 0);
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -23,7 +25,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: "#6b7280",
         tabBarStyle: {
           height: 100,
-          paddingBottom: 6,
+          paddingBottom: 6 + insets.bottom,
           paddingTop: 6,
           backgroundColor: "#1e1e1e",
           borderTopColor: "#374151",
