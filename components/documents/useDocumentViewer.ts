@@ -16,7 +16,6 @@ export function useDocumentViewer({
   onDelete,
 }: UseDocumentViewerArgs) {
   const [showDocInfo, setShowDocInfo] = useState(false);
-  const [fabMenuOpen, setFabMenuOpen] = useState(false);
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
@@ -163,8 +162,6 @@ export function useDocumentViewer({
     // state
     showDocInfo,
     setShowDocInfo,
-    fabMenuOpen,
-    setFabMenuOpen,
     toast,
     showToast,
     hideToast,

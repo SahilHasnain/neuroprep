@@ -4,7 +4,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "@/constants/theme";
 import type { Document, DocumentGenerationState } from "@/types/document";
 import DocumentHeader from "./DocumentHeader";
-import FloatingActionMenu from "./FloatingActionMenu";
 import DocumentInfoPanel from "./DocumentInfoPanel";
 import DocumentContent from "./DocumentContent";
 import StatusBanners from "./StatusBanners";
@@ -61,8 +60,6 @@ export default function DocumentViewer({
     // state
     showDocInfo,
     setShowDocInfo,
-    fabMenuOpen,
-    setFabMenuOpen,
     toast,
     hideToast,
 
@@ -91,6 +88,9 @@ export default function DocumentViewer({
           title="Loading..."
           createdAt={document.$createdAt}
           onBack={onBack}
+          onInfo={handleInfo}
+          onShare={handleShare}
+          onDelete={handleDelete}
         />
         <View className="items-center justify-center flex-1 gap-4">
           <ActivityIndicator size="large" color={COLORS.primary.blue} />
@@ -106,6 +106,9 @@ export default function DocumentViewer({
         title={document.title}
         createdAt={document.$createdAt}
         onBack={onBack}
+        onInfo={handleInfo}
+        onShare={handleShare}
+        onDelete={handleDelete}
       />
 
       {/* Generation Progress Banner */}
@@ -127,15 +130,6 @@ export default function DocumentViewer({
       {/* Document Content with inline controls */}
       <DocumentContent fileUrl={document.fileUrl} />
 
-      {/* Floating Action Menu */}
-      <FloatingActionMenu
-        isOpen={fabMenuOpen}
-        onToggle={() => setFabMenuOpen(!fabMenuOpen)}
-        onInfo={handleInfo}
-        onShare={handleShare}
-        onDelete={handleDelete}
-      />
-
       {/* Toast Notifications */}
       <Toast
         visible={toast.visible}
@@ -145,61 +139,64 @@ export default function DocumentViewer({
       />
 
       {/* Dismissible Bottom Sheet */}
-      <DismissibleBottomSheet
-        isVisible={bottomSheetVisible}
-        onToggle={() => setBottomSheetVisible(!bottomSheetVisible)}
-      >
-        {/* Document Info Panel */}
-        {showDocInfo && (
-          <DocumentInfoPanel
-            document={document}
-            onClose={() => setShowDocInfo(false)}
+      <SafeAreaView edges={["bottom"]}>
+        <DismissibleBottomSheet
+          isVisible={bottomSheetVisible}
+          onToggle={() => setBottomSheetVisible(!bottomSheetVisible)}
+        >
+          {/* Document Info Panel */}
+          {showDocInfo && (
+            <DocumentInfoPanel
+              document={document}
+              onClose={() => setShowDocInfo(false)}
+            />
+          )}
+
+          {/* Status Banners */}
+          <StatusBanners
+            isOcrPending={isOcrPending}
+            isOcrFailed={isOcrFailed}
+            hasNoText={hasNoText}
+            hasShortText={hasShortText}
+            documentCreatedAt={document.$createdAt}
           />
-        )}
 
-        {/* Status Banners */}
-        <StatusBanners
-          isOcrPending={isOcrPending}
-          isOcrFailed={isOcrFailed}
-          hasNoText={hasNoText}
-          hasShortText={hasShortText}
-          documentCreatedAt={document.$createdAt}
-        />
+          {/* Generation Status Cards */}
+          {(questionsState.status !== "idle" ||
+            notesState.status !== "idle") && (
+            <View className="gap-3 mb-4">
+              {questionsState.status !== "idle" && (
+                <GenerationStatusCard
+                  type="questions"
+                  state={questionsState}
+                  onViewAll={onViewQuestions}
+                  onRetry={onGenerateQuestions}
+                  previewData={questionsState.data}
+                />
+              )}
+              {notesState.status !== "idle" && (
+                <GenerationStatusCard
+                  type="notes"
+                  state={notesState}
+                  onViewAll={onViewNotes}
+                  onRetry={onGenerateNotes}
+                  previewData={notesState.data}
+                />
+              )}
+            </View>
+          )}
 
-        {/* Generation Status Cards */}
-        {(questionsState.status !== "idle" || notesState.status !== "idle") && (
-          <View className="gap-3 mb-4">
-            {questionsState.status !== "idle" && (
-              <GenerationStatusCard
-                type="questions"
-                state={questionsState}
-                onViewAll={onViewQuestions}
-                onRetry={onGenerateQuestions}
-                previewData={questionsState.data}
-              />
-            )}
-            {notesState.status !== "idle" && (
-              <GenerationStatusCard
-                type="notes"
-                state={notesState}
-                onViewAll={onViewNotes}
-                onRetry={onGenerateNotes}
-                previewData={notesState.data}
-              />
-            )}
-          </View>
-        )}
-
-        {/* Action Buttons */}
-        <ActionButtons
-          canGenerate={canGenerate}
-          questionsState={questionsState}
-          notesState={notesState}
-          onGenerateQuestions={onGenerateQuestions}
-          onGenerateNotes={onGenerateNotes}
-          onGenerateFlashcards={onGenerateFlashcards}
-        />
-      </DismissibleBottomSheet>
+          {/* Action Buttons */}
+          <ActionButtons
+            canGenerate={canGenerate}
+            questionsState={questionsState}
+            notesState={notesState}
+            onGenerateQuestions={onGenerateQuestions}
+            onGenerateNotes={onGenerateNotes}
+            onGenerateFlashcards={onGenerateFlashcards}
+          />
+        </DismissibleBottomSheet>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }
