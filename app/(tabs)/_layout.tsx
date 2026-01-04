@@ -12,7 +12,8 @@ import { isMVPBypassMode } from "@/config/featureFlags";
 import { useModalStore } from "@/store/modalStore";
 
 export default function TabsLayout() {
-  const isAnyModalOpen = useModalStore((state) => state.isAnyModalOpen());
+  // Select directly from state to ensure reactivity on modal open/close
+  const isAnyModalOpen = useModalStore((state) => state.openModals.size > 0);
 
   return (
     <Tabs

@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { usePlanStore } from "@/store/planStore";
+import { useModalStore } from "@/store/modalStore";
 import { isMVPBypassMode } from "@/config/featureFlags";
 import "./globals.css";
 
@@ -15,6 +16,7 @@ export default function RootLayout() {
   const { fetchPlanStatus } = usePlanStore();
   const router = useRouter();
   const segments = useSegments();
+  const clearAllModals = useModalStore((s) => s.clearAllModals);
 
   useEffect(() => {
     fetchPlanStatus();
@@ -31,6 +33,11 @@ export default function RootLayout() {
     }
   }, [segments]);
   // MVP_BYPASS: END
+
+  // Ensure any lingering modal state is cleared on route changes
+  useEffect(() => {
+    clearAllModals();
+  }, [segments, clearAllModals]);
   // // Load custom fonts
   // const [fontsLoaded] = useFonts({
   //   InterRegular: require("../assets/fonts/Inter-Regular.ttf"),

@@ -5,6 +5,7 @@ interface ModalStore {
   registerModal: (modalId: string) => void;
   unregisterModal: (modalId: string) => void;
   isAnyModalOpen: () => boolean;
+  clearAllModals: () => void;
 }
 
 export const useModalStore = create<ModalStore>((set, get) => ({
@@ -28,5 +29,9 @@ export const useModalStore = create<ModalStore>((set, get) => ({
 
   isAnyModalOpen: () => {
     return get().openModals.size > 0;
+  },
+
+  clearAllModals: () => {
+    set({ openModals: new Set() });
   },
 }));

@@ -23,6 +23,7 @@ import type {
   ConnectionContextData,
   ConnectionAction,
 } from "@/hooks/useConnectionContext";
+import { useModalVisibility } from "@/hooks/useModalVisibility";
 
 interface ConnectionPanelProps {
   visible: boolean;
@@ -39,6 +40,8 @@ export default function ConnectionPanel({
   onActionSelect,
   loading = false,
 }: ConnectionPanelProps) {
+  // Register visibility to control tab bar via global store
+  useModalVisibility("connection-panel", visible);
   const [selectedAction, setSelectedAction] = useState<ConnectionAction | null>(
     null
   );
