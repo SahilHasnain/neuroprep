@@ -58,9 +58,14 @@ export default function QuestionCard({
           const isCorrectOption = correctAnswer === option.id;
           const shouldHighlight = isAnswerRevealed || showAnswer;
 
+          // Debug log for missing text
+          if (!option.text) {
+            console.error("⚠️ Option missing text:", { option, index, questionHasOptions: options.length });
+          }
+
           return (
             <TouchableOpacity
-              key={option.id}
+              key={option.id || `option-${index}`}
               onPress={() => handleOptionPress(option.id)}
               disabled={isAnswerRevealed || showAnswer}
               className={clsx(
@@ -131,7 +136,7 @@ export default function QuestionCard({
                       },
                     }}
                   >
-                    {option.text}
+                    {option.text || `[Option ${String.fromCharCode(65 + index)} - Text Missing]`}
                   </MathMarkdown>
                 </View>
               </View>

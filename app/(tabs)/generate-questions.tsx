@@ -166,7 +166,17 @@ export default function GenerateQuestionsScreen() {
       try {
         const parsedData = JSON.parse(params.viewGeneratedQuestions as string);
 
+        console.log("📥 Received viewGeneratedQuestions:", {
+          hasQuestions: !!parsedData.questions,
+          questionsLength: parsedData.questions?.length,
+        });
+
         if (parsedData.questions && Array.isArray(parsedData.questions)) {
+          // Log first question for debugging
+          if (parsedData.questions.length > 0) {
+            console.log("🔍 First question from params:", JSON.stringify(parsedData.questions[0], null, 2));
+          }
+
           // Reload question sets to include the newly saved questions
           loadSets();
 
