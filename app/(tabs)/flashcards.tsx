@@ -52,6 +52,8 @@ export default function FlashcardsScreen() {
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
   const [filterSubject, setFilterSubject] = useState<string>("all");
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [contextGenerationStarted, setContextGenerationStarted] =
+    useState(false);
 
   // Parse context from route params
   const { documentContext, noteContext, doubtContext } = useMemo(
@@ -63,12 +65,77 @@ export default function FlashcardsScreen() {
     fetchDecks();
   }, [fetchDecks]);
 
-  // Auto-open modal when context is present
+  // Auto-generate flashcards when arriving with context (document/note/doubt)
   useEffect(() => {
-    if (hasContext(params)) {
-      setModalVisible(true);
-    }
-  }, [params]);
+    const generateFromContext = async () => {
+      // Prevent duplicate runs on param changes
+      if (contextGenerationStarted) return;
+      if (!hasContext(params)) return;
+
+      setContextGenerationStarted(true);
+
+      const defaultCardCount = 10;
+
+      const buildConfig = () => {
+        if (documentContext) {
+          return {
+            deckName: `${documentContext.documentTitle} Flashcards`,
+            subject: "Document Content",
+            topic: documentContext.documentTitle,
+            cardCount: defaultCardCount,
+            documentContext,
+          };
+        }
+        if (noteContext) {
+          return {
+            deckName: `${noteContext.topic} Flashcards`,
+            subject: noteContext.subject || "General",
+            topic: noteContext.topic,
+            cardCount: defaultCardCount,
+            noteContext,
+          };
+        }
+        if (doubtContext) {
+          return {
+            deckName: `${doubtContext.questionText?.slice(0, 30) || "Doubt"} Flashcards`,
+            subject: doubtContext.subject || "General",
+            topic: doubtContext.topic || "Doubt Context",
+            cardCount: defaultCardCount,
+            doubtContext,
+          };
+        }
+        return null;
+      };
+
+      const config = buildConfig();
+      if (!config) return;
+
+      const result = await generateFlashcards(config);
+
+      if (result.success) {
+        Alert.alert("Success", "Flashcards created from your context.");
+      } else if (result.error) {
+        Alert.alert("Error", result.error);
+      }
+
+      // Clear params to avoid re-triggering when user stays on screen
+      router.setParams({
+        documentContext: undefined,
+        noteContext: undefined,
+        doubtContext: undefined,
+      });
+    };
+
+    generateFromContext();
+  }, [
+    params,
+    contextGenerationStarted,
+    documentContext,
+    noteContext,
+    doubtContext,
+    generateFlashcards,
+    router,
+  ]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -110,6 +177,13 @@ export default function FlashcardsScreen() {
       });
     }
   };
+
+  // Reset context generation guard when no context is present (for future navigations)
+  useEffect(() => {
+    if (!hasContext(params) && contextGenerationStarted) {
+      setContextGenerationStarted(false);
+    }
+  }, [params, contextGenerationStarted]);
 
   // Filter and sort decks
   const filteredAndSortedDecks = useMemo(() => {
