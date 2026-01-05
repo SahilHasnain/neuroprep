@@ -60,7 +60,11 @@ export default function QuestionCard({
 
           // Debug log for missing text
           if (!option.text) {
-            console.error("⚠️ Option missing text:", { option, index, questionHasOptions: options.length });
+            console.error("⚠️ Option missing text:", {
+              option,
+              index,
+              questionHasOptions: options.length,
+            });
           }
 
           return (
@@ -136,7 +140,8 @@ export default function QuestionCard({
                       },
                     }}
                   >
-                    {option.text || `[Option ${String.fromCharCode(65 + index)} - Text Missing]`}
+                    {option.text ||
+                      `[Option ${String.fromCharCode(65 + index)} - Text Missing]`}
                   </MathMarkdown>
                 </View>
               </View>

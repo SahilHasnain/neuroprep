@@ -379,7 +379,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       // Log first question structure for debugging
       if (Array.isArray(result.data) && result.data.length > 0) {
-        console.log("🔍 First question structure:", JSON.stringify(result.data[0], null, 2));
+        console.log(
+          "🔍 First question structure:",
+          JSON.stringify(result.data[0], null, 2)
+        );
         console.log("🔍 First question options:", result.data[0].options);
       }
 

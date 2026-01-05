@@ -218,7 +218,7 @@ My question: `;
                 className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 active:opacity-80 flex-row items-center"
               >
                 <Sparkles size={14} color="#60a5fa" />
-                <Text className="text-xs font-medium text-blue-300 ml-1">
+                <Text className="ml-1 text-xs font-medium text-blue-300">
                   Connect
                 </Text>
               </Pressable>
@@ -232,7 +232,7 @@ My question: `;
           </View>
 
           {/* Progress Bar */}
-          <View className="h-2 overflow-hidden rounded-full bg-gray-700">
+          <View className="h-2 overflow-hidden bg-gray-700 rounded-full">
             <LinearGradient
               colors={THEME.gradients.progress}
               start={{ x: 0, y: 0 }}
@@ -299,7 +299,7 @@ My question: `;
 
             <Pressable
               onPress={() => setShowAllQuestions(true)}
-              className="px-4 py-3 rounded-xl bg-gray-800 active:bg-gray-700"
+              className="px-4 py-3 bg-gray-800 rounded-xl active:bg-gray-700"
             >
               <Text className="text-sm font-medium text-gray-300">
                 {currentQuestionIndex + 1}/{questions.length}
@@ -311,7 +311,7 @@ My question: `;
             selectedAnswers[currentQuestion.id] ? (
               <Pressable
                 onPress={() => setShowScore(true)}
-                className="flex-1 rounded-xl overflow-hidden active:opacity-80"
+                className="flex-1 overflow-hidden rounded-xl active:opacity-80"
               >
                 <LinearGradient
                   colors={THEME.gradients.green}
@@ -346,7 +346,7 @@ My question: `;
                     colors={THEME.gradients.primaryButton}
                     start={THEME.gradientConfig.start}
                     end={{ x: 1, y: 0 }}
-                    className="flex-row items-center justify-center px-4 py-3 absolute inset-0"
+                    className="absolute inset-0 flex-row items-center justify-center px-4 py-3"
                   >
                     <Text className="mr-1 text-sm font-semibold text-white">
                       Next
