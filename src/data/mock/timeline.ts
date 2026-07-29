@@ -1,0 +1,88 @@
+import type { TimelineEvent } from "../../types";
+
+export const mockTimeline: TimelineEvent[] = [
+  {
+    id: "t1",
+    incidentId: "1",
+    action: "Incident Created",
+    description: "Incident reported by Jane Doe",
+    createdAt: "2026-07-28T09:20:00Z",
+  },
+  {
+    id: "t2",
+    incidentId: "1",
+    action: "Investigation Started",
+    description: "John Smith assigned as owner",
+    createdAt: "2026-07-28T09:45:00Z",
+  },
+  {
+    id: "t3",
+    incidentId: "1",
+    action: "Risk Assessment",
+    description: "Risk assessed as high - personal data involved",
+    createdAt: "2026-07-28T10:00:00Z",
+  },
+  {
+    id: "t4",
+    incidentId: "2",
+    action: "Incident Created",
+    description: "Lost device reported by Mike Johnson",
+    createdAt: "2026-07-25T14:00:00Z",
+  },
+  {
+    id: "t5",
+    incidentId: "2",
+    action: "IT Security Notified",
+    description: "Remote wipe initiated",
+    createdAt: "2026-07-25T15:30:00Z",
+  },
+  {
+    id: "t6",
+    incidentId: "3",
+    action: "Incident Created",
+    description: "Unauthorized access detected by IT Security",
+    createdAt: "2026-07-20T08:00:00Z",
+  },
+  {
+    id: "t7",
+    incidentId: "3",
+    action: "Access Revoked",
+    description: "Former employee credentials revoked",
+    createdAt: "2026-07-20T10:00:00Z",
+  },
+  {
+    id: "t8",
+    incidentId: "3",
+    action: "Incident Closed",
+    description: "Access logs reviewed, no data exfiltration found",
+    createdAt: "2026-07-22T16:00:00Z",
+  },
+  {
+    id: "t9",
+    incidentId: "8",
+    action: "Incident Created",
+    description: "Data breach reported by Marketing Lead",
+    createdAt: "2026-07-05T10:00:00Z",
+  },
+  {
+    id: "t10",
+    incidentId: "8",
+    action: "Investigation Started",
+    description: "IT Security investigating unauthorized IP",
+    createdAt: "2026-07-05T11:00:00Z",
+  },
+  {
+    id: "t11",
+    incidentId: "8",
+    action: "Affected Parties Notified",
+    description: "2000 customers notified of potential data exposure",
+    createdAt: "2026-07-06T09:00:00Z",
+  },
+  {
+    id: "t12",
+    incidentId: "8",
+    action: "Incident Closed",
+    description: "Security patch applied, incident resolved",
+    createdAt: "2026-07-08T17:00:00Z",
+  },
+];

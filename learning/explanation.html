@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>complyDesk - Samjhaiye</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+      line-height: 1.7;
+      color: #1e293b;
+    }
+    .card {
+      max-width: 700px;
+      margin: 0 auto 20px;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      background: #2563eb;
+      color: white;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 20px;
+      font-size: 15px;
+    }
+    .emoji-big { font-size: 40px; }
+    .story {
+      background: #fef9c3;
+      border-left: 4px solid #eab308;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 18px 0;
+      font-size: 15px;
+    }
+    .person {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .person:last-child { border-bottom: none; }
+    .person .avatar {
+      font-size: 32px;
+      min-width: 50px;
+      text-align: center;
+    }
+    .person h3 {
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+    .person p {
+      font-size: 14px;
+      color: #475569;
+    }
+    .tag {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+    .footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>
+    <span class="emoji-big">&#x1F4CB;</span>
+    complyDesk
+    <span class="badge">beta</span>
+  </h1>
+  <div class="subtitle">Yeh app kya hai aur kis kaam aati hai — bilkul simple baat mein</div>
+
+  <p><strong>Short mein:</strong> complyDesk ek <strong>shikayat / complaint tracker</strong> hai. Lekin yeh aam shikayat ke liye nahi hai — yeh <strong>company ke andar hone wali ghaltiyan</strong> track karne ke liye hai jo <strong>qanoon (law)</strong> se relacion rakhti hain.</p>
+
+  <hr />
+
+  <h2 style="font-size:18px; margin-bottom:12px;">&#x1F4A1; Example — real life story</h2>
+
+  <div class="story">
+    <strong>Sochiye:</strong> Aap ek <strong>bank</strong> mein kaam karte hain. Ek customer ne apna <strong>Aadhaar card aur bank statement</strong> email kiya. Galti se woh email <strong>galat aadmi</strong> ko chala gaya.<br /><br />
+    Yeh <strong>data breach</strong> hai. Qanoon ke mutabiq aapko yeh <strong>record karna</strong> hoga, <strong>investigate</strong> karna hoga, aur <strong>deadline</strong> mein regulator ko report bhejni hogi.<br /><br />
+    <strong>Yahan complyDesk aati hai.</strong>
+  </div>
+
+  <hr />
+
+  <h2 style="font-size:18px; margin-bottom:12px;">&#x1F465; Kaun kaun istemal karta hai?</h2>
+
+  <div class="person">
+    <div class="avatar">&#x1F9D1;&#x200D;&#x1F393;</div>
+    <div>
+      <h3>Compliance Officer &#x1F3AF;</h3>
+      <p>Woh insaan jiska kaam hai yeh dekhna ke company <strong>qanoon ke against</strong> to nahi ja rahi. Jab bhi koi ghalti hoti hai, woh complyDesk mein <strong>incident create</strong> karta hai aur track karta hai ke <strong>investigation</strong> kahan tak pahunchi.</p>
+      <span class="tag">&#x1F3E6; Bank / Insurance / Hospital</span>
+    </div>
+  </div>
+
+  <div class="person">
+    <div class="avatar">&#x1F9D1;&#x200D;&#x1F4BB;</div>
+    <div>
+      <h3>IT Security Team &#x1F6E1;&#xFE0F;</h3>
+      <p>Agar incident <strong>cyber</strong> hai (hacking, phishing, virus), to IT team <strong>investigate</strong> karti hai. Woh complyDesk mein <strong>timeline update</strong> karte hain — "yeh hua, woh hua, ab yeh kar rahe hain".</p>
+      <span class="tag">&#x1F4F1; Data breach / Hacking</span>
+    </div>
+  </div>
+
+  <div class="person">
+    <div class="avatar">&#x1F9D1;&#x200D;&#x2696;&#xFE0F;</div>
+    <div>
+      <h3>Legal / Law Team &#x1F4DC;</h3>
+      <p>Kuch incidents mein <strong>regulator ko report</strong> bhejni hoti hai (jaise <strong>RBI, SEBI, IT Ministry</strong>). Legal team complyDesk se <strong>PDF report</strong> generate karti hai aur regulator ko bhejti hai.</p>
+      <span class="tag">&#x1F4C4; GDPR / PDPB / IT Act</span>
+    </div>
+  </div>
+
+  <div class="person">
+    <div class="avatar">&#x1F9D1;&#x200D;&#x1F4BC;</div>
+    <div>
+      <h3>Manager / Boss &#x1F4CA;</h3>
+      <p>Manager <strong>Dashboard</strong> dekhta hai — "aaj kitne incidents khule hain? Kitne band huye? Kaun si category mein zyada problem hai?" Bas ek nazar mein <strong>puri picture</strong> samajh aati hai.</p>
+      <span class="tag">&#x1F4AD; "Mujhe report do"</span>
+    </div>
+  </div>
+
+  <hr />
+
+  <h2 style="font-size:18px; margin-bottom:12px;">&#x2753; Aam aadmi ko is se kya?</h2>
+
+  <p>Directly kuch nahi. Lekin indirectly —</p>
+  <ul style="padding-left:20px; margin-top:8px; color:#475569; font-size:14px;">
+    <li>Aapka <strong>bank</strong> yeh app use karta hai → aapka paisa safe hai</li>
+    <li>Aapka <strong>hospital</strong> yeh use karta hai → aapka medical record safe hai</li>
+    <li>Aapka <strong>mobile company</strong> yeh use karti hai → aapka personal data safe hai</li>
+  </ul>
+  <p style="margin-top:10px; font-weight:500;">&#x1F381; Yeh app logon ke <strong>data ki hifazat</strong> ke liye hai.</p>
+
+  <hr />
+
+  <h2 style="font-size:18px; margin-bottom:12px;">&#x1F3ED; Kaun si companies istemal kar sakti hain?</h2>
+
+  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F3E6; Banks</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F3E5; Hospitals</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F4F1; Telecom</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F3C0; Fintech</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F3ED; E-commerce</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F3E2; Insurance</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F4DA; Schools / Uni</span>
+    <span class="tag" style="background:#f1f5f9; color:#334155;">&#x1F3E8; Govt departments</span>
+  </div>
+  <p style="margin-top:12px; font-size:13px; color:#64748b;">&#x1F449; Koi bhi company jo <strong>customer ka data</strong> rakhhti hai.</p>
+
+  <hr />
+
+  <h2 style="font-size:18px; margin-bottom:12px;">&#x1F52D; Ek line mein yaad rakhne ke liye</h2>
+
+  <div class="story" style="background:#e0f2fe; border-left-color:#2563eb;">
+    <strong>"complyDesk woh app hai jo company ko <span style="color:#2563eb;">qanoon ki pareshani</span> se bachati hai."</strong>
+  </div>
+
+  <p style="font-size:14px; color:#64748b; margin-top:16px;">
+    Jaise aap <strong>Google Maps</strong> use karte ho raasta dhundhne ke liye, waise hi compliance officer <strong>complyDesk</strong> use karta hai <strong>incident ka raasta</strong> dhundhne ke liye — start se lekar closure tak.
+  </p>
+</div>
+
+<div class="footer">
+  complyDesk — abhi sirf learning phase hai &#x1F4A1;
+</div>
+
+</body>
+</html>
